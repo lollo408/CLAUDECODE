@@ -1,37 +1,20 @@
-entrypoint = "main.py"
+# .replit
+language = "python3"
+run = "python3 main.py"
 modules = ["python-3.11"]
 
-[nix]
-channel = "stable-25_05"
-
-[unitTest]
-language = "python3"
-
-[gitHubImport]
-requiredFiles = [".replit", "replit.nix"]
-
 [deployment]
-run = ["python3"]
+run = ["gunicorn", "--bind=0.0.0.0:5000", "--reuse-port", "main:app"]
+
+# This tells replit to open port 8080
+ports = [8080]
 deploymentTarget = "autoscale"
 
 [agent]
 expertMode = true
 
-[[ports]]
-localPort = 81
-externalPort = 80
-
-[[ports]]
-localPort = 5000
-externalPort = 80
-
-[[ports]]
-localPort = 8080
-externalPort = 8080
-
-[[ports]]
-localPort = 34769
-externalPort = 3000
+[nix]
+channel = "stable-25_05"
 
 [workflows]
 runButton = "Project"
@@ -56,3 +39,7 @@ waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
