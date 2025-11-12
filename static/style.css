@@ -1,7 +1,5 @@
-/* Import Google Fonts - Inter (clean, professional sans-serif) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* ===== GLOBAL STYLES ===== */
 * {
     margin: 0;
     padding: 0;
@@ -13,14 +11,14 @@ body {
     background-color: #f5f5f5;
     color: #333;
     line-height: 1.6;
-    padding: 20px;
 }
 
-/* ===== HEADER ===== */
 header {
     text-align: center;
-    margin-bottom: 40px;
-    padding: 20px 0;
+    padding: 30px 20px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 0;
 }
 
 header h1 {
@@ -30,44 +28,78 @@ header h1 {
     letter-spacing: -0.5px;
 }
 
-/* ===== MAIN CONTENT ===== */
-main {
-    max-width: 1400px;
-    margin: 0 auto;
+.carousel-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
 }
 
-/* ===== MODULE CARD ===== */
+.carousel-track {
+    display: flex;
+    transition: transform 0.6s ease-in-out;
+    width: 400%;
+}
+
+.carousel-track img {
+    width: 25%;
+    height: 350px;
+    object-fit: cover;
+    display: block;
+}
+
+.carousel-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 10;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: scale(1.2);
+}
+
+.dot.active {
+    background: white;
+    transform: scale(1.3);
+}
+
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
 .module {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     padding: 40px;
-    display: flex;
-    gap: 40px;
     margin-bottom: 30px;
 }
 
-/* ===== TWO-COLUMN LAYOUT ===== */
-.column-image {
-    flex: 0 0 30%;
-    max-width: 30%;
-}
-
-.column-image img {
-    width: 100%;
-    height: auto;
-    border-radius: 8px;
-    object-fit: cover;
-}
-
 .column-content {
-    flex: 1;
-    min-width: 0;
+    width: 100%;
 }
 
-/* ===== TYPOGRAPHY ===== */
 h2 {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 600;
     color: #2c3e50;
     margin-bottom: 25px;
@@ -76,16 +108,11 @@ h2 {
 }
 
 h3 {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: 600;
     color: #34495e;
     margin-bottom: 15px;
     margin-top: 10px;
-}
-
-/* ===== TOP 3 NEWS SECTION ===== */
-.top-3-news {
-    margin-bottom: 30px;
 }
 
 .top-3-news ul {
@@ -97,7 +124,7 @@ h3 {
     padding: 15px 0;
     border-bottom: 1px solid #ecf0f1;
     line-height: 1.8;
-    font-size: 1rem;
+    font-size: 1.05rem;
 }
 
 .top-3-news li:last-child {
@@ -115,16 +142,10 @@ h3 {
     padding: 15px 0;
 }
 
-/* ===== HORIZONTAL DIVIDER ===== */
 hr {
     border: none;
     border-top: 2px solid #ecf0f1;
     margin: 30px 0;
-}
-
-/* ===== FULL REPORT SECTION ===== */
-.full-report {
-    margin-top: 20px;
 }
 
 .full-report p {
@@ -145,52 +166,29 @@ hr {
     color: #2980b9;
 }
 
-.full-report ul,
-.full-report ol {
-    margin-left: 25px;
-    margin-bottom: 15px;
-}
-
-.full-report li {
-    margin-bottom: 8px;
-    line-height: 1.8;
-}
-
-/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
-    .module {
-        flex-direction: column;
-        padding: 25px;
+    .carousel-track img {
+        height: 250px;
     }
-
-    .column-image {
-        flex: 0 0 100%;
-        max-width: 100%;
-        margin-bottom: 20px;
-    }
-
+    
     header h1 {
         font-size: 2rem;
     }
-
-    h2 {
-        font-size: 1.6rem;
+    
+    .module {
+        padding: 25px 20px;
     }
-
-    h3 {
-        font-size: 1.2rem;
+    
+    h2 {
+        font-size: 1.8rem;
     }
 }
 
 @media (max-width: 480px) {
-    body {
-        padding: 10px;
+    .carousel-track img {
+        height: 200px;
     }
-
-    .module {
-        padding: 20px;
-    }
-
+    
     header h1 {
         font-size: 1.6rem;
     }
