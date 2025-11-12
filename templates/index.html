@@ -34,7 +34,11 @@
                         <h3>Top 3 News</h3>
                         <ul>
                             {% for item in hospitality_news %}
-                                <li><strong>{{ item.headline }}</strong>: {{ item.summary }}</li>
+                                <li>
+                                    <a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">
+                                        <strong>{{ item.headline }}</strong>
+                                    </a>: {{ item.summary }}
+                                </li>
                             {% endfor %}
                         </ul>
                     {% else %}
