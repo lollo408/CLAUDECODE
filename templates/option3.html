@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option 3 - Banner Carousel | Piana BI Hub</title>
+    <link rel="stylesheet" href="/static/style-option3.css"> 
+</head>
+<body>
+    <header>
+        <h1>Piana Business Intelligence Hub</h1>
+    </header>
+
+    <div class="carousel-container">
+        <div class="carousel-track">
+            <img src="/static/piana 26.png" alt="Business Intelligence 1">
+            <img src="/static/piana 33.png" alt="Business Intelligence 2">
+            <img src="/static/piana 35.png" alt="Business Intelligence 3">
+            <img src="/static/piana 36.png" alt="Business Intelligence 4">
+        </div>
+        <div class="carousel-dots">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+    </div>
+
+    <main>
+        <section class="module">
+            <div class="column-content">
+                <h2>Hospitality</h2>
+
+                <div class="top-3-news">
+                    {% if hospitality_news %}
+                        <h3>Top 3 News</h3>
+                        <ul>
+                            {% for item in hospitality_news %}
+                                <li><strong>{{ item.headline }}</strong>: {{ item.summary }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Top news is being generated...</p>
+                    {% endif %}
+                </div>
+
+                <hr>
+
+                <div class="full-report">
+                    <h3>Full Report</h3>
+                    {% if full_report %}
+                        {{ full_report | safe }}
+                    {% else %}
+                        <p>Full report is being generated...</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <div class="option-nav">
+        <a href="/">Original</a> | 
+        <a href="/option1">Option 1</a> | 
+        <a href="/option2">Option 2</a> | 
+        <a href="/option3" class="active">Option 3</a>
+    </div>
+
+    <script>
+        const track = document.querySelector('.carousel-track');
+        const dots = document.querySelectorAll('.dot');
+        let currentIndex = 0;
+
+        function updateCarousel() {
+            track.style.transform = `translateX(-${currentIndex * 25}%)`;
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % 4;
+            updateCarousel();
+        }
+
+        setInterval(nextSlide, 4000);
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                currentIndex = index;
+                updateCarousel();
+            });
+        });
+    </script>
+</body>
+</html>
