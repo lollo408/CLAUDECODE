@@ -28,6 +28,43 @@ def dashboard():
         return f"Error loading dashboard: {e}"
 
 
+# Dashboard design options for user to preview
+@app.route('/option1')
+def option1():
+    try:
+        top_3_news = db.get("hospitality_top_3")
+        full_report_html = db.get("hospitality_full_html")
+        return render_template('option1.html',
+                               hospitality_news=top_3_news,
+                               full_report=full_report_html)
+    except Exception as e:
+        return f"Error loading dashboard: {e}"
+
+
+@app.route('/option2')
+def option2():
+    try:
+        top_3_news = db.get("hospitality_top_3")
+        full_report_html = db.get("hospitality_full_html")
+        return render_template('option2.html',
+                               hospitality_news=top_3_news,
+                               full_report=full_report_html)
+    except Exception as e:
+        return f"Error loading dashboard: {e}"
+
+
+@app.route('/option3')
+def option3():
+    try:
+        top_3_news = db.get("hospitality_top_3")
+        full_report_html = db.get("hospitality_full_html")
+        return render_template('option3.html',
+                               hospitality_news=top_3_news,
+                               full_report=full_report_html)
+    except Exception as e:
+        return f"Error loading dashboard: {e}"
+
+
 # --- 2. THE SECRET WEBHOOKS (THE "ENGINE") ---
 # These are the private URLs your Make.com flow will call.
 
