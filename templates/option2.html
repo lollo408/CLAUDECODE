@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option 2 - Sidebar Gallery | Piana BI Hub</title>
+    <link rel="stylesheet" href="/static/style-option2.css"> 
+</head>
+<body>
+    <header>
+        <h1>Piana Business Intelligence Hub</h1>
+    </header>
+
+    <div class="main-container">
+        <aside class="image-sidebar">
+            <div class="gallery-grid">
+                <img src="/static/piana 26.png" alt="Business Intelligence 1">
+                <img src="/static/piana 33.png" alt="Business Intelligence 2">
+                <img src="/static/piana 35.png" alt="Business Intelligence 3">
+                <img src="/static/piana 36.png" alt="Business Intelligence 4">
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <section class="module">
+                <div class="column-content">
+                    <h2>Hospitality</h2>
+
+                    <div class="top-3-news">
+                        {% if hospitality_news %}
+                            <h3>Top 3 News</h3>
+                            <ul>
+                                {% for item in hospitality_news %}
+                                    <li><strong>{{ item.headline }}</strong>: {{ item.summary }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Top news is being generated...</p>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <div class="full-report">
+                        <h3>Full Report</h3>
+                        {% if full_report %}
+                            {{ full_report | safe }}
+                        {% else %}
+                            <p>Full report is being generated...</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <div class="option-nav">
+        <a href="/">Original</a> | 
+        <a href="/option1">Option 1</a> | 
+        <a href="/option2" class="active">Option 2</a> | 
+        <a href="/option3">Option 3</a>
+    </div>
+</body>
+</html>
