@@ -11,11 +11,23 @@
         <h1>Piana Business Intelligence Hub</h1>
     </header>
 
+    <div class="carousel-container">
+        <div class="carousel-track">
+            <img src="/static/piana 26.png" alt="Business Intelligence 1">
+            <img src="/static/piana 33.png" alt="Business Intelligence 2">
+            <img src="/static/piana 35.png" alt="Business Intelligence 3">
+            <img src="/static/piana 36.png" alt="Business Intelligence 4">
+        </div>
+        <div class="carousel-dots">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+    </div>
+
     <main>
         <section class="module">
-            <div class="column-image">
-                <img src="/static/hospitality-image.jpg" alt="Hospitality">
-            </div>
             <div class="column-content">
                 <h2>Hospitality</h2>
 
@@ -44,7 +56,33 @@
                 </div>
             </div>
         </section>
+    </main>
 
-        </main>
+    <script>
+        const track = document.querySelector('.carousel-track');
+        const dots = document.querySelectorAll('.dot');
+        let currentIndex = 0;
+
+        function updateCarousel() {
+            track.style.transform = `translateX(-${currentIndex * 25}%)`;
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % 4;
+            updateCarousel();
+        }
+
+        setInterval(nextSlide, 4000);
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                currentIndex = index;
+                updateCarousel();
+            });
+        });
+    </script>
 </body>
 </html>
