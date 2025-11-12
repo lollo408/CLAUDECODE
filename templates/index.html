@@ -16,11 +16,9 @@
             <img src="/static/piana 26.png" alt="Business Intelligence 1">
             <img src="/static/piana 33.png" alt="Business Intelligence 2">
             <img src="/static/piana 35.png" alt="Business Intelligence 3">
-            <img src="/static/piana 36.png" alt="Business Intelligence 4">
         </div>
         <div class="carousel-dots">
             <span class="dot active"></span>
-            <span class="dot"></span>
             <span class="dot"></span>
             <span class="dot"></span>
         </div>
@@ -64,14 +62,14 @@
         let currentIndex = 0;
 
         function updateCarousel() {
-            track.style.transform = `translateX(-${currentIndex * 25}%)`;
+            track.style.transform = `translateX(-${currentIndex * 33.33}%)`;
             dots.forEach((dot, index) => {
                 dot.classList.toggle('active', index === currentIndex);
             });
         }
 
         function nextSlide() {
-            currentIndex = (currentIndex + 1) % 4;
+            currentIndex = (currentIndex + 1) % 3;
             updateCarousel();
         }
 
