@@ -1,0 +1,185 @@
+/* OPTION 1: HERO BACKGROUND DESIGN */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* HERO HEADER WITH BACKGROUND IMAGE */
+.hero-header {
+    position: relative;
+    height: 400px;
+    background-image: url('/static/piana 36.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.85), rgba(44, 62, 80, 0.85));
+}
+
+.hero-header h1 {
+    position: relative;
+    z-index: 2;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: white;
+    text-align: center;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    padding: 0 20px;
+    letter-spacing: -1px;
+}
+
+/* MAIN CONTENT */
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.module {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 50px;
+    margin-bottom: 30px;
+}
+
+.column-content {
+    width: 100%;
+}
+
+/* TYPOGRAPHY */
+h2 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 10px;
+}
+
+h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #34495e;
+    margin-bottom: 15px;
+    margin-top: 10px;
+}
+
+/* TOP 3 NEWS */
+.top-3-news ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.top-3-news li {
+    padding: 15px 0;
+    border-bottom: 1px solid #ecf0f1;
+    line-height: 1.8;
+    font-size: 1.05rem;
+}
+
+.top-3-news li:last-child {
+    border-bottom: none;
+}
+
+.top-3-news li strong {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.top-3-news p {
+    color: #7f8c8d;
+    font-style: italic;
+    padding: 15px 0;
+}
+
+hr {
+    border: none;
+    border-top: 2px solid #ecf0f1;
+    margin: 30px 0;
+}
+
+/* FULL REPORT */
+.full-report p {
+    margin-bottom: 15px;
+    line-height: 1.8;
+    color: #4a4a4a;
+}
+
+.full-report a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.full-report a:hover {
+    text-decoration: underline;
+    color: #2980b9;
+}
+
+/* OPTION NAVIGATION */
+.option-nav {
+    text-align: center;
+    padding: 30px;
+    background: white;
+    margin: 20px auto;
+    max-width: 1200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.option-nav a {
+    color: #3498db;
+    text-decoration: none;
+    padding: 8px 15px;
+    margin: 0 5px;
+    font-weight: 500;
+}
+
+.option-nav a.active {
+    color: #2c3e50;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .hero-header {
+        height: 300px;
+    }
+    
+    .hero-header h1 {
+        font-size: 2.2rem;
+    }
+    
+    .module {
+        padding: 30px 20px;
+    }
+    
+    h2 {
+        font-size: 1.8rem;
+    }
+}
