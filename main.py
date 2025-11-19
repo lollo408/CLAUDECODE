@@ -1,43 +1,45 @@
-from flask import Flask, render_template, request, abort
-from replit import db
 import os
+from flask import Flask, render_template
+from supabase import create_client, Client
 
 app = Flask(__name__)
 
-MAKE_API_KEY = os.environ.get('MAKE_API_KEY')
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_KEY")
+
+if not url or not key:
+    raise ValueError(f"Missing Supabase credentials! URL: {bool(url)}, KEY: {bool(key)}")
+
+try:
+    supabase: Client = create_client(url, key)
+except Exception as e:
+    raise ValueError(f"Failed to create Supabase client. Error: {e}")
 
 
 @app.route('/')
 def dashboard():
-    try:
-        top_3_news = db.get("hospitality_top_3")
-        full_report_html = db.get("hospitality_full_html")
+    response = supabase.table('intelligence_reports') \
+        .select("*") \
+        .eq('vertical', 'hospitality') \
+        .order('created_at', desc=True) \
+        .limit(1) \
+        .execute()
 
-        return render_template('index.html',
-                               hospitality_news=top_3_news,
-                               full_report=full_report_html)
-    except Exception as e:
-        return f"Error loading dashboard: {e}"
+    latest_hospitality = response.data[0] if response.data else None
 
-
-@app.route('/update-top3', methods=['POST'])
-def update_top3():
-    if request.headers.get('X-API-KEY') != MAKE_API_KEY:
-        abort(401)
-
-    new_data = request.json
-    db["hospitality_top_3"] = new_data
-    return {"status": "success", "updated_key": "hospitality_top_3"}, 200
+    return render_template('index.html', hospitality_data=latest_hospitality)
 
 
-@app.route('/update-full-report', methods=['POST'])
-def update_full_report():
-    if request.headers.get('X-API-KEY') != MAKE_API_KEY:
-        abort(401)
+@app.route('/archive')
+def archive():
+    response = supabase.table('intelligence_reports') \
+        .select("*") \
+        .order('created_at', desc=True) \
+        .execute()
 
-    new_data = request.data.decode('utf-8')
-    db["hospitality_full_html"] = new_data
-    return {"status": "success", "updated_key": "hospitality_full_html"}, 200
+    all_reports = response.data
+
+    return render_template('archive.html', reports=all_reports)
 
 
 if __name__ == '__main__':
