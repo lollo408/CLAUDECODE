@@ -26,8 +26,13 @@ def dashboard():
         .execute()
 
     latest_hospitality = response.data[0] if response.data else None
+    
+    hospitality_news = latest_hospitality.get('top_3_news') if latest_hospitality else None
+    full_report = latest_hospitality.get('full_report') if latest_hospitality else None
 
-    return render_template('index.html', hospitality_data=latest_hospitality)
+    return render_template('index.html', 
+                         hospitality_news=hospitality_news,
+                         full_report=full_report)
 
 
 @app.route('/archive')
