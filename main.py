@@ -5,13 +5,16 @@ from supabase import create_client, Client
 app = Flask(__name__)
 
 # --- 1. SETUP SUPABASE CONNECTION ---
-url: str = os.environ.get("https://rxojowqnworekispsrqj.supabase.co")
-key: str = os.environ.get("sb_secret_vC0VFcNdxNr2j54tydkqVw_8I27NhHk")
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_KEY")
 
 if not url or not key:
-    raise ValueError("Missing Supabase credentials in Secrets!")
+    raise ValueError(f"Missing Supabase credentials! URL: {bool(url)}, KEY: {bool(key)}")
 
-supabase: Client = create_client(url, key)
+try:
+    supabase: Client = create_client(url, key)
+except Exception as e:
+    raise ValueError(f"Failed to create Supabase client. URL length: {len(url) if url else 0}, Error: {e}")
 
 # --- 2. ROUTES ---
 
@@ -54,4 +57,4 @@ def archive():
 
 # --- 3. RUN THE APP ---
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=5000)
