@@ -1,67 +1,57 @@
-from flask import Flask, render_template, request, abort
-from replit import db  # Imports the Replit Database
-import os  # Imports the ability to read Secrets
+import os
+from flask import Flask, render_template
+from supabase import create_client, Client
 
 app = Flask(__name__)
 
-# Load your secret key from the Replit "Secrets" tab
-MAKE_API_KEY = os.environ.get('MAKE_API_KEY')
+# --- 1. SETUP SUPABASE CONNECTION ---
+url: str = os.environ.get("https://rxojowqnworekispsrqj.supabase.co")
+key: str = os.environ.get("sb_secret_vC0VFcNdxNr2j54tydkqVw_8I27NhHk")
+
+if not url or not key:
+    raise ValueError("Missing Supabase credentials in Secrets!")
+
+supabase: Client = create_client(url, key)
+
+# --- 2. ROUTES ---
 
 
-# --- 1. THE PUBLIC DASHBOARD (THE "FACE") ---
-# This is the URL your engineers will visit.
 @app.route('/')
 def dashboard():
-    try:
-        # Read the latest data from the Replit Database
-        # Note: 'db.get()' returns 'None' if the key doesn't exist yet,
-        # which is perfect for the first run.
-        top_3_news = db.get("hospitality_top_3")
-        full_report_html = db.get("hospitality_full_html")
+    """
+    The Main Dashboard (The 'Face').
+    Fetches the LATEST report for the Hospitality vertical.
+    """
+    # Query Supabase for the most recent 'hospitality' row
+    response = supabase.table('intelligence_reports') \
+        .select("*") \
+        .eq('vertical', 'hospitality') \
+        .order('created_at', desc=True) \
+        .limit(1) \
+        .execute()
 
-        # Render the 'index.html' template and pass the data to it
-        return render_template('index.html',
-                               hospitality_news=top_3_news,
-                               full_report=full_report_html)
-    except Exception as e:
-        # Return a clean error if the database fails
-        return f"Error loading dashboard: {e}"
+    # If we found data, get the first item. Otherwise, None.
+    latest_hospitality = response.data[0] if response.data else None
 
-
-# --- 2. THE SECRET WEBHOOKS (THE "ENGINE") ---
-# These are the private URLs your Make.com flow will call.
+    return render_template('index.html', hospitality_data=latest_hospitality)
 
 
-# Webhook to update the "Top 3 News"
-@app.route('/update-top3', methods=['POST'])
-def update_top3():
-    # A. Check if the request is from Make.com (using your secret key)
-    if request.headers.get('X-API-KEY') != MAKE_API_KEY:
-        abort(401)  # Unauthorized
+@app.route('/archive')
+def archive():
+    """
+    The Archive Page (The 'Warehouse').
+    Fetches ALL reports to display in a table.
+    """
+    response = supabase.table('intelligence_reports') \
+        .select("*") \
+        .order('created_at', desc=True) \
+        .execute()
 
-    # B. Get the new JSON data from Make.com
-    new_data = request.json
+    all_reports = response.data
 
-    # C. Save the new data to the Replit Database
-    db["hospitality_top_3"] = new_data
-    return {"status": "success", "updated_key": "hospitality_top_3"}, 200
-
-
-# Webhook to update the "Full Report"
-@app.route('/update-full-report', methods=['POST'])
-def update_full_report():
-    # A. Check for the secret key
-    if request.headers.get('X-API-KEY') != MAKE_API_KEY:
-        abort(401)  # Unauthorized
-
-    # B. Get the new HTML data from Make.com (sent as raw text/html)
-    new_data = request.data.decode('utf-8')
-
-    # C. Save the new data to the Replit Database
-    db["hospitality_full_html"] = new_data
-    return {"status": "success", "updated_key": "hospitality_full_html"}, 200
+    return render_template('archive.html', reports=all_reports)
 
 
 # --- 3. RUN THE APP ---
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=8080)
