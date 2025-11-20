@@ -1,86 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Piana BI Hub</title>
-    <link rel="stylesheet" href="/static/style.css"> 
-</head>
-<body>
-    <header>
-        <h1>Piana Business Intelligence Hub</h1>
-    </header>
+{% extends "base.html" %}
 
-    <div class="carousel-container">
-        <div class="carousel-track">
-            <img src="/static/piana 26.png" alt="Business Intelligence 1">
-            <img src="/static/piana 33.png" alt="Business Intelligence 2">
-            <img src="/static/piana 35.png" alt="Business Intelligence 3">
+{% block content %}
+<section class="module">
+    <div class="column-content">
+        <div class="vertical-header">
+            <h2>Hospitality Intelligence</h2>
+            <span class="live-badge">Live</span>
         </div>
-        <div class="carousel-dots">
-            <span class="dot active"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-        </div>
-    </div>
 
-    <main>
-        <section class="module">
-            <div class="column-content">
-                <h2>Hospitality</h2>
-
-                <div class="top-3-news">
-                    {% if hospitality_news %}
-                        <h3>Top 3 News</h3>
-                        <ul>
-                            {% for item in hospitality_news %}
-                                <li><strong>{{ item.headline }}</strong>: {{ item.summary }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Top news is being generated...</p>
-                    {% endif %}
-                </div>
-
-                <hr>
-
-                <div class="full-report">
-                    <h3>Full Report</h3>
-                    {% if full_report %}
-                        {{ full_report | safe }}
-                    {% else %}
-                        <p>Full report is being generated...</p>
-                    {% endif %}
-                </div>
+        {% if hospitality_data %}
+            <div class="top-3-news">
+                <h3>Top 3 News</h3>
+                <ul>
+                    {% for item in hospitality_data['top_3_json'] %}
+                        <li>
+                            <a href="{{ item['source_url'] }}" target="_blank">
+                                <strong>{{ item['headline'] }}</strong>
+                            </a>: {{ item['summary'] }}
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
-        </section>
-    </main>
 
-    <script>
-        const track = document.querySelector('.carousel-track');
-        const dots = document.querySelectorAll('.dot');
-        let currentIndex = 0;
+            <hr>
 
-        function updateCarousel() {
-            track.style.transform = `translateX(-${currentIndex * 33.33}%)`;
-            dots.forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentIndex);
-            });
-        }
+            <div class="full-report">
+                <div class="report-header">
+                    <h3>Full Report</h3>
+                    {% if hospitality_data['pdf_url'] %}
+                        <a href="{{ hospitality_data['pdf_url'] }}" class="btn-pdf" target="_blank">
+                            📥 Download PDF
+                        </a>
+                    {% endif %}
+                </div>
 
-        function nextSlide() {
-            currentIndex = (currentIndex + 1) % 3;
-            updateCarousel();
-        }
+                {{ hospitality_data['report_html'] | safe }}
+            </div>
 
-        setInterval(nextSlide, 4000);
-
-        dots.forEach((dot, index) => {
-            dot.addEventListener('click', () => {
-                currentIndex = index;
-                updateCarousel();
-            });
-        });
-    </script>
-</body>
-</html>
+        {% else %}
+            <div class="empty-state">
+                <p>No report found. Run the Make.com flow to generate the first insight.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
