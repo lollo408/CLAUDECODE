@@ -8,7 +8,8 @@ url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 
 if not url or not key:
-    raise ValueError(f"Missing Supabase credentials! URL: {bool(url)}, KEY: {bool(key)}")
+    raise ValueError(
+        f"Missing Supabase credentials! URL: {bool(url)}, KEY: {bool(key)}")
 
 try:
     supabase: Client = create_client(url, key)
@@ -18,6 +19,14 @@ except Exception as e:
 
 @app.route('/')
 def dashboard():
+    """
+    DEBUG MODE: Fetches ANY report (ignoring the vertical name).
+    """
+    print("--- DEBUG START ---")
+
+    # 1. Query Supabase (NO FILTER)
+    # We removed .eq('vertical', 'hospitality') to see if ANY data exists
+    # RESTORED: The correct filter
     response = supabase.table('intelligence_reports') \
         .select("*") \
         .eq('vertical', 'hospitality') \
@@ -25,14 +34,7 @@ def dashboard():
         .limit(1) \
         .execute()
 
-    latest_hospitality = response.data[0] if response.data else None
-    
-    hospitality_news = latest_hospitality.get('top_3_news') if latest_hospitality else None
-    full_report = latest_hospitality.get('full_report') if latest_hospitality else None
-
-    return render_template('index.html', 
-                         hospitality_news=hospitality_news,
-                         full_report=full_report)
+    return render_template('index.html', hospitality_data=hospitality)
 
 
 @app.route('/archive')

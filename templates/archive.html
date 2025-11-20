@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="module">
+    <div class="column-content">
+        <h2>Intelligence Archive</h2>
+        <p style="color: #6b7280; margin-bottom: 1.5rem;">
+            Historical record of all generated market intelligence reports.
+        </p>
+
+        <table class="archive-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Vertical</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.created_at[:10] }}</td>
+
+                    <td style="text-transform: capitalize;">
+                        {{ report.vertical }}
+                    </td>
+
+                    <td>
+                        {% if report.pdf_url %}
+                            <a href="{{ report.pdf_url }}" target="_blank" class="link-pdf">
+                                📥 Download PDF
+                            </a>
+                        {% else %}
+                            <span style="color: #9ca3af;">Processing...</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

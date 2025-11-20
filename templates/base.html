@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piana BI Hub</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Quick Nav Styling to ensure it looks good immediately */
+        .main-nav {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .nav-brand {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #111827;
+        }
+        .nav-links a {
+            color: #4b5563;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .nav-links a:hover {
+            color: #2563eb;
+        }
+        .archive-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .archive-table th, .archive-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .archive-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        .link-pdf {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .link-pdf:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <nav class="main-nav">
+        <div class="nav-brand">Piana BI Hub</div>
+        <div class="nav-links">
+            <a href="/">📊 Dashboard</a>
+            <a href="/archive">🗄️ Archive</a>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>
