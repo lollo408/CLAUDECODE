@@ -11,7 +11,9 @@
         <div id="Hospitality" class="tab-content">
             <div class="vertical-header">
                 <h2>Hospitality Intelligence</h2>
-                <span class="live-badge">{{ hospitality_data['created_at'][:10] }}</span>
+                <span class="live-badge">
+                    {{ hospitality_data['created_at'][:10] if hospitality_data else 'No Data' }}
+                </span>
             </div>
 
             {% if hospitality_data %}
@@ -20,7 +22,9 @@
                     <ul>
                         {% for item in hospitality_data['top_3_json'] %}
                             <li>
-                                <a href="{{ item['source_url'] }}" target="_blank"><strong>{{ item['headline'] }}</strong></a>: {{ item['summary'] }}
+                                <a href="{{ item['source_url'] }}" target="_blank">
+                                    <strong>{{ item['headline'] }}</strong>
+                                </a>: {{ item['summary'] }}
                             </li>
                         {% endfor %}
                     </ul>
