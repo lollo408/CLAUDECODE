@@ -18,54 +18,52 @@ except Exception as e:
     raise ValueError(f"Failed to create Supabase client. Error: {e}")
 
 
-@app.route('/')
-def dashboard():
-    print("--- DASHBOARD START ---")
+# --- HELPER FUNCTION ---
+def get_latest_report(vertical_name):
+    """Fetches and cleans the latest report for a given vertical."""
     try:
-        # 1. Query Supabase
         response = supabase.table('intelligence_reports') \
             .select("*") \
-            .eq('vertical', 'hospitality') \
+            .eq('vertical', vertical_name) \
             .order('created_at', desc=True) \
             .limit(1) \
             .execute()
 
-        print(f"Database Response: {response.data}")
+        data = response.data[0] if response.data else None
 
-        # 2. Get the data (Default to empty dict {} if None)
-        latest_hospitality = response.data[0] if response.data else {}
-
-        # 3. DATA CLEANING (Type-Safe Version)
-        # We check 'isinstance(..., dict)' to verify it's a real dictionary
-        # before trying to edit it. This fixes the red squiggles.
-        if isinstance(latest_hospitality, dict):
-
-            # Fix Top 3 News
-            top_3 = latest_hospitality.get('top_3_json')
+        if data and isinstance(data, dict):
+            # Clean Top 3 JSON
+            top_3 = data.get('top_3_json')
             if isinstance(top_3, str):
                 try:
-                    latest_hospitality['top_3_json'] = json.loads(top_3)
-                except Exception as e:
-                    print(f"Error parsing Top 3 JSON: {e}")
+                    data['top_3_json'] = json.loads(top_3)
+                except:
+                    print(f"Error parsing JSON for {vertical_name}")
 
-            # Fix HTML Report
-            report_html = latest_hospitality.get('report_html')
+            # Clean HTML
+            report_html = data.get('report_html')
             if isinstance(report_html, str):
-                latest_hospitality['report_html'] = report_html.replace(
-                    '\\n', '\n').strip('"')
+                data['report_html'] = report_html.replace('\\n',
+                                                          '\n').strip('"')
 
-        # If it was empty {}, change it back to None so the template handles it correctly
-        if latest_hospitality == {}:
-            latest_hospitality = None
-
-        return render_template('index.html',
-                               hospitality_data=latest_hospitality)
-
+        return data
     except Exception as e:
-        print("\n!!!!!!!!!!!!!! APP CRASHED !!!!!!!!!!!!!!")
-        print(f"ERROR TYPE: {type(e).__name__}")
-        print(f"ERROR DETAILS: {e}")
-        return f"<h3>App Crashed: {e}</h3>", 500
+        print(f"Error fetching {vertical_name}: {e}")
+        return None
+
+
+@app.route('/')
+def dashboard():
+    print("--- DASHBOARD START ---")
+
+    # Fetch both verticals
+    hospitality = get_latest_report('hospitality')
+    automotive = get_latest_report('automotive')
+
+    # Render with both datasets
+    return render_template('index.html',
+                           hospitality_data=hospitality,
+                           automotive_data=automotive)
 
 
 @app.route('/archive')

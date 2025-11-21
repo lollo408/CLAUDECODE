@@ -3,45 +3,93 @@
 {% block content %}
 <section class="module">
     <div class="column-content">
-        <div class="vertical-header">
-            <h2>Hospitality Intelligence</h2>
-            <span class="live-badge">Live</span>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'Hospitality')">Hospitality</button>
+            <button class="tab-btn" onclick="openTab(event, 'Automotive')">Automotive</button>
         </div>
 
-        {% if hospitality_data %}
-            <div class="top-3-news">
-                <h3>Top 3 News</h3>
-                <ul>
-                    {% for item in hospitality_data['top_3_json'] %}
-                        <li>
-                            <a href="{{ item['source_url'] }}" target="_blank">
-                                <strong>{{ item['headline'] }}</strong>
-                            </a>: {{ item['summary'] }}
-                        </li>
-                    {% endfor %}
-                </ul>
+        <div id="Hospitality" class="tab-content">
+            <div class="vertical-header">
+                <h2>Hospitality Intelligence</h2>
+                <span class="live-badge">{{ hospitality_data['created_at'][:10] }}</span>
             </div>
 
-            <hr>
-
-            <div class="full-report">
-                <div class="report-header">
-                    <h3>Full Report</h3>
+            {% if hospitality_data %}
+                <div class="top-3-news">
+                    <h3>Top 3 News ({{ hospitality_data['created_at'][:10] }})</h3>
+                    <ul>
+                        {% for item in hospitality_data['top_3_json'] %}
+                            <li>
+                                <a href="{{ item['source_url'] }}" target="_blank"><strong>{{ item['headline'] }}</strong></a>: {{ item['summary'] }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="action-section">
                     {% if hospitality_data['pdf_url'] %}
-                        <a href="{{ hospitality_data['pdf_url'] }}" class="btn-pdf" target="_blank">
-                            📥 Download PDF
+                        <a href="{{ hospitality_data['pdf_url'] }}" class="btn-pdf" target="_blank">📥 Download Full Report (PDF)</a>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p class="empty-state">No Hospitality data found.</p>
+            {% endif %}
+        </div>
+
+        <div id="Automotive" class="tab-content" style="display: none;">
+            <div class="vertical-header">
+                <h2>Automotive Intelligence</h2>
+                <span class="live-badge">
+                    {{ automotive_data['created_at'][:10] if automotive_data else 'No Data' }}
+                </span>
+            </div>
+
+            {% if automotive_data %}
+                <div class="top-3-news">
+                    <h3>Top 3 News ({{ automotive_data['created_at'][:10] }})</h3>
+                    <ul>
+                        {% for item in automotive_data['top_3_json'] %}
+                            <li>
+                                <a href="{{ item['source_url'] }}" target="_blank">
+                                    <strong>{{ item['headline'] }}</strong>
+                                </a>: {{ item['summary'] }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="action-section">
+                    {% if automotive_data['pdf_url'] %}
+                        <a href="{{ automotive_data['pdf_url'] }}" class="btn-pdf" target="_blank">
+                            📥 Download Full Report (PDF)
                         </a>
                     {% endif %}
                 </div>
-
-                {{ hospitality_data['report_html'] | safe }}
-            </div>
-
-        {% else %}
-            <div class="empty-state">
-                <p>No report found. Run the Make.com flow to generate the first insight.</p>
-            </div>
-        {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <p>No Automotive data found. Run the "Automotive" Make.com flow.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </section>
+
+<script>
+function openTab(evt, tabName) {
+    // 1. Hide all tab content
+    var tabcontent = document.getElementsByClassName("tab-content");
+    for (var i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+
+    // 2. Remove "active" class from all buttons
+    var tablinks = document.getElementsByClassName("tab-btn");
+    for (var i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // 3. Show the current tab and highlight the button
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
+</script>
 {% endblock %}

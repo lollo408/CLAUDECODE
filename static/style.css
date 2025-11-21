@@ -170,15 +170,15 @@ hr {
     .carousel-track img {
         height: 250px;
     }
-    
+
     header h1 {
         font-size: 2rem;
     }
-    
+
     .module {
         padding: 25px 20px;
     }
-    
+
     h2 {
         font-size: 1.8rem;
     }
@@ -188,8 +188,80 @@ hr {
     .carousel-track img {
         height: 200px;
     }
-    
+
     header h1 {
         font-size: 1.6rem;
     }
+}
+
+/* --- TABBED INTERFACE STYLES --- */
+.tabs {
+    display: flex;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px; /* Overlap the border */
+}
+
+.tab-btn:hover { color: #111827; }
+
+.tab-btn.active {
+    color: #2563eb;
+    border-bottom: 2px solid #2563eb;
+}
+
+.tab-content {
+    display: none; /* Hidden by default */
+    animation: fadeEffect 0.5s;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: relative;
+}
+
+.tab-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.92);
+    z-index: 1;
+}
+
+.tab-content > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* Make the first tab visible by default */
+#Hospitality { 
+    display: block;
+    background-image: url('/static/pexels-pixabay-271639%20(1).jpg');
+}
+
+#Automotive {
+    background-image: url('/static/pexels-impact-dog-crates-1789722873-28468161.jpg');
+}
+
+@keyframes fadeEffect {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+.action-section {
+    margin-top: 1.5rem;
+    text-align: right;
 }
