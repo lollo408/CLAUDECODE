@@ -228,47 +228,22 @@ hr {
 }
 
 .vertical-header {
-    background-size: cover;
-    background-position: center;
-    padding: 60px 40px;
-    margin: -40px -40px 30px -40px;
-    position: relative;
-    border-radius: 12px 12px 0 0;
-    min-height: 200px;
-    display: flex;
-    align-items: flex-end;
-}
-
-.vertical-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%);
-    z-index: 1;
-    border-radius: 12px 12px 0 0;
+    margin-bottom: 30px;
 }
 
 .vertical-header h2 {
-    position: relative;
-    z-index: 2;
-    color: white;
-    border-bottom: 3px solid rgba(255, 255, 255, 0.6);
-    margin-bottom: 0;
+    color: #2c3e50;
+    border-bottom: 3px solid #3498db;
 }
 
 .live-badge {
-    position: relative;
-    z-index: 2;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 8px 16px;
+    background: #f0f4f8;
+    color: #2c3e50;
+    padding: 6px 12px;
     border-radius: 20px;
-    font-size: 0.9rem;
-    margin-left: auto;
-    margin-bottom: 5px;
+    font-size: 0.85rem;
+    display: inline-block;
+    margin-left: 15px;
 }
 
 /* Make the first tab visible by default */
@@ -276,12 +251,72 @@ hr {
     display: block;
 }
 
-#Hospitality .vertical-header {
-    background-image: url('/static/pexels-pixabay-271639%20(1).jpg');
+/* HOSPITALITY - Warm earth tone cards */
+#Hospitality .top-3-news li {
+    background: linear-gradient(135deg, rgba(210, 180, 140, 0.1) 0%, rgba(222, 184, 135, 0.08) 100%);
+    padding: 20px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(210, 180, 140, 0.2);
+    border-bottom: none;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
 }
 
-#Automotive .vertical-header {
-    background-image: url('/static/pexels-impact-dog-crates-1789722873-28468161.jpg');
+#Hospitality .top-3-news li:hover {
+    background: linear-gradient(135deg, rgba(210, 180, 140, 0.15) 0%, rgba(222, 184, 135, 0.12) 100%);
+    box-shadow: 0 4px 8px rgba(210, 180, 140, 0.15);
+}
+
+#Hospitality .top-3-news li:last-child {
+    border-bottom: none;
+}
+
+#Hospitality .full-report {
+    background: linear-gradient(135deg, rgba(210, 180, 140, 0.08) 0%, rgba(222, 184, 135, 0.06) 100%);
+    padding: 25px 25px;
+    border-radius: 8px;
+    border: 1px solid rgba(210, 180, 140, 0.15);
+}
+
+#Hospitality .action-section {
+    background: rgba(210, 180, 140, 0.07);
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+/* AUTOMOTIVE - Dark metallic tone cards */
+#Automotive .top-3-news li {
+    background: linear-gradient(135deg, rgba(70, 80, 90, 0.08) 0%, rgba(90, 100, 110, 0.06) 100%);
+    padding: 20px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(70, 80, 90, 0.15);
+    border-bottom: none;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+}
+
+#Automotive .top-3-news li:hover {
+    background: linear-gradient(135deg, rgba(70, 80, 90, 0.12) 0%, rgba(90, 100, 110, 0.1) 100%);
+    box-shadow: 0 4px 8px rgba(70, 80, 90, 0.12);
+}
+
+#Automotive .top-3-news li:last-child {
+    border-bottom: none;
+}
+
+#Automotive .full-report {
+    background: linear-gradient(135deg, rgba(70, 80, 90, 0.06) 0%, rgba(90, 100, 110, 0.05) 100%);
+    padding: 25px 25px;
+    border-radius: 8px;
+    border: 1px solid rgba(70, 80, 90, 0.12);
+}
+
+#Automotive .action-section {
+    background: rgba(70, 80, 90, 0.05);
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
 }
 
 @keyframes fadeEffect {
