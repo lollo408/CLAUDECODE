@@ -6,14 +6,14 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="openTab(event, 'Hospitality')">Hospitality</button>
             <button class="tab-btn" onclick="openTab(event, 'Automotive')">Automotive</button>
+            <button class="tab-btn" onclick="openTab(event, 'Bedding')">Bedding</button>
+            <button class="tab-btn" onclick="openTab(event, 'Textiles')">Textiles</button>
         </div>
 
         <div id="Hospitality" class="tab-content">
             <div class="vertical-header">
                 <h2>Hospitality Intelligence</h2>
-                <span class="live-badge">
-                    {{ hospitality_data['created_at'][:10] if hospitality_data else 'No Data' }}
-                </span>
+                <span class="live-badge">{{ hospitality_data['created_at'][:10] }}</span>
             </div>
 
             {% if hospitality_data %}
@@ -71,6 +71,78 @@
             {% else %}
                 <div class="empty-state">
                     <p>No Automotive data found. Run the "Automotive" Make.com flow.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div id="Bedding" class="tab-content" style="display: none;">
+            <div class="vertical-header">
+                <h2>Bedding Intelligence</h2>
+                <span class="live-badge">
+                    {{ bedding_data['created_at'][:10] if bedding_data else 'No Data' }}
+                </span>
+            </div>
+
+            {% if bedding_data %}
+                <div class="top-3-news">
+                    <h3>Top 3 News ({{ bedding_data['created_at'][:10] }})</h3>
+                    <ul>
+                        {% for item in bedding_data['top_3_json'] %}
+                            <li>
+                                <a href="{{ item['source_url'] }}" target="_blank">
+                                    <strong>{{ item['headline'] }}</strong>
+                                </a>: {{ item['summary'] }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="action-section">
+                    {% if bedding_data['pdf_url'] %}
+                        <a href="{{ bedding_data['pdf_url'] }}" class="btn-pdf" target="_blank">
+                            📥 Download Full Report (PDF)
+                        </a>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No Bedding data found. Run the "Bedding" Make.com flow.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div id="Textiles" class="tab-content" style="display: none;">
+            <div class="vertical-header">
+                <h2>Textiles Intelligence</h2>
+                <span class="live-badge">
+                    {{ textiles_data['created_at'][:10] if textiles_data else 'No Data' }}
+                </span>
+            </div>
+
+            {% if textiles_data %}
+                <div class="top-3-news">
+                    <h3>Top 3 News ({{ textiles_data['created_at'][:10] }})</h3>
+                    <ul>
+                        {% for item in textiles_data['top_3_json'] %}
+                            <li>
+                                <a href="{{ item['source_url'] }}" target="_blank">
+                                    <strong>{{ item['headline'] }}</strong>
+                                </a>: {{ item['summary'] }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="action-section">
+                    {% if textiles_data['pdf_url'] %}
+                        <a href="{{ textiles_data['pdf_url'] }}" class="btn-pdf" target="_blank">
+                            📥 Download Full Report (PDF)
+                        </a>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No Textiles data found. Run the "Textiles" Make.com flow.</p>
                 </div>
             {% endif %}
         </div>

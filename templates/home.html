@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="home-container">
+    <div class="hero-section">
+        <h1>Market Intelligence Hub</h1>
+        <p>Real-time insights across Piana Sleep's core verticals.</p>
+    </div>
+
+    <div class="card-grid">
+        <a href="/dashboard#Hospitality" class="vertical-card" onclick="selectTab('Hospitality')">
+            <div class="card-icon">🏨</div>
+            <h3>Hospitality</h3>
+            <p>Hotels, Travel & Guest Experience</p>
+        </a>
+
+        <a href="/dashboard#Automotive" class="vertical-card" onclick="selectTab('Automotive')">
+            <div class="card-icon">🚗</div>
+            <h3>Automotive</h3>
+            <p>Mobility, EV & Interior Trends</p>
+        </a>
+
+        <a href="/dashboard#Bedding" class="vertical-card" onclick="selectTab('Bedding')">
+            <div class="card-icon">🛏️</div>
+            <h3>Bedding</h3>
+            <p>Sleep Tech & Mattress Innovation</p>
+        </a>
+
+        <a href="/dashboard#Textiles" class="vertical-card" onclick="selectTab('Textiles')">
+            <div class="card-icon">🧵</div>
+            <h3>Textiles</h3>
+            <p>Non-Wovens & Sustainable Materials</p>
+        </a>
+    </div>
+</div>
+
+<script>
+    // Simple helper to ensure the correct tab opens when clicking a card
+    function selectTab(tabName) {
+        localStorage.setItem('activeTab', tabName);
+    }
+</script>
+{% endblock %}

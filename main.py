@@ -64,30 +64,47 @@ def get_latest_report(vertical_name):
         return None
 
 
-@app.route('/')
-def dashboard():
-    print("--- DASHBOARD START ---")
+# --- ROUTES ---
 
-    # Fetch both verticals
+
+@app.route('/')
+def home():
+    """
+    The Landing Page (Mission Control).
+    """
+    return render_template('home.html')
+
+
+@app.route('/dashboard')
+def dashboard():
+    """
+    The Main Dashboard.
+    Fetches reports for ALL 4 verticals.
+    """
+    # Fetch all 4 verticals
     hospitality = get_latest_report('hospitality')
     automotive = get_latest_report('automotive')
+    bedding = get_latest_report('bedding')
+    textiles = get_latest_report('textiles')
 
-    # Render with both datasets
+    # Render with all datasets
     return render_template('index.html',
                            hospitality_data=hospitality,
-                           automotive_data=automotive)
+                           automotive_data=automotive,
+                           bedding_data=bedding,
+                           textiles_data=textiles)
 
 
 @app.route('/archive')
 def archive():
-    response = supabase.table('intelligence_reports') \
-        .select("*") \
-        .order('created_at', desc=True) \
-        .execute()
-
-    all_reports = response.data
-
-    return render_template('archive.html', reports=all_reports)
+    try:
+        response = supabase.table('intelligence_reports') \
+            .select("*") \
+            .order('created_at', desc=True) \
+            .execute()
+        return render_template('archive.html', reports=response.data)
+    except Exception as e:
+        return f"<h3>Archive Crashed: {e}</h3>", 500
 
 
 if __name__ == '__main__':

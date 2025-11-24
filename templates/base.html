@@ -22,6 +22,19 @@
             font-size: 1.2rem;
             color: #111827;
         }
+        .nav-brand-link {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        .nav-logo {
+            height: 40px;
+            width: auto;
+            transition: transform 0.2s ease;
+        }
+        .nav-logo:hover {
+            transform: scale(1.05);
+        }
         .nav-links a {
             color: #4b5563;
             text-decoration: none;
@@ -57,7 +70,9 @@
 <body>
 
     <nav class="main-nav">
-        <div class="nav-brand">Piana BI Hub</div>
+        <a href="/" class="nav-brand-link">
+            <img src="/static/piana-logo.png" alt="Piana Sleep" class="nav-logo">
+        </a>
         <div class="nav-links">
             <a href="/">Dashboard</a>
             <a href="/archive">Archive</a>

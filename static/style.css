@@ -224,100 +224,10 @@ hr {
 .tab-content {
     display: none; /* Hidden by default */
     animation: fadeEffect 0.5s;
-    position: relative;
-}
-
-.vertical-header {
-    margin-bottom: 30px;
-}
-
-.vertical-header h2 {
-    color: #2c3e50;
-    border-bottom: 3px solid #3498db;
-}
-
-.live-badge {
-    background: #f0f4f8;
-    color: #2c3e50;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    display: inline-block;
-    margin-left: 15px;
 }
 
 /* Make the first tab visible by default */
-#Hospitality { 
-    display: block;
-}
-
-/* HOSPITALITY - Warm earth tone cards */
-#Hospitality .top-3-news li {
-    background: linear-gradient(135deg, rgba(210, 180, 140, 0.1) 0%, rgba(222, 184, 135, 0.08) 100%);
-    padding: 20px 20px;
-    border-radius: 8px;
-    border: 1px solid rgba(210, 180, 140, 0.2);
-    border-bottom: none;
-    margin-bottom: 12px;
-    transition: all 0.3s ease;
-}
-
-#Hospitality .top-3-news li:hover {
-    background: linear-gradient(135deg, rgba(210, 180, 140, 0.15) 0%, rgba(222, 184, 135, 0.12) 100%);
-    box-shadow: 0 4px 8px rgba(210, 180, 140, 0.15);
-}
-
-#Hospitality .top-3-news li:last-child {
-    border-bottom: none;
-}
-
-#Hospitality .full-report {
-    background: linear-gradient(135deg, rgba(210, 180, 140, 0.08) 0%, rgba(222, 184, 135, 0.06) 100%);
-    padding: 25px 25px;
-    border-radius: 8px;
-    border: 1px solid rgba(210, 180, 140, 0.15);
-}
-
-#Hospitality .action-section {
-    background: rgba(210, 180, 140, 0.07);
-    padding: 20px;
-    border-radius: 8px;
-    margin-top: 20px;
-}
-
-/* AUTOMOTIVE - Dark metallic tone cards */
-#Automotive .top-3-news li {
-    background: linear-gradient(135deg, rgba(70, 80, 90, 0.08) 0%, rgba(90, 100, 110, 0.06) 100%);
-    padding: 20px 20px;
-    border-radius: 8px;
-    border: 1px solid rgba(70, 80, 90, 0.15);
-    border-bottom: none;
-    margin-bottom: 12px;
-    transition: all 0.3s ease;
-}
-
-#Automotive .top-3-news li:hover {
-    background: linear-gradient(135deg, rgba(70, 80, 90, 0.12) 0%, rgba(90, 100, 110, 0.1) 100%);
-    box-shadow: 0 4px 8px rgba(70, 80, 90, 0.12);
-}
-
-#Automotive .top-3-news li:last-child {
-    border-bottom: none;
-}
-
-#Automotive .full-report {
-    background: linear-gradient(135deg, rgba(70, 80, 90, 0.06) 0%, rgba(90, 100, 110, 0.05) 100%);
-    padding: 25px 25px;
-    border-radius: 8px;
-    border: 1px solid rgba(70, 80, 90, 0.12);
-}
-
-#Automotive .action-section {
-    background: rgba(70, 80, 90, 0.05);
-    padding: 20px;
-    border-radius: 8px;
-    margin-top: 20px;
-}
+#Hospitality { display: block; }
 
 @keyframes fadeEffect {
     from {opacity: 0;}
@@ -327,4 +237,64 @@ hr {
 .action-section {
     margin-top: 1.5rem;
     text-align: right;
+}
+
+/* --- LANDING PAGE STYLES --- */
+.home-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.hero-section h1 {
+    font-size: 2.5rem;
+    color: #111827;
+    margin-bottom: 10px;
+}
+
+.hero-section p {
+    font-size: 1.2rem;
+    color: #6b7280;
+    margin-bottom: 50px;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.vertical-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.vertical-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+    border-color: #2563eb;
+}
+
+.card-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.vertical-card h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #111827;
+}
+
+.vertical-card p {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-top: 8px;
 }
