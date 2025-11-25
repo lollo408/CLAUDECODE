@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview: Linear Style | Piana BI Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0a0a0a;
+            color: #e5e5e5;
+            min-height: 100vh;
+        }
+
+        .preview-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00f260 0%, #0575e6 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 242, 96, 0.3);
+        }
+
+        nav {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #222;
+            padding: 16px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo img {
+            height: 36px;
+            filter: brightness(0) invert(1);
+        }
+
+        .nav-links a {
+            color: #888;
+            text-decoration: none;
+            margin-left: 30px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #fff;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 100px 40px 80px;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(88, 28, 135, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-top: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 400;
+        }
+
+        .terminal-grid {
+            max-width: 1000px;
+            margin: 0 auto 100px;
+            padding: 0 40px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .terminal-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 30px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .terminal-card:hover {
+            border-color: #444;
+            box-shadow: 0 0 40px rgba(88, 28, 135, 0.2);
+        }
+
+        .terminal-card:hover .glow-line {
+            opacity: 1;
+        }
+
+        .glow-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .terminal-card.hospitality .glow-line {
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+        }
+
+        .terminal-card.automotive .glow-line {
+            background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+        }
+
+        .terminal-card.bedding .glow-line {
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+        }
+
+        .terminal-card.textiles .glow-line {
+            background: linear-gradient(90deg, #22c55e, #06b6d4);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+        }
+
+        .card-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: #666;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .card-footer {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-metric {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .card-arrow {
+            color: #444;
+            transition: all 0.3s;
+        }
+
+        .terminal-card:hover .card-arrow {
+            color: #fff;
+            transform: translateX(5px);
+        }
+
+        @media (max-width: 768px) {
+            .terminal-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-badge">Option B: Linear Style</div>
+
+    <nav>
+        <div class="nav-content">
+            <a href="/" class="nav-logo">
+                <img src="/static/piana-logo.png" alt="Piana Sleep">
+            </a>
+            <div class="nav-links">
+                <a href="/">dashboard</a>
+                <a href="/archive">archive</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Market Intelligence Hub</h1>
+        <p>// real-time insights across core verticals</p>
+    </section>
+
+    <div class="terminal-grid">
+        <a href="/dashboard#Hospitality" class="terminal-card hospitality">
+            <div class="glow-line"></div>
+            <div class="card-header">
+                <div class="card-icon">🏨</div>
+                <div class="card-status">LIVE</div>
+            </div>
+            <h3 class="card-title">Hospitality</h3>
+            <p class="card-desc">Hotels, Travel & Guest Experience</p>
+            <div class="card-footer">
+                <span class="card-metric">Updated 2h ago</span>
+                <span class="card-arrow">→</span>
+            </div>
+        </a>
+
+        <a href="/dashboard#Automotive" class="terminal-card automotive">
+            <div class="glow-line"></div>
+            <div class="card-header">
+                <div class="card-icon">🚗</div>
+                <div class="card-status">LIVE</div>
+            </div>
+            <h3 class="card-title">Automotive</h3>
+            <p class="card-desc">Mobility, EV & Interior Trends</p>
+            <div class="card-footer">
+                <span class="card-metric">Updated 4h ago</span>
+                <span class="card-arrow">→</span>
+            </div>
+        </a>
+
+        <a href="/dashboard#Bedding" class="terminal-card bedding">
+            <div class="glow-line"></div>
+            <div class="card-header">
+                <div class="card-icon">🛏️</div>
+                <div class="card-status">LIVE</div>
+            </div>
+            <h3 class="card-title">Bedding</h3>
+            <p class="card-desc">Sleep Tech & Mattress Innovation</p>
+            <div class="card-footer">
+                <span class="card-metric">Updated 1h ago</span>
+                <span class="card-arrow">→</span>
+            </div>
+        </a>
+
+        <a href="/dashboard#Textiles" class="terminal-card textiles">
+            <div class="glow-line"></div>
+            <div class="card-header">
+                <div class="card-icon">🧵</div>
+                <div class="card-status">LIVE</div>
+            </div>
+            <h3 class="card-title">Textiles</h3>
+            <p class="card-desc">Non-Wovens & Sustainable Materials</p>
+            <div class="card-footer">
+                <span class="card-metric">Updated 3h ago</span>
+                <span class="card-arrow">→</span>
+            </div>
+        </a>
+    </div>
+</body>
+</html>

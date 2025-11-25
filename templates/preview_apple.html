@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview: Apple Style | Piana BI Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #F5F5F7;
+            color: #1d1d1f;
+            min-height: 100vh;
+        }
+
+        .preview-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        nav {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 16px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo img {
+            height: 36px;
+        }
+
+        .nav-links a {
+            color: #1d1d1f;
+            text-decoration: none;
+            margin-left: 30px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #0066CC;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 80px 40px 60px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #1d1d1f 0%, #515154 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.4rem;
+            color: #86868b;
+            margin-top: 16px;
+            font-weight: 400;
+        }
+
+        .bento-grid {
+            max-width: 1100px;
+            margin: 0 auto 80px;
+            padding: 0 40px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 280px);
+            gap: 20px;
+        }
+
+        .bento-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bento-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .bento-card.hospitality {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .bento-card.automotive {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .bento-card.bedding {
+            background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+        }
+
+        .bento-card.textiles {
+            background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+        }
+
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .card-content h3 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1d1d1f;
+        }
+
+        .card-content p {
+            font-size: 1rem;
+            color: rgba(0, 0, 0, 0.6);
+            font-weight: 400;
+        }
+
+        .card-arrow {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .bento-card:hover .card-arrow {
+            background: rgba(0, 0, 0, 0.2);
+            transform: translateX(5px);
+        }
+
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+            }
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-badge">Option A: Apple Style</div>
+
+    <nav>
+        <div class="nav-content">
+            <a href="/" class="nav-logo">
+                <img src="/static/piana-logo.png" alt="Piana Sleep">
+            </a>
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/archive">Archive</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Market Intelligence Hub</h1>
+        <p>Real-time insights across Piana Sleep's core verticals.</p>
+    </section>
+
+    <div class="bento-grid">
+        <a href="/dashboard#Hospitality" class="bento-card hospitality">
+            <div class="card-icon">🏨</div>
+            <div class="card-content">
+                <h3>Hospitality</h3>
+                <p>Hotels, Travel & Guest Experience</p>
+            </div>
+            <div class="card-arrow">→</div>
+        </a>
+
+        <a href="/dashboard#Automotive" class="bento-card automotive">
+            <div class="card-icon">🚗</div>
+            <div class="card-content">
+                <h3>Automotive</h3>
+                <p>Mobility, EV & Interior Trends</p>
+            </div>
+            <div class="card-arrow">→</div>
+        </a>
+
+        <a href="/dashboard#Bedding" class="bento-card bedding">
+            <div class="card-icon">🛏️</div>
+            <div class="card-content">
+                <h3>Bedding</h3>
+                <p>Sleep Tech & Mattress Innovation</p>
+            </div>
+            <div class="card-arrow">→</div>
+        </a>
+
+        <a href="/dashboard#Textiles" class="bento-card textiles">
+            <div class="card-icon">🧵</div>
+            <div class="card-content">
+                <h3>Textiles</h3>
+                <p>Non-Wovens & Sustainable Materials</p>
+            </div>
+            <div class="card-arrow">→</div>
+        </a>
+    </div>
+</body>
+</html>
