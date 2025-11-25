@@ -2,98 +2,86 @@
 
 ## Overview
 
-The Piana BI Hub is a Flask-based web application that provides a business intelligence dashboard for the hospitality industry. The application displays curated news content and analytical reports that are automatically updated via webhook integrations. It serves as a centralized information hub for engineers and stakeholders to view the latest hospitality industry insights.
-
-The system operates on a separation of concerns model: the public-facing dashboard presents information, while private webhook endpoints receive and store data from external automation workflows (Make.com).
+The Piana BI Hub is a Flask-based web application that provides a business intelligence dashboard for Piana Sleep. The application displays curated news content and analytical reports across four industry verticals: Hospitality, Automotive, Bedding, and Textiles. Data is automatically updated via external automation workflows (Make.com) and stored in Supabase.
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+- Preferred communication style: Simple, everyday language
+- Design preference: Linear/Dark mode style with monospace accents
+
+## Recent Changes
+
+- **2025-11-25**: Applied Linear dark mode design system across all pages (home, dashboard, archive)
+- **2025-11-24**: Migrated from Replit Database to Supabase for data persistence
+- **2025-11-24**: Added four industry verticals with tabbed navigation
 
 ## System Architecture
 
 ### Frontend Architecture
 
-**Technology Stack**: HTML5 + CSS3 with Google Fonts (Inter family)
+**Technology Stack**: HTML5 + CSS3 with Google Fonts (Inter + JetBrains Mono)
 
-**Design Pattern**: Server-side rendering using Flask's Jinja2 templating engine. The frontend is deliberately simple with no JavaScript framework, prioritizing fast loading and reliability.
+**Design System**: Linear-inspired dark mode aesthetic featuring:
+- Dark background (#0a0a0a) with subtle borders (#222)
+- Gradient text effects and glowing accent lines on hover
+- Monospace typography (JetBrains Mono) for labels and metadata
+- Color-coded vertical tags (amber/hospitality, cyan/automotive, purple/bedding, green/textiles)
+- Glassmorphism navigation with blur effects
 
-**Layout Strategy**: Two-column card-based layout where each "module" represents a business intelligence domain (currently Hospitality). The left column displays visual content (images), while the right column contains data (news summaries and reports).
+**Layout Strategy**: 
+- Landing page: 2x2 card grid with LIVE status badges
+- Dashboard: Tabbed interface with content cards for each vertical
+- Archive: Dark table with colored vertical tags
 
-**Rationale**: Server-side rendering eliminates client-side complexity and ensures content is immediately available without additional API calls. This approach prioritizes simplicity and maintainability over interactivity.
+**Rationale**: Server-side rendering with Jinja2 templates prioritizes fast loading and reliability. The dark mode design provides a modern, professional appearance.
 
 ### Backend Architecture
 
 **Framework**: Flask (Python micro-framework)
 
-**Architecture Pattern**: Request-response model with two distinct access patterns:
-1. **Public Route** (`/`): Read-only dashboard access for viewing data
-2. **Webhook Routes** (`/update-top3`, `/update-full-report`): Write-only endpoints protected by API key authentication
+**Routes**:
+- `/` - Landing page with vertical cards
+- `/dashboard` - Main intelligence dashboard with tabs
+- `/archive` - Historical report archive
 
-**Authentication Mechanism**: Header-based API key validation (`X-API-KEY`) for webhook endpoints. The public dashboard requires no authentication, allowing open access to the information.
-
-**Rationale**: Flask provides minimal overhead while offering essential web framework features. The separation between public and private routes creates a clear security boundary.
+**Rationale**: Flask provides minimal overhead while offering essential web framework features.
 
 ### Data Storage
 
-**Solution**: Replit Database (key-value store)
+**Solution**: Supabase (PostgreSQL-based)
 
-**Schema Design**:
-- `hospitality_top_3`: Stores JSON array of news objects with `headline` and `summary` fields
-- `hospitality_full_html`: Stores pre-rendered HTML content for detailed reports
+**Table**: `intelligence_reports`
+- `vertical`: String (hospitality, automotive, bedding, textiles)
+- `top_3_json`: JSON array of news items with headline, summary, source_url
+- `report_html`: Full HTML report content
+- `pdf_url`: Link to downloadable PDF report
+- `created_at`: Timestamp
 
-**Data Flow**: External automation systems (Make.com) process raw data and send formatted results to webhook endpoints, which persist to the database. The dashboard reads from the database on each page load.
-
-**Rationale**: Replit Database provides zero-configuration persistence suitable for the application's simple key-value needs. Storing pre-formatted HTML eliminates server-side processing overhead during dashboard requests.
-
-**Alternative Considered**: Traditional relational database (PostgreSQL) - rejected due to unnecessary complexity for the current two-field data model.
-
-**Pros**: 
-- No database setup or management required
-- Built-in integration with Replit environment
-- Sufficient for current scale and requirements
-
-**Cons**: 
-- Limited querying capabilities
-- Scaling constraints for complex data relationships
-- Vendor lock-in to Replit platform
+**Data Flow**: Make.com workflows collect and process industry news, then POST to Supabase. The Flask app queries the latest report per vertical on each page load.
 
 ### Security Architecture
 
-**Secret Management**: Environment variables accessed via `os.environ` for sensitive credentials (specifically `MAKE_API_KEY`)
-
-**Access Control**: 
-- Webhook endpoints validate incoming requests against the stored API key
-- Returns HTTP 401 (Unauthorized) for invalid authentication attempts
-- Public dashboard has no access restrictions
-
-**Rationale**: API key validation provides sufficient protection for webhook endpoints while maintaining simplicity. The public nature of the dashboard aligns with the goal of information dissemination.
+**Secret Management**: Environment variables via Replit Secrets
+- `SUPABASE_URL`: Supabase project URL
+- `SUPABASE_KEY`: Supabase service_role API key
 
 ## External Dependencies
 
 ### Third-Party Services
 
-**Make.com Integration**: External automation platform that orchestrates data collection, processing, and delivery workflows. Make.com scenarios are responsible for:
-- Aggregating hospitality industry news from various sources
-- Processing and summarizing content
-- Formatting data into the expected JSON/HTML structure
-- Calling webhook endpoints to update the dashboard
+**Supabase**: PostgreSQL database for storing intelligence reports
 
-**Integration Method**: HTTP POST requests to webhook endpoints with JSON payloads and API key authentication header.
+**Make.com**: Automation platform for data collection and processing workflows
 
 ### Python Packages
 
-**Flask**: Core web framework providing routing, request handling, and template rendering capabilities
-
-**replit**: Platform-specific library providing access to Replit Database and environment features
-
-### Environment Configuration
-
-**Required Secrets**:
-- `MAKE_API_KEY`: Authentication token for validating webhook requests from Make.com
+- **Flask**: Web framework
+- **supabase**: Supabase Python client
+- **gunicorn**: Production WSGI server
 
 ### Asset Dependencies
 
-**Google Fonts**: Inter font family loaded via CDN for typography
+**Google Fonts**: Inter (body text) + JetBrains Mono (code/labels)
 
-**Static Assets**: Local image file (`hospitality-image.jpg`) for visual branding in the dashboard module
+**Static Assets**: 
+- `piana-logo.png` - Company logo (inverted for dark mode)
