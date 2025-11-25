@@ -107,5 +107,20 @@ def archive():
         return f"<h3>Archive Crashed: {e}</h3>", 500
 
 
+@app.route('/preview/apple')
+def preview_apple():
+    return render_template('preview_apple.html')
+
+
+@app.route('/preview/linear')
+def preview_linear():
+    return render_template('preview_linear.html')
+
+
+@app.route('/preview/stripe')
+def preview_stripe():
+    return render_template('preview_stripe.html')
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
