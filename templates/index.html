@@ -1,175 +1,433 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="module">
-    <div class="column-content">
-        <div class="tabs">
-            <button class="tab-btn active" onclick="openTab(event, 'Hospitality')">Hospitality</button>
-            <button class="tab-btn" onclick="openTab(event, 'Automotive')">Automotive</button>
-            <button class="tab-btn" onclick="openTab(event, 'Bedding')">Bedding</button>
-            <button class="tab-btn" onclick="openTab(event, 'Textiles')">Textiles</button>
-        </div>
+<style>
+    .dashboard-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+    }
 
-        <div id="Hospitality" class="tab-content">
-            <div class="vertical-header">
-                <h2>Hospitality Intelligence</h2>
-                <span class="live-badge">{{ hospitality_data['created_at'][:10] }}</span>
-            </div>
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
 
-            {% if hospitality_data %}
-                <div class="top-3-news">
-                    <h3>Top 3 News ({{ hospitality_data['created_at'][:10] }})</h3>
-                    <ul>
-                        {% for item in hospitality_data['top_3_json'] %}
-                            <li>
-                                <a href="{{ item['source_url'] }}" target="_blank">
-                                    <strong>{{ item['headline'] }}</strong>
-                                </a>
-                                {{ item['summary'] }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                <div class="action-section">
-                    {% if hospitality_data['pdf_url'] %}
-                        <a href="{{ hospitality_data['pdf_url'] }}" class="btn-pdf" target="_blank">📥 Download Full Report (PDF)</a>
-                    {% endif %}
-                </div>
-            {% else %}
-                <p class="empty-state">No Hospitality data found.</p>
-            {% endif %}
-        </div>
+    .dashboard-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, #fff 0%, #888 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
 
-        <div id="Automotive" class="tab-content" style="display: none;">
-            <div class="vertical-header">
-                <h2>Automotive Intelligence</h2>
-                <span class="live-badge">
-                    {{ automotive_data['created_at'][:10] if automotive_data else 'No Data' }}
-                </span>
-            </div>
+    .dashboard-header p {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: #666;
+    }
 
-            {% if automotive_data %}
-                <div class="top-3-news">
-                    <h3>Top 3 News ({{ automotive_data['created_at'][:10] }})</h3>
-                    <ul>
-                        {% for item in automotive_data['top_3_json'] %}
-                            <li>
-                                <a href="{{ item['source_url'] }}" target="_blank">
-                                    <strong>{{ item['headline'] }}</strong>
-                                </a>
-                                {{ item['summary'] }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+    .tabs {
+        display: flex;
+        gap: 4px;
+        background: #111;
+        padding: 6px;
+        border-radius: 10px;
+        border: 1px solid #222;
+        margin-bottom: 30px;
+        overflow-x: auto;
+    }
 
-                <div class="action-section">
-                    {% if automotive_data['pdf_url'] %}
-                        <a href="{{ automotive_data['pdf_url'] }}" class="btn-pdf" target="_blank">
-                            📥 Download Full Report (PDF)
-                        </a>
-                    {% endif %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <p>No Automotive data found. Run the "Automotive" Make.com flow.</p>
-                </div>
-            {% endif %}
-        </div>
+    .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 12px 24px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        font-family: 'JetBrains Mono', monospace;
+        color: #666;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
 
-        <div id="Bedding" class="tab-content" style="display: none;">
-            <div class="vertical-header">
-                <h2>Bedding Intelligence</h2>
-                <span class="live-badge">
-                    {{ bedding_data['created_at'][:10] if bedding_data else 'No Data' }}
-                </span>
-            </div>
+    .tab-btn:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.05);
+    }
 
-            {% if bedding_data %}
-                <div class="top-3-news">
-                    <h3>Top 3 News ({{ bedding_data['created_at'][:10] }})</h3>
-                    <ul>
-                        {% for item in bedding_data['top_3_json'] %}
-                            <li>
-                                <a href="{{ item['source_url'] }}" target="_blank">
-                                    <strong>{{ item['headline'] }}</strong>
-                                </a>
-                                {{ item['summary'] }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+    .tab-btn.active {
+        color: #fff;
+        background: #222;
+    }
 
-                <div class="action-section">
-                    {% if bedding_data['pdf_url'] %}
-                        <a href="{{ bedding_data['pdf_url'] }}" class="btn-pdf" target="_blank">
-                            📥 Download Full Report (PDF)
-                        </a>
-                    {% endif %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <p>No Bedding data found. Run the "Bedding" Make.com flow.</p>
-                </div>
-            {% endif %}
-        </div>
+    .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
 
-        <div id="Textiles" class="tab-content" style="display: none;">
-            <div class="vertical-header">
-                <h2>Textiles Intelligence</h2>
-                <span class="live-badge">
-                    {{ textiles_data['created_at'][:10] if textiles_data else 'No Data' }}
-                </span>
-            </div>
+    #Hospitality { display: block; }
 
-            {% if textiles_data %}
-                <div class="top-3-news">
-                    <h3>Top 3 News ({{ textiles_data['created_at'][:10] }})</h3>
-                    <ul>
-                        {% for item in textiles_data['top_3_json'] %}
-                            <li>
-                                <a href="{{ item['source_url'] }}" target="_blank">
-                                    <strong>{{ item['headline'] }}</strong>
-                                </a>
-                                {{ item['summary'] }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
-                <div class="action-section">
-                    {% if textiles_data['pdf_url'] %}
-                        <a href="{{ textiles_data['pdf_url'] }}" class="btn-pdf" target="_blank">
-                            📥 Download Full Report (PDF)
-                        </a>
-                    {% endif %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <p>No Textiles data found. Run the "Textiles" Make.com flow.</p>
-                </div>
-            {% endif %}
-        </div>
+    .vertical-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #222;
+    }
+
+    .vertical-header h2 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #fff;
+        margin: 0;
+    }
+
+    .live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #22c55e;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .live-badge::before {
+        content: '●';
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    .section-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 16px;
+    }
+
+    .top-3-news ul {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .top-3-news li {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 24px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .top-3-news li::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        background: linear-gradient(180deg, #8b5cf6, #06b6d4);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .top-3-news li:hover {
+        border-color: #333;
+        box-shadow: 0 0 30px rgba(88, 28, 135, 0.15);
+    }
+
+    .top-3-news li:hover::before {
+        opacity: 1;
+    }
+
+    .top-3-news li a {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .top-3-news li strong {
+        display: block;
+        color: #fff;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        transition: color 0.2s;
+    }
+
+    .top-3-news li a:hover strong {
+        color: #a78bfa;
+    }
+
+    .top-3-news li p,
+    .top-3-news li > span {
+        color: #888;
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+
+    .action-section {
+        margin-top: 30px;
+        text-align: right;
+    }
+
+    .btn-pdf {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 28px;
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: #666;
+        background: #111;
+        border: 1px dashed #333;
+        border-radius: 12px;
+    }
+
+    .empty-state p {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.95rem;
+        margin: 0;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 20px 15px 60px;
+        }
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+        }
+        .tabs {
+            padding: 4px;
+        }
+        .tab-btn {
+            padding: 10px 16px;
+            font-size: 0.8rem;
+        }
+        .vertical-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .vertical-header h2 {
+            font-size: 1.4rem;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Intelligence Dashboard</h1>
+        <p>// select a vertical to view latest insights</p>
     </div>
-</section>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'Hospitality')">hospitality</button>
+        <button class="tab-btn" onclick="openTab(event, 'Automotive')">automotive</button>
+        <button class="tab-btn" onclick="openTab(event, 'Bedding')">bedding</button>
+        <button class="tab-btn" onclick="openTab(event, 'Textiles')">textiles</button>
+    </div>
+
+    <div id="Hospitality" class="tab-content">
+        <div class="vertical-header">
+            <h2>Hospitality Intelligence</h2>
+            <span class="live-badge">{{ hospitality_data['created_at'][:10] if hospitality_data else 'No Data' }}</span>
+        </div>
+
+        {% if hospitality_data %}
+            <div class="top-3-news">
+                <div class="section-label">// top 3 stories</div>
+                <ul>
+                    {% for item in hospitality_data['top_3_json'] %}
+                        <li>
+                            <a href="{{ item['source_url'] }}" target="_blank">
+                                <strong>{{ item['headline'] }}</strong>
+                            </a>
+                            <span>{{ item['summary'] }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="action-section">
+                {% if hospitality_data['pdf_url'] %}
+                    <a href="{{ hospitality_data['pdf_url'] }}" class="btn-pdf" target="_blank">Download Full Report</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No Hospitality data found.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div id="Automotive" class="tab-content" style="display: none;">
+        <div class="vertical-header">
+            <h2>Automotive Intelligence</h2>
+            <span class="live-badge">{{ automotive_data['created_at'][:10] if automotive_data else 'No Data' }}</span>
+        </div>
+
+        {% if automotive_data %}
+            <div class="top-3-news">
+                <div class="section-label">// top 3 stories</div>
+                <ul>
+                    {% for item in automotive_data['top_3_json'] %}
+                        <li>
+                            <a href="{{ item['source_url'] }}" target="_blank">
+                                <strong>{{ item['headline'] }}</strong>
+                            </a>
+                            <span>{{ item['summary'] }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="action-section">
+                {% if automotive_data['pdf_url'] %}
+                    <a href="{{ automotive_data['pdf_url'] }}" class="btn-pdf" target="_blank">Download Full Report</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No Automotive data found. Run the workflow to populate.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div id="Bedding" class="tab-content" style="display: none;">
+        <div class="vertical-header">
+            <h2>Bedding Intelligence</h2>
+            <span class="live-badge">{{ bedding_data['created_at'][:10] if bedding_data else 'No Data' }}</span>
+        </div>
+
+        {% if bedding_data %}
+            <div class="top-3-news">
+                <div class="section-label">// top 3 stories</div>
+                <ul>
+                    {% for item in bedding_data['top_3_json'] %}
+                        <li>
+                            <a href="{{ item['source_url'] }}" target="_blank">
+                                <strong>{{ item['headline'] }}</strong>
+                            </a>
+                            <span>{{ item['summary'] }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="action-section">
+                {% if bedding_data['pdf_url'] %}
+                    <a href="{{ bedding_data['pdf_url'] }}" class="btn-pdf" target="_blank">Download Full Report</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No Bedding data found. Run the workflow to populate.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div id="Textiles" class="tab-content" style="display: none;">
+        <div class="vertical-header">
+            <h2>Textiles Intelligence</h2>
+            <span class="live-badge">{{ textiles_data['created_at'][:10] if textiles_data else 'No Data' }}</span>
+        </div>
+
+        {% if textiles_data %}
+            <div class="top-3-news">
+                <div class="section-label">// top 3 stories</div>
+                <ul>
+                    {% for item in textiles_data['top_3_json'] %}
+                        <li>
+                            <a href="{{ item['source_url'] }}" target="_blank">
+                                <strong>{{ item['headline'] }}</strong>
+                            </a>
+                            <span>{{ item['summary'] }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="action-section">
+                {% if textiles_data['pdf_url'] %}
+                    <a href="{{ textiles_data['pdf_url'] }}" class="btn-pdf" target="_blank">Download Full Report</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No Textiles data found. Run the workflow to populate.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
 
 <script>
 function openTab(evt, tabName) {
-    // 1. Hide all tab content
     var tabcontent = document.getElementsByClassName("tab-content");
     for (var i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
 
-    // 2. Remove "active" class from all buttons
     var tablinks = document.getElementsByClassName("tab-btn");
     for (var i = 0; i < tablinks.length; i++) {
         tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
 
-    // 3. Show the current tab and highlight the button
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    var hash = window.location.hash.replace('#', '');
+    var savedTab = localStorage.getItem('activeTab');
+    var tabToOpen = hash || savedTab || 'Hospitality';
+    
+    var tabBtn = document.querySelector('.tab-btn');
+    if (tabBtn) {
+        var allTabs = document.querySelectorAll('.tab-btn');
+        allTabs.forEach(function(btn) {
+            if (btn.textContent.toLowerCase() === tabToOpen.toLowerCase()) {
+                btn.click();
+            }
+        });
+    }
+});
 </script>
 {% endblock %}
