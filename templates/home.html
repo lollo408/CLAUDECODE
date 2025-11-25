@@ -1,41 +1,253 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="home-container">
-    <div class="hero-section">
-        <h1>Market Intelligence Hub</h1>
-        <p>Real-time insights across Piana Sleep's core verticals.</p>
-    </div>
+<style>
+    .hero {
+        text-align: center;
+        padding: 100px 40px 80px;
+        max-width: 900px;
+        margin: 0 auto;
+        position: relative;
+    }
 
-    <div class="card-grid">
-        <a href="/dashboard#Hospitality" class="vertical-card" onclick="selectTab('Hospitality')">
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(88, 28, 135, 0.3) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero h1 {
+        font-size: 4rem;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+        background: linear-gradient(135deg, #fff 0%, #888 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+    }
+
+    .hero p {
+        font-size: 1.2rem;
+        color: #666;
+        margin-top: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 400;
+    }
+
+    .terminal-grid {
+        max-width: 1000px;
+        margin: 0 auto 100px;
+        padding: 0 40px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .terminal-card {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 30px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .terminal-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
+
+    .terminal-card:hover {
+        border-color: #444;
+        box-shadow: 0 0 40px rgba(88, 28, 135, 0.2);
+    }
+
+    .terminal-card:hover .glow-line {
+        opacity: 1;
+    }
+
+    .glow-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .terminal-card.hospitality .glow-line {
+        background: linear-gradient(90deg, #f59e0b, #ef4444);
+    }
+
+    .terminal-card.automotive .glow-line {
+        background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+    }
+
+    .terminal-card.bedding .glow-line {
+        background: linear-gradient(90deg, #a855f7, #ec4899);
+    }
+
+    .terminal-card.textiles .glow-line {
+        background: linear-gradient(90deg, #22c55e, #06b6d4);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .card-icon {
+        font-size: 1.8rem;
+    }
+
+    .card-status {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        color: #22c55e;
+        background: rgba(34, 197, 94, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-left: auto;
+    }
+
+    .card-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 8px;
+    }
+
+    .card-desc {
+        font-size: 0.9rem;
+        color: #666;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .card-footer {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #222;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-metric {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        color: #888;
+    }
+
+    .card-arrow {
+        color: #444;
+        transition: all 0.3s;
+    }
+
+    .terminal-card:hover .card-arrow {
+        color: #fff;
+        transform: translateX(5px);
+    }
+
+    @media (max-width: 768px) {
+        .terminal-grid {
+            grid-template-columns: 1fr;
+            padding: 0 20px;
+        }
+        .hero {
+            padding: 60px 20px 40px;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+        .hero p {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<section class="hero">
+    <h1>Market Intelligence Hub</h1>
+    <p>// real-time insights across core verticals</p>
+</section>
+
+<div class="terminal-grid">
+    <a href="/dashboard#Hospitality" class="terminal-card hospitality" onclick="selectTab('Hospitality')">
+        <div class="glow-line"></div>
+        <div class="card-header">
             <div class="card-icon">🏨</div>
-            <h3>Hospitality</h3>
-            <p>Hotels, Travel & Guest Experience</p>
-        </a>
+            <div class="card-status">LIVE</div>
+        </div>
+        <h3 class="card-title">Hospitality</h3>
+        <p class="card-desc">Hotels, Travel & Guest Experience</p>
+        <div class="card-footer">
+            <span class="card-metric">View latest intel</span>
+            <span class="card-arrow">→</span>
+        </div>
+    </a>
 
-        <a href="/dashboard#Automotive" class="vertical-card" onclick="selectTab('Automotive')">
+    <a href="/dashboard#Automotive" class="terminal-card automotive" onclick="selectTab('Automotive')">
+        <div class="glow-line"></div>
+        <div class="card-header">
             <div class="card-icon">🚗</div>
-            <h3>Automotive</h3>
-            <p>Mobility, EV & Interior Trends</p>
-        </a>
+            <div class="card-status">LIVE</div>
+        </div>
+        <h3 class="card-title">Automotive</h3>
+        <p class="card-desc">Mobility, EV & Interior Trends</p>
+        <div class="card-footer">
+            <span class="card-metric">View latest intel</span>
+            <span class="card-arrow">→</span>
+        </div>
+    </a>
 
-        <a href="/dashboard#Bedding" class="vertical-card" onclick="selectTab('Bedding')">
+    <a href="/dashboard#Bedding" class="terminal-card bedding" onclick="selectTab('Bedding')">
+        <div class="glow-line"></div>
+        <div class="card-header">
             <div class="card-icon">🛏️</div>
-            <h3>Bedding</h3>
-            <p>Sleep Tech & Mattress Innovation</p>
-        </a>
+            <div class="card-status">LIVE</div>
+        </div>
+        <h3 class="card-title">Bedding</h3>
+        <p class="card-desc">Sleep Tech & Mattress Innovation</p>
+        <div class="card-footer">
+            <span class="card-metric">View latest intel</span>
+            <span class="card-arrow">→</span>
+        </div>
+    </a>
 
-        <a href="/dashboard#Textiles" class="vertical-card" onclick="selectTab('Textiles')">
+    <a href="/dashboard#Textiles" class="terminal-card textiles" onclick="selectTab('Textiles')">
+        <div class="glow-line"></div>
+        <div class="card-header">
             <div class="card-icon">🧵</div>
-            <h3>Textiles</h3>
-            <p>Non-Wovens & Sustainable Materials</p>
-        </a>
-    </div>
+            <div class="card-status">LIVE</div>
+        </div>
+        <h3 class="card-title">Textiles</h3>
+        <p class="card-desc">Non-Wovens & Sustainable Materials</p>
+        <div class="card-footer">
+            <span class="card-metric">View latest intel</span>
+            <span class="card-arrow">→</span>
+        </div>
+    </a>
 </div>
 
 <script>
-    // Simple helper to ensure the correct tab opens when clicking a card
     function selectTab(tabName) {
         localStorage.setItem('activeTab', tabName);
     }

@@ -4,78 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Piana BI Hub</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* Quick Nav Styling to ensure it looks good immediately */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0a0a0a;
+            color: #e5e5e5;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
         .main-nav {
-            background-color: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 1rem 2rem;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid #222;
+            padding: 16px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
         }
-        .nav-brand {
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: #111827;
-        }
+
         .nav-brand-link {
             text-decoration: none;
             display: flex;
             align-items: center;
         }
+
         .nav-logo {
-            height: 40px;
+            height: 36px;
             width: auto;
-            transition: transform 0.2s ease;
+            filter: brightness(0) invert(1);
+            transition: opacity 0.2s;
         }
+
         .nav-logo:hover {
-            transform: scale(1.05);
+            opacity: 0.8;
         }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
         .nav-links a {
-            color: #4b5563;
+            color: #888;
             text-decoration: none;
-            margin-left: 20px;
+            font-size: 0.9rem;
             font-weight: 500;
-            font-size: 0.95rem;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
         }
+
         .nav-links a:hover {
-            color: #2563eb;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
         }
-        .archive-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
-        .archive-table th, .archive-table td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
+
+        @media (max-width: 768px) {
+            .main-nav {
+                padding: 12px 20px;
+            }
+            .nav-content {
+                flex-direction: column;
+                gap: 12px;
+            }
         }
-        .archive-table th {
-            background-color: #f9fafb;
-            font-weight: 600;
-        }
-        .link-pdf {
-            color: #2563eb;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .link-pdf:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <nav class="main-nav">
-        <a href="/" class="nav-brand-link">
-            <img src="/static/piana-logo.png" alt="Piana Sleep" class="nav-logo">
-        </a>
-        <div class="nav-links">
-            <a href="/">Dashboard</a>
-            <a href="/archive">Archive</a>
+        <div class="nav-content">
+            <a href="/" class="nav-brand-link">
+                <img src="/static/piana-logo.png" alt="Piana Sleep" class="nav-logo">
+            </a>
+            <div class="nav-links">
+                <a href="/dashboard">dashboard</a>
+                <a href="/archive">archive</a>
+            </div>
         </div>
     </nav>
 
