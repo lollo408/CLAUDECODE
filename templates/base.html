@@ -39,21 +39,31 @@
             align-items: center;
         }
 
-        .nav-brand-link {
+        .nav-home-link {
             text-decoration: none;
             display: flex;
             align-items: center;
+            gap: 8px;
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
         }
 
-        .nav-logo {
-            height: 36px;
-            width: auto;
-            filter: brightness(0) invert(1);
-            transition: opacity 0.2s;
+        .nav-home-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .nav-logo:hover {
-            opacity: 0.8;
+        .nav-home-link svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 1.5;
+            fill: none;
         }
 
         .nav-links {
@@ -98,8 +108,11 @@
 
     <nav class="main-nav">
         <div class="nav-content">
-            <a href="/" class="nav-brand-link">
-                <img src="/static/piana-logo.png" alt="Piana Sleep" class="nav-logo">
+            <a href="/" class="nav-home-link">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                home
             </a>
             <div class="nav-links">
                 <a href="/dashboard">dashboard</a>
