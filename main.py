@@ -1,7 +1,10 @@
 import os
 import json
 import ast  # <--- NEW: Add this library
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
+from datetime import datetime, date
+import csv
+import io
 from supabase import create_client, Client
 
 app = Flask(__name__)
@@ -64,6 +67,41 @@ def get_latest_report(vertical_name):
         return None
 
 
+# --- EVENTS HELPER FUNCTIONS ---
+def get_all_events(filter_type='all', industry=None):
+    """Fetches events with optional filtering."""
+    try:
+        query = supabase.table('events').select("*")
+
+        if industry and industry != 'all':
+            query = query.eq('industry', industry)
+
+        if filter_type == 'upcoming':
+            query = query.gte('start_date', date.today().isoformat())
+        elif filter_type == 'past':
+            query = query.lt('start_date', date.today().isoformat())
+
+        response = query.order('start_date', desc=False).execute()
+        return response.data
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        return []
+
+
+def get_event_by_id(event_id):
+    """Fetches a single event by ID."""
+    try:
+        response = supabase.table('events') \
+            .select("*") \
+            .eq('id', event_id) \
+            .limit(1) \
+            .execute()
+        return response.data[0] if response.data else None
+    except Exception as e:
+        print(f"Error fetching event {event_id}: {e}")
+        return None
+
+
 # --- ROUTES ---
 
 
@@ -105,6 +143,74 @@ def archive():
         return render_template('archive.html', reports=response.data)
     except Exception as e:
         return f"<h3>Archive Crashed: {e}</h3>", 500
+
+
+# --- EVENTS ROUTES ---
+
+@app.route('/events')
+def events():
+    """Events listing page with filters."""
+    filter_type = request.args.get('filter', 'all')
+    industry = request.args.get('industry', 'all')
+
+    events_list = get_all_events(filter_type, industry)
+
+    return render_template('events.html',
+                           events=events_list,
+                           current_filter=filter_type,
+                           current_industry=industry)
+
+
+@app.route('/events/<event_id>')
+def event_detail(event_id):
+    """Single event detail page."""
+    event = get_event_by_id(event_id)
+    if not event:
+        return "<h3>Event not found</h3>", 404
+    return render_template('event_detail.html', event=event)
+
+
+@app.route('/upload-events', methods=['GET', 'POST'])
+def upload_events():
+    """CSV upload for events."""
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return render_template('upload_events.html', error="No file selected")
+
+        file = request.files['file']
+        if file.filename == '':
+            return render_template('upload_events.html', error="No file selected")
+
+        if not file.filename.endswith('.csv'):
+            return render_template('upload_events.html', error="Please upload a CSV file")
+
+        try:
+            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+            reader = csv.DictReader(stream)
+
+            count = 0
+            for row in reader:
+                event_data = {
+                    'name': row.get('name', '').strip(),
+                    'industry': row.get('industry', '').strip() or None,
+                    'start_date': row.get('start_date', '').strip(),
+                    'end_date': row.get('end_date', '').strip() or None,
+                    'location': row.get('location', '').strip() or None,
+                    'country': row.get('country', '').strip() or None,
+                    'website': row.get('website', '').strip() or None,
+                    'description': row.get('description', '').strip() or None,
+                }
+
+                if event_data['name'] and event_data['start_date']:
+                    supabase.table('events').insert(event_data).execute()
+                    count += 1
+
+            return redirect(url_for('events') + f'?uploaded={count}')
+
+        except Exception as e:
+            return render_template('upload_events.html', error=f"Error processing file: {e}")
+
+    return render_template('upload_events.html')
 
 
 if __name__ == '__main__':
