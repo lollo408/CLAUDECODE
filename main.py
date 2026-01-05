@@ -2,7 +2,7 @@ import os
 import json
 import ast  # <--- NEW: Add this library
 from flask import Flask, render_template, request, redirect, url_for
-from datetime import datetime, date
+from datetime import date
 import csv
 import io
 from supabase import create_client, Client
@@ -178,7 +178,7 @@ def upload_events():
             return render_template('upload_events.html', error="No file selected")
 
         file = request.files['file']
-        if file.filename == '':
+        if not file.filename or file.filename == '':
             return render_template('upload_events.html', error="No file selected")
 
         if not file.filename.endswith('.csv'):
