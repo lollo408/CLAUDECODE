@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where:*)",
+      "Bash(venvScriptspip install streamlit)",
+      "Bash(npm install:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(git remote add:*)",
+      "Bash(git fetch:*)"
+    ]
+  }
+}
