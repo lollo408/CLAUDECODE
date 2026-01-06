@@ -86,7 +86,7 @@ name, industry, start_date, end_date, location, country, website, description
 
 **TODO - Next Session:**
 1. ✅ 2025 events uploaded (48 events)
-2. ⏳ Backfill running overnight - check `event_summaries` table for results
-3. [ ] Change Make.com filter back to 7-14 day range
+2. ✅ Make.com filter set to 7-14 day range
+3. ⏳ Backfill running - check `event_summaries` table for results
 4. [ ] Upload 2026 events CSV
 5. [ ] Optimize frontend display
