@@ -7,7 +7,19 @@
       "Bash(npx create-next-app:*)",
       "Bash(npx create-next-app@latest:*)",
       "Bash(git remote add:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:piana-bi-hub-marketingpsl.replit.app)",
+      "Bash(cat:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git -C \"C:\\\\Users\\\\LLeprotti\\\\OneDrive - Tintoria-Piana US Inc\\\\Claude Code\" remote -v)",
+      "Bash(git -C \"C:\\\\Users\\\\LLeprotti\\\\OneDrive - Tintoria-Piana US Inc\\\\Claude Code\" log --oneline -5)",
+      "WebFetch(domain:docs.perplexity.ai)",
+      "Bash(git remote:*)",
+      "Bash(git merge:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

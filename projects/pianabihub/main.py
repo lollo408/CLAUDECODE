@@ -172,7 +172,12 @@ def event_detail(event_id):
 
 @app.route('/upload-events', methods=['GET', 'POST'])
 def upload_events():
-    """CSV upload for events."""
+    """CSV upload for events - Admin only."""
+    # Admin protection: require ?key=<admin_secret>
+    admin_secret = os.environ.get('ADMIN_SECRET', 'piana2026')
+    if request.args.get('key') != admin_secret:
+        return "<h3>Unauthorized - Admin access required</h3>", 403
+
     if request.method == 'POST':
         if 'file' not in request.files:
             return render_template('upload_events.html', error="No file selected")

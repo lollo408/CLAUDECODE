@@ -258,7 +258,6 @@
             <h1>Industry Events</h1>
             <p>// track conferences, trade shows & exhibitions</p>
         </div>
-        <a href="/upload-events" class="btn-upload">+ Upload CSV</a>
     </div>
 
     {% if request.args.get('uploaded') %}
@@ -311,8 +310,7 @@
     </div>
     {% else %}
     <div class="empty-state">
-        <p>No events found. Upload a CSV to get started.</p>
-        <a href="/upload-events" class="btn-upload">+ Upload CSV</a>
+        <p>No events found.</p>
     </div>
     {% endif %}
 </div>
