@@ -34,7 +34,7 @@ def generate_event_summary(event_name: str, event_date: str,
             'error': 'PERPLEXITY_API_KEY not configured'
         }
 
-    prompt = f"""Research and write a 2-3 paragraph summary of the industry event:
+    prompt = f"""Research the industry event below and provide a structured summary in HTML format.
 
 Event: {event_name}
 Date: {event_date}
@@ -42,13 +42,39 @@ Industry: {industry}
 Location: {location}
 {f'Website: {website}' if website else ''}
 
-Please provide:
-1. Overview of what happened at the event
-2. Key announcements, product launches, or trends discussed
-3. Notable attendees or speakers if known
-4. Industry impact or takeaways
+FORMAT YOUR RESPONSE AS HTML EXACTLY LIKE THIS:
 
-Write in a professional business intelligence tone. Focus on actionable insights."""
+<h3>Overview</h3>
+<p>One paragraph summarizing what the event was about and its significance.</p>
+
+<h3>Key Highlights</h3>
+<ul>
+<li><strong>Highlight 1:</strong> Key announcement or product launch</li>
+<li><strong>Highlight 2:</strong> Important trend discussed</li>
+<li><strong>Highlight 3:</strong> Notable speaker or presentation</li>
+<li><strong>Highlight 4:</strong> Industry impact or takeaway</li>
+</ul>
+
+<h3>Notable Attendees</h3>
+<ul>
+<li>Company/Person 1</li>
+<li>Company/Person 2</li>
+</ul>
+
+<h3>Sources</h3>
+<ul>
+<li><a href="URL">Source 1 title</a></li>
+<li><a href="URL">Source 2 title</a></li>
+</ul>
+
+IMPORTANT RULES:
+- Output ONLY valid HTML, no markdown
+- Do NOT include inline citations like [1] or [2] in the text
+- Use <ul> and <li> for bullet points
+- Put all sources at the bottom with clickable links
+- Write in a professional business intelligence tone
+- Focus on actionable insights
+- Do NOT wrap the response in code blocks"""
 
     headers = {
         'Authorization': f'Bearer {PERPLEXITY_API_KEY}',
