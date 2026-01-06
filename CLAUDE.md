@@ -84,8 +84,9 @@ name, industry, start_date, end_date, location, country, website, description
 - Primary: Manual CSV upload once per year (2026 events)
 - Future: Automated discovery via Make.com + web scraping
 
-**TODO - Backfill 2025 Events:**
-After uploading 2025 events CSV, temporarily change Make.com filter:
-1. Change filter to: `end_date` < `{{formatDate(now; "YYYY-MM-DD")}}`
-2. Run scenario manually once
-3. Change filter back to 7-14 days range
+**TODO - Next Session:**
+1. ✅ 2025 events uploaded (48 events)
+2. ⏳ Backfill running overnight - check `event_summaries` table for results
+3. [ ] Change Make.com filter back to 7-14 day range
+4. [ ] Upload 2026 events CSV
+5. [ ] Optimize frontend display
