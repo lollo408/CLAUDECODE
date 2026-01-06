@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .event-detail-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+        text-decoration: none;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: #fff;
+    }
+
+    .event-detail-header {
+        margin-bottom: 40px;
+    }
+
+    .event-detail-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, #fff 0%, #888 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 16px;
+    }
+
+    .event-tags {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .industry-tag {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .industry-tag.hospitality {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .industry-tag.automotive {
+        background: rgba(6, 182, 212, 0.1);
+        color: #06b6d4;
+        border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .industry-tag.bedding {
+        background: rgba(168, 85, 247, 0.1);
+        color: #a855f7;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .industry-tag.textiles {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .industry-tag.other {
+        background: rgba(148, 163, 184, 0.1);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .status-tag {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .status-tag.upcoming {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-tag.past {
+        background: rgba(148, 163, 184, 0.1);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .info-card {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 24px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .info-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        color: #e5e5e5;
+    }
+
+    .info-value a {
+        color: #a78bfa;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .info-value a:hover {
+        color: #c4b5fd;
+    }
+
+    .description-section {
+        margin-top: 30px;
+        padding-top: 24px;
+        border-top: 1px solid #222;
+    }
+
+    .section-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 12px;
+    }
+
+    .description-text {
+        color: #888;
+        line-height: 1.7;
+    }
+
+    .summary-card {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+    }
+
+    .summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .summary-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #fff;
+        margin: 0;
+    }
+
+    .ai-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        color: #a78bfa;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    .summary-pending {
+        text-align: center;
+        padding: 40px 20px;
+        color: #666;
+    }
+
+    .summary-pending p {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    @media (max-width: 768px) {
+        .event-detail-container {
+            padding: 20px 15px 60px;
+        }
+        .event-detail-header h1 {
+            font-size: 1.8rem;
+        }
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="event-detail-container">
+    <a href="/events" class="back-link">← back to events</a>
+
+    <div class="event-detail-header">
+        <h1>{{ event.name }}</h1>
+        <div class="event-tags">
+            {% if event.industry %}
+            <span class="industry-tag {{ event.industry|lower }}">{{ event.industry }}</span>
+            {% endif %}
+            {% if event.start_date >= (now().strftime('%Y-%m-%d') if now is defined else '') %}
+            <span class="status-tag upcoming">upcoming</span>
+            {% else %}
+            <span class="status-tag past">past</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="info-card">
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">// dates</span>
+                <span class="info-value">
+                    {{ event.start_date }}{% if event.end_date %} → {{ event.end_date }}{% endif %}
+                </span>
+            </div>
+
+            {% if event.location %}
+            <div class="info-item">
+                <span class="info-label">// location</span>
+                <span class="info-value">
+                    {{ event.location }}{% if event.country %}, {{ event.country }}{% endif %}
+                </span>
+            </div>
+            {% endif %}
+
+            {% if event.website %}
+            <div class="info-item">
+                <span class="info-label">// website</span>
+                <span class="info-value">
+                    <a href="{{ event.website }}" target="_blank">{{ event.website }} →</a>
+                </span>
+            </div>
+            {% endif %}
+
+            <div class="info-item">
+                <span class="info-label">// added</span>
+                <span class="info-value">{{ event.created_at[:10] }}</span>
+            </div>
+        </div>
+
+        {% if event.description %}
+        <div class="description-section">
+            <div class="section-label">// description</div>
+            <p class="description-text">{{ event.description }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- AI Summary Section (Phase 3 - placeholder for now) -->
+    <div class="summary-card">
+        <div class="summary-header">
+            <h2>Event Summary</h2>
+            <span class="ai-badge">✨ AI-generated</span>
+        </div>
+        <div class="summary-pending">
+            <p>Summary will be generated 7 days after the event ends.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

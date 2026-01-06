@@ -1,0 +1,45 @@
+# .replit
+language = "python3"
+run = "python3 main.py"
+modules = ["python-3.11"]
+
+[deployment]
+run = ["gunicorn", "--bind=0.0.0.0:5000", "--reuse-port", "main:app"]
+
+# This tells replit to open port 8080
+ports = [8080]
+deploymentTarget = "autoscale"
+
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Flask App"
+
+[[workflows.workflow]]
+name = "Flask App"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 main.py"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

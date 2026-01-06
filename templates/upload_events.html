@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .upload-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+        text-decoration: none;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: #fff;
+    }
+
+    .upload-header {
+        margin-bottom: 40px;
+    }
+
+    .upload-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, #fff 0%, #888 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
+
+    .upload-header p {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .upload-card {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 24px;
+    }
+
+    .error-banner {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+    }
+
+    .upload-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .file-input-wrapper {
+        position: relative;
+        border: 2px dashed #333;
+        border-radius: 10px;
+        padding: 40px 20px;
+        text-align: center;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .file-input-wrapper:hover {
+        border-color: #8b5cf6;
+        background: rgba(139, 92, 246, 0.05);
+    }
+
+    .file-input-wrapper input[type="file"] {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .file-input-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        pointer-events: none;
+    }
+
+    .file-icon {
+        width: 48px;
+        height: 48px;
+        color: #666;
+    }
+
+    .file-input-label span {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: #888;
+    }
+
+    .file-input-label strong {
+        color: #a78bfa;
+    }
+
+    .file-name {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        color: #22c55e;
+        margin-top: 8px;
+    }
+
+    .btn-submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 28px;
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+    }
+
+    .format-card {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 24px;
+    }
+
+    .format-card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 16px;
+    }
+
+    .format-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .format-table th {
+        text-align: left;
+        padding: 10px 12px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid #222;
+    }
+
+    .format-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #1a1a1a;
+        color: #888;
+    }
+
+    .format-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .format-table code {
+        font-family: 'JetBrains Mono', monospace;
+        color: #a78bfa;
+        background: rgba(139, 92, 246, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+
+    .required-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .optional-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        background: rgba(148, 163, 184, 0.1);
+        color: #94a3b8;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    @media (max-width: 768px) {
+        .upload-container {
+            padding: 20px 15px 60px;
+        }
+        .upload-header h1 {
+            font-size: 1.6rem;
+        }
+    }
+</style>
+
+<div class="upload-container">
+    <a href="/events" class="back-link">← back to events</a>
+
+    <div class="upload-header">
+        <h1>Upload Events</h1>
+        <p>// import events from a CSV file</p>
+    </div>
+
+    <div class="upload-card">
+        {% if error %}
+        <div class="error-banner">
+            ✕ {{ error }}
+        </div>
+        {% endif %}
+
+        <form class="upload-form" method="POST" enctype="multipart/form-data">
+            <div class="file-input-wrapper" id="dropZone">
+                <input type="file" name="file" accept=".csv" id="fileInput">
+                <div class="file-input-label">
+                    <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/>
+                        <line x1="9" y1="15" x2="15" y2="15"/>
+                    </svg>
+                    <span>Drop your CSV here or <strong>browse</strong></span>
+                </div>
+                <div class="file-name" id="fileName"></div>
+            </div>
+            <button type="submit" class="btn-submit">Upload & Import</button>
+        </form>
+    </div>
+
+    <div class="format-card">
+        <h3>Expected CSV Format</h3>
+        <table class="format-table">
+            <thead>
+                <tr>
+                    <th>Column</th>
+                    <th>Required</th>
+                    <th>Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>name</code></td>
+                    <td><span class="required-badge">required</span></td>
+                    <td>CES 2025</td>
+                </tr>
+                <tr>
+                    <td><code>start_date</code></td>
+                    <td><span class="required-badge">required</span></td>
+                    <td>2025-01-07</td>
+                </tr>
+                <tr>
+                    <td><code>end_date</code></td>
+                    <td><span class="optional-badge">optional</span></td>
+                    <td>2025-01-10</td>
+                </tr>
+                <tr>
+                    <td><code>industry</code></td>
+                    <td><span class="optional-badge">optional</span></td>
+                    <td>Automotive</td>
+                </tr>
+                <tr>
+                    <td><code>location</code></td>
+                    <td><span class="optional-badge">optional</span></td>
+                    <td>Las Vegas, NV</td>
+                </tr>
+                <tr>
+                    <td><code>country</code></td>
+                    <td><span class="optional-badge">optional</span></td>
+                    <td>USA</td>
+                </tr>
+                <tr>
+                    <td><code>website</code></td>
+                    <td><span class="optional-badge">optional</span></td>
+                    <td>https://ces.tech</td>
+                </tr>
+                <tr>
+                    <td><code>description</code></td>
+                    <td><span class="optional-badge">optional</span></td>
+                    <td>Consumer electronics show</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    var fileName = e.target.files[0] ? e.target.files[0].name : '';
+    document.getElementById('fileName').textContent = fileName;
+});
+</script>
+{% endblock %}

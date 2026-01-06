@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .events-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+    }
+
+    .events-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+    }
+
+    .events-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, #fff 0%, #888 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
+
+    .events-header p {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .btn-upload {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-upload:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+    }
+
+    .filters {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 4px;
+        background: #111;
+        padding: 6px;
+        border-radius: 10px;
+        border: 1px solid #222;
+    }
+
+    .filter-btn {
+        background: transparent;
+        border: none;
+        padding: 10px 18px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        font-family: 'JetBrains Mono', monospace;
+        color: #666;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .filter-btn:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .filter-btn.active {
+        color: #fff;
+        background: #222;
+    }
+
+    .success-banner {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #22c55e;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+    }
+
+    .events-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .event-card {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 24px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: block;
+    }
+
+    .event-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        background: linear-gradient(180deg, #8b5cf6, #06b6d4);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .event-card:hover {
+        border-color: #333;
+        box-shadow: 0 0 30px rgba(88, 28, 135, 0.15);
+    }
+
+    .event-card:hover::before {
+        opacity: 1;
+    }
+
+    .event-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .event-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #fff;
+        margin: 0;
+    }
+
+    .event-card:hover .event-name {
+        color: #a78bfa;
+    }
+
+    .industry-tag {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .industry-tag.hospitality {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .industry-tag.automotive {
+        background: rgba(6, 182, 212, 0.1);
+        color: #06b6d4;
+        border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .industry-tag.bedding {
+        background: rgba(168, 85, 247, 0.1);
+        color: #a855f7;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .industry-tag.textiles {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .industry-tag.other {
+        background: rgba(148, 163, 184, 0.1);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .event-meta {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        color: #888;
+    }
+
+    .event-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: #666;
+        background: #111;
+        border: 1px dashed #333;
+        border-radius: 12px;
+    }
+
+    .empty-state p {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.95rem;
+        margin: 0 0 20px;
+    }
+
+    @media (max-width: 768px) {
+        .events-container {
+            padding: 20px 15px 60px;
+        }
+        .events-header {
+            flex-direction: column;
+            gap: 20px;
+        }
+        .events-header h1 {
+            font-size: 1.8rem;
+        }
+        .filters {
+            flex-direction: column;
+        }
+        .event-meta {
+            flex-direction: column;
+            gap: 8px;
+        }
+    }
+</style>
+
+<div class="events-container">
+    <div class="events-header">
+        <div>
+            <h1>Industry Events</h1>
+            <p>// track conferences, trade shows & exhibitions</p>
+        </div>
+        <a href="/upload-events" class="btn-upload">+ Upload CSV</a>
+    </div>
+
+    {% if request.args.get('uploaded') %}
+    <div class="success-banner">
+        ✓ Successfully imported {{ request.args.get('uploaded') }} events
+    </div>
+    {% endif %}
+
+    <div class="filters">
+        <div class="filter-group">
+            <a href="/events?filter=all&industry={{ current_industry }}"
+               class="filter-btn {{ 'active' if current_filter == 'all' else '' }}">all</a>
+            <a href="/events?filter=upcoming&industry={{ current_industry }}"
+               class="filter-btn {{ 'active' if current_filter == 'upcoming' else '' }}">upcoming</a>
+            <a href="/events?filter=past&industry={{ current_industry }}"
+               class="filter-btn {{ 'active' if current_filter == 'past' else '' }}">past</a>
+        </div>
+        <div class="filter-group">
+            <a href="/events?filter={{ current_filter }}&industry=all"
+               class="filter-btn {{ 'active' if current_industry == 'all' else '' }}">all industries</a>
+            <a href="/events?filter={{ current_filter }}&industry=Hospitality"
+               class="filter-btn {{ 'active' if current_industry == 'Hospitality' else '' }}">hospitality</a>
+            <a href="/events?filter={{ current_filter }}&industry=Automotive"
+               class="filter-btn {{ 'active' if current_industry == 'Automotive' else '' }}">automotive</a>
+            <a href="/events?filter={{ current_filter }}&industry=Bedding"
+               class="filter-btn {{ 'active' if current_industry == 'Bedding' else '' }}">bedding</a>
+            <a href="/events?filter={{ current_filter }}&industry=Textiles"
+               class="filter-btn {{ 'active' if current_industry == 'Textiles' else '' }}">textiles</a>
+        </div>
+    </div>
+
+    {% if events %}
+    <div class="events-list">
+        {% for event in events %}
+        <a href="/events/{{ event.id }}" class="event-card">
+            <div class="event-card-header">
+                <h3 class="event-name">{{ event.name }}</h3>
+                {% if event.industry %}
+                <span class="industry-tag {{ event.industry|lower }}">{{ event.industry }}</span>
+                {% endif %}
+            </div>
+            <div class="event-meta">
+                <span>📅 {{ event.start_date }}{% if event.end_date %} → {{ event.end_date }}{% endif %}</span>
+                {% if event.location %}
+                <span>📍 {{ event.location }}{% if event.country %}, {{ event.country }}{% endif %}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No events found. Upload a CSV to get started.</p>
+        <a href="/upload-events" class="btn-upload">+ Upload CSV</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
