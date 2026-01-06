@@ -2,7 +2,7 @@ import os
 import json
 import ast  # <--- NEW: Add this library
 from flask import Flask, render_template, request, redirect, url_for, jsonify
-from datetime import date
+from datetime import date, datetime
 import csv
 import io
 from supabase import create_client, Client
@@ -150,25 +150,78 @@ def archive():
 
 @app.route('/events')
 def events():
-    """Events listing page with filters."""
+    """Events listing page with filters and upcoming notifications."""
     filter_type = request.args.get('filter', 'all')
     industry = request.args.get('industry', 'all')
 
     events_list = get_all_events(filter_type, industry)
+    today = date.today()
+
+    # Process events for display
+    upcoming_events = []
+    for event in events_list:
+        try:
+            start_date = datetime.strptime(event['start_date'], '%Y-%m-%d').date()
+            end_date_str = event.get('end_date') or event['start_date']
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+            days_until = (start_date - today).days
+            event['days_until'] = days_until
+            event['is_upcoming'] = 0 < days_until <= 14
+            event['is_past'] = end_date < today
+            event['is_this_week'] = 0 < days_until <= 7
+
+            # Collect upcoming for featured section
+            if 0 < days_until <= 14:
+                upcoming_events.append(event)
+        except:
+            event['days_until'] = None
+            event['is_upcoming'] = False
+            event['is_past'] = False
+            event['is_this_week'] = False
+
+    # Sort upcoming by soonest first
+    upcoming_events.sort(key=lambda x: x.get('days_until', 999))
 
     return render_template('events.html',
                            events=events_list,
+                           upcoming_events=upcoming_events,
                            current_filter=filter_type,
                            current_industry=industry)
 
 
 @app.route('/events/<event_id>')
 def event_detail(event_id):
-    """Single event detail page."""
+    """Single event detail page with AI summary."""
     event = get_event_by_id(event_id)
     if not event:
         return "<h3>Event not found</h3>", 404
-    return render_template('event_detail.html', event=event)
+
+    # Fetch summary if exists
+    summary = None
+    try:
+        summary_response = supabase.table('event_summaries') \
+            .select('*') \
+            .eq('event_id', event_id) \
+            .eq('status', 'completed') \
+            .limit(1) \
+            .execute()
+        summary = summary_response.data[0] if summary_response.data else None
+    except Exception as e:
+        print(f"Error fetching summary: {e}")
+
+    # Determine if event is past
+    end_date_str = event.get('end_date') or event.get('start_date')
+    try:
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        is_past_event = end_date < date.today()
+    except:
+        is_past_event = False
+
+    return render_template('event_detail.html',
+                           event=event,
+                           summary=summary,
+                           is_past_event=is_past_event)
 
 
 @app.route('/upload-events', methods=['GET', 'POST'])

@@ -230,6 +230,29 @@
         margin: 0;
     }
 
+    .summary-content {
+        color: #ccc;
+        line-height: 1.8;
+        font-size: 0.95rem;
+    }
+
+    .summary-content p {
+        margin-bottom: 16px;
+    }
+
+    .summary-content p:last-child {
+        margin-bottom: 0;
+    }
+
+    .summary-meta {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #222;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        color: #666;
+    }
+
     @media (max-width: 768px) {
         .event-detail-container {
             padding: 20px 15px 60px;
@@ -301,7 +324,21 @@
         {% endif %}
     </div>
 
-    <!-- AI Summary Section (Phase 3 - placeholder for now) -->
+    <!-- AI Summary Section -->
+    {% if summary %}
+    <div class="summary-card">
+        <div class="summary-header">
+            <h2>Event Summary</h2>
+            <span class="ai-badge">✨ AI-generated</span>
+        </div>
+        <div class="summary-content">
+            {{ summary.summary_text | safe }}
+        </div>
+        <div class="summary-meta">
+            Generated {{ summary.generated_at[:10] }}
+        </div>
+    </div>
+    {% elif is_past_event %}
     <div class="summary-card">
         <div class="summary-header">
             <h2>Event Summary</h2>
@@ -311,5 +348,6 @@
             <p>Summary will be generated 7 days after the event ends.</p>
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}

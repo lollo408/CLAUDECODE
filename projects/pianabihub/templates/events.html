@@ -231,6 +231,107 @@
         margin: 0 0 20px;
     }
 
+    /* Upcoming Events Section */
+    .upcoming-section {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 30px;
+    }
+
+    .upcoming-section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .upcoming-section-header h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #22c55e;
+        margin: 0;
+    }
+
+    .upcoming-count {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .upcoming-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+
+    .upcoming-card {
+        background: #111;
+        border: 1px solid #222;
+        border-left: 3px solid #22c55e;
+        border-radius: 8px;
+        padding: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s ease;
+    }
+
+    .upcoming-card:hover {
+        border-color: #333;
+        transform: translateY(-2px);
+    }
+
+    .upcoming-card-name {
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+
+    .upcoming-card-meta {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        color: #888;
+    }
+
+    /* Event Badges */
+    .event-badges {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .badge {
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .badge-upcoming {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .badge-this-week {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-past {
+        background: rgba(148, 163, 184, 0.1);
+        color: #64748b;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
     @media (max-width: 768px) {
         .events-container {
             padding: 20px 15px 60px;
@@ -289,12 +390,46 @@
         </div>
     </div>
 
+    <!-- Upcoming Events Section -->
+    {% if upcoming_events %}
+    <div class="upcoming-section">
+        <div class="upcoming-section-header">
+            <h2>Upcoming Events</h2>
+            <span class="upcoming-count">{{ upcoming_events|length }}</span>
+        </div>
+        <div class="upcoming-grid">
+            {% for event in upcoming_events[:4] %}
+            <a href="/events/{{ event.id }}" class="upcoming-card">
+                <div class="upcoming-card-name">{{ event.name }}</div>
+                <div class="upcoming-card-meta">
+                    {% if event.is_this_week %}
+                    This week
+                    {% else %}
+                    In {{ event.days_until }} days
+                    {% endif %}
+                    • {{ event.start_date }}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     {% if events %}
     <div class="events-list">
         {% for event in events %}
         <a href="/events/{{ event.id }}" class="event-card">
             <div class="event-card-header">
-                <h3 class="event-name">{{ event.name }}</h3>
+                <div class="event-badges">
+                    <h3 class="event-name">{{ event.name }}</h3>
+                    {% if event.is_this_week %}
+                    <span class="badge badge-this-week">This Week</span>
+                    {% elif event.is_upcoming %}
+                    <span class="badge badge-upcoming">In {{ event.days_until }}d</span>
+                    {% elif event.is_past %}
+                    <span class="badge badge-past">Past</span>
+                    {% endif %}
+                </div>
                 {% if event.industry %}
                 <span class="industry-tag {{ event.industry|lower }}">{{ event.industry }}</span>
                 {% endif %}
