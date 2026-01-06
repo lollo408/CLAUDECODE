@@ -448,5 +448,27 @@
         <p>No events found.</p>
     </div>
     {% endif %}
+
+    <!-- Admin link (subtle) -->
+    <div class="admin-link">
+        <a href="/upload-events?key=piana2026">admin</a>
+    </div>
 </div>
+
+<style>
+    .admin-link {
+        margin-top: 40px;
+        text-align: center;
+    }
+    .admin-link a {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        color: #333;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .admin-link a:hover {
+        color: #666;
+    }
+</style>
 {% endblock %}
