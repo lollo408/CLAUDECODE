@@ -250,6 +250,7 @@ def upload_events():
             reader = csv.DictReader(stream)
 
             count = 0
+            skipped = 0
             for row in reader:
                 event_data = {
                     'name': row.get('name', '').strip(),
@@ -263,10 +264,21 @@ def upload_events():
                 }
 
                 if event_data['name'] and event_data['start_date']:
+                    # Check for duplicates
+                    existing = supabase.table('events') \
+                        .select('id') \
+                        .eq('name', event_data['name']) \
+                        .eq('start_date', event_data['start_date']) \
+                        .execute()
+
+                    if existing.data:
+                        skipped += 1
+                        continue
+
                     supabase.table('events').insert(event_data).execute()
                     count += 1
 
-            return redirect(url_for('events') + f'?uploaded={count}')
+            return redirect(url_for('events') + f'?uploaded={count}&skipped={skipped}')
 
         except Exception as e:
             return render_template('upload_events.html', error=f"Error processing file: {e}")
