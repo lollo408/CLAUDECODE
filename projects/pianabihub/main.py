@@ -160,6 +160,8 @@ def events():
     # Process events for display
     upcoming_events = []
     for event in events_list:
+        if not event:
+            continue
         try:
             start_date = datetime.strptime(event['start_date'], '%Y-%m-%d').date()
             end_date_str = event.get('end_date') or event['start_date']
@@ -174,7 +176,7 @@ def events():
             # Collect upcoming for featured section
             if 0 < days_until <= 14:
                 upcoming_events.append(event)
-        except:
+        except Exception:
             event['days_until'] = None
             event['is_upcoming'] = False
             event['is_past'] = False
