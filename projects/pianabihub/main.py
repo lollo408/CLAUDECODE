@@ -1,11 +1,12 @@
 import os
 import json
 import ast  # <--- NEW: Add this library
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from datetime import date
 import csv
 import io
 from supabase import create_client, Client
+from services.perplexity_service import generate_event_summary
 
 app = Flask(__name__)
 
@@ -216,6 +217,76 @@ def upload_events():
             return render_template('upload_events.html', error=f"Error processing file: {e}")
 
     return render_template('upload_events.html')
+
+
+# --- API ENDPOINTS ---
+
+@app.route('/api/generate-summary', methods=['POST'])
+def api_generate_summary():
+    """
+    Webhook endpoint for Make.com to trigger summary generation.
+
+    Expected JSON payload:
+    {
+        "event_id": "uuid-here",
+        "webhook_secret": "your-secret"
+    }
+    """
+    webhook_secret = os.environ.get('WEBHOOK_SECRET', 'make-webhook-2026')
+
+    data = request.get_json()
+
+    # Validate webhook secret
+    if data.get('webhook_secret') != webhook_secret:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    event_id = data.get('event_id')
+    if not event_id:
+        return jsonify({'error': 'event_id required'}), 400
+
+    # Fetch event from Supabase
+    try:
+        event_response = supabase.table('events').select('*').eq('id', event_id).single().execute()
+        event = event_response.data
+    except Exception as e:
+        return jsonify({'error': f'Event not found: {e}'}), 404
+
+    if not event:
+        return jsonify({'error': 'Event not found'}), 404
+
+    # Generate summary via Perplexity
+    result = generate_event_summary(
+        event_name=event['name'],
+        event_date=event.get('end_date') or event['start_date'],
+        industry=event.get('industry', 'General'),
+        location=event.get('location', 'Unknown'),
+        website=event.get('website')
+    )
+
+    if result['success']:
+        # Save to event_summaries table
+        try:
+            supabase.table('event_summaries').insert({
+                'event_id': event_id,
+                'summary_text': result['summary'],
+                'status': 'completed'
+            }).execute()
+
+            return jsonify({'success': True, 'summary': result['summary']})
+        except Exception as e:
+            return jsonify({'error': f'Failed to save summary: {e}'}), 500
+    else:
+        # Log failure
+        try:
+            supabase.table('event_summaries').insert({
+                'event_id': event_id,
+                'summary_text': '',
+                'status': 'failed'
+            }).execute()
+        except:
+            pass
+
+        return jsonify({'success': False, 'error': result['error']}), 500
 
 
 if __name__ == '__main__':
