@@ -54,42 +54,48 @@
 
     .filters {
         display: flex;
-        gap: 12px;
+        gap: 20px;
         margin-bottom: 30px;
         flex-wrap: wrap;
     }
 
-    .filter-group {
+    .filter-dropdown {
         display: flex;
-        gap: 4px;
-        background: #111;
-        padding: 6px;
-        border-radius: 10px;
-        border: 1px solid #222;
+        flex-direction: column;
+        gap: 6px;
     }
 
-    .filter-btn {
-        background: transparent;
-        border: none;
-        padding: 10px 18px;
-        font-size: 0.85rem;
-        font-weight: 500;
+    .filter-label {
         font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
         color: #666;
+        text-transform: lowercase;
+        letter-spacing: 0.05em;
+    }
+
+    .filter-select {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        font-family: 'JetBrains Mono', monospace;
+        color: #fff;
         cursor: pointer;
-        border-radius: 6px;
         transition: all 0.2s ease;
-        text-decoration: none;
+        min-width: 180px;
     }
 
-    .filter-btn:hover {
-        color: #fff;
-        background: rgba(255, 255, 255, 0.05);
+    .filter-select:hover {
+        border-color: #333;
+        background: #151515;
     }
 
-    .filter-btn.active {
-        color: #fff;
-        background: #222;
+    .filter-select:focus {
+        outline: none;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
     }
 
     .success-banner {
@@ -368,27 +374,41 @@
     {% endif %}
 
     <div class="filters">
-        <div class="filter-group">
-            <a href="/events?filter=all&industry={{ current_industry }}"
-               class="filter-btn {{ 'active' if current_filter == 'all' else '' }}">all</a>
-            <a href="/events?filter=upcoming&industry={{ current_industry }}"
-               class="filter-btn {{ 'active' if current_filter == 'upcoming' else '' }}">upcoming</a>
-            <a href="/events?filter=past&industry={{ current_industry }}"
-               class="filter-btn {{ 'active' if current_filter == 'past' else '' }}">past</a>
+        <div class="filter-dropdown">
+            <label for="timeFilter" class="filter-label">// time range</label>
+            <select id="timeFilter" class="filter-select">
+                <option value="3months" {{ 'selected' if current_filter == '3months' else '' }}>Next 3 Months</option>
+                <option value="upcoming" {{ 'selected' if current_filter == 'upcoming' else '' }}>All Upcoming</option>
+                <option value="past" {{ 'selected' if current_filter == 'past' else '' }}>Past Events</option>
+                <option value="all" {{ 'selected' if current_filter == 'all' else '' }}>All Events</option>
+            </select>
         </div>
-        <div class="filter-group">
-            <a href="/events?filter={{ current_filter }}&industry=all"
-               class="filter-btn {{ 'active' if current_industry == 'all' else '' }}">all industries</a>
-            <a href="/events?filter={{ current_filter }}&industry=Hospitality"
-               class="filter-btn {{ 'active' if current_industry == 'Hospitality' else '' }}">hospitality</a>
-            <a href="/events?filter={{ current_filter }}&industry=Automotive"
-               class="filter-btn {{ 'active' if current_industry == 'Automotive' else '' }}">automotive</a>
-            <a href="/events?filter={{ current_filter }}&industry=Bedding"
-               class="filter-btn {{ 'active' if current_industry == 'Bedding' else '' }}">bedding</a>
-            <a href="/events?filter={{ current_filter }}&industry=Textiles"
-               class="filter-btn {{ 'active' if current_industry == 'Textiles' else '' }}">textiles</a>
+        <div class="filter-dropdown">
+            <label for="industryFilter" class="filter-label">// industry</label>
+            <select id="industryFilter" class="filter-select">
+                <option value="all" {{ 'selected' if current_industry == 'all' else '' }}>All Industries</option>
+                <option value="Hospitality" {{ 'selected' if current_industry == 'Hospitality' else '' }}>Hospitality</option>
+                <option value="Automotive" {{ 'selected' if current_industry == 'Automotive' else '' }}>Automotive</option>
+                <option value="Bedding" {{ 'selected' if current_industry == 'Bedding' else '' }}>Bedding</option>
+                <option value="Textiles" {{ 'selected' if current_industry == 'Textiles' else '' }}>Textiles</option>
+            </select>
         </div>
     </div>
+
+    <script>
+        // Handle filter dropdown changes
+        const timeFilter = document.getElementById('timeFilter');
+        const industryFilter = document.getElementById('industryFilter');
+
+        function updateFilters() {
+            const time = timeFilter.value;
+            const industry = industryFilter.value;
+            window.location.href = `/events?filter=${time}&industry=${industry}`;
+        }
+
+        timeFilter.addEventListener('change', updateFilters);
+        industryFilter.addEventListener('change', updateFilters);
+    </script>
 
     <!-- Upcoming Events Section -->
     {% if upcoming_events %}

@@ -69,18 +69,27 @@ def get_latest_report(vertical_name):
 
 
 # --- EVENTS HELPER FUNCTIONS ---
-def get_all_events(filter_type='all', industry=None):
+def get_all_events(filter_type='3months', industry=None):
     """Fetches events with optional filtering."""
     try:
+        from datetime import timedelta
+
         query = supabase.table('events').select("*")
 
         if industry and industry != 'all':
             query = query.eq('industry', industry)
 
-        if filter_type == 'upcoming':
-            query = query.gte('start_date', date.today().isoformat())
+        today = date.today()
+
+        if filter_type == '3months':
+            # Next 3 months rolling window
+            three_months_out = (today + timedelta(days=90)).isoformat()
+            query = query.gte('start_date', today.isoformat()).lte('start_date', three_months_out)
+        elif filter_type == 'upcoming':
+            query = query.gte('start_date', today.isoformat())
         elif filter_type == 'past':
-            query = query.lt('start_date', date.today().isoformat())
+            query = query.lt('start_date', today.isoformat())
+        # 'all' = no date filter
 
         response = query.order('start_date', desc=False).execute()
         return response.data
@@ -151,7 +160,7 @@ def archive():
 @app.route('/events')
 def events():
     """Events listing page with filters and upcoming notifications."""
-    filter_type = request.args.get('filter', 'all')
+    filter_type = request.args.get('filter', '3months')
     industry = request.args.get('industry', 'all')
 
     events_list = get_all_events(filter_type, industry)
