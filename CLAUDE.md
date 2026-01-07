@@ -99,3 +99,44 @@ name, industry, start_date, end_date, location, country, website, description
 **Upcoming Tasks:**
 - [ ] Upload 2026 Q2 events (April-June) when dates available
 - [ ] Monitor Make.com automation for Q1 2026 event summaries
+
+---
+
+### Mobile-First Redesign (Subproject)
+**Status:** Phase 1 Complete, Phase 2 In Progress
+**Goal:** Optimize web app for mobile AND desktop, simplify navigation
+
+**Approach:** Option B - Streamlined Separate Pages
+- Keep pages separate but add hamburger menu + bottom navigation on mobile
+- Consolidate CSS into reusable files
+
+**Completed:**
+- [x] Create `static/css/base.css` - CSS variables, reset, typography
+- [x] Create `static/css/components.css` - Cards, buttons, tags, navigation
+- [x] Update `base.html` with hamburger menu + bottom nav bar
+- [x] Push changes to GitHub (commit `414507b`)
+
+**In Progress:**
+- [ ] Verify Vercel deployment (may need manual redeploy)
+- [ ] Optimize `home.html` for mobile (full-width cards)
+- [ ] Optimize `index.html` dashboard for mobile (scrollable tabs)
+- [ ] Optimize `events.html` for mobile (collapsible filters)
+- [ ] Test on real mobile devices
+
+**New Files Created:**
+- `static/css/base.css` - CSS custom properties and base styles
+- `static/css/components.css` - Reusable UI components
+
+**Mobile Features Added:**
+- Bottom navigation bar (4 icons: Home, Intel, Events, Archive)
+- Hamburger menu (full-screen overlay)
+- Active state highlighting (current page in purple)
+- Touch-friendly 44px minimum targets
+- Safe area support for notched phones
+
+**Plan File:** `~/.claude/plans/humble-rolling-quail.md`
+
+**Next Session:**
+1. Trigger Vercel redeploy to see mobile navigation
+2. Continue optimizing individual page templates
+3. Test on mobile devices
