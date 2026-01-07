@@ -2,129 +2,106 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Piana BI Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #0a0a0a;
-            color: #e5e5e5;
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        .main-nav {
-            background: rgba(10, 10, 10, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid #222;
-            padding: 16px 40px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-home-link {
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #888;
-            font-size: 0.9rem;
-            font-weight: 500;
-            font-family: 'JetBrains Mono', monospace;
-            padding: 8px 16px;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-
-        .nav-home-link:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-home-link svg {
-            width: 18px;
-            height: 18px;
-            stroke: currentColor;
-            stroke-width: 1.5;
-            fill: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 8px;
-        }
-
-        .nav-links a {
-            color: #888;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            font-family: 'JetBrains Mono', monospace;
-            padding: 8px 16px;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        @media (max-width: 768px) {
-            .main-nav {
-                padding: 12px 20px;
-            }
-            .nav-content {
-                flex-direction: column;
-                gap: 12px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
 </head>
 <body>
 
+    <!-- Main Navigation -->
     <nav class="main-nav">
         <div class="nav-content">
             <a href="/" class="nav-home-link">
                 <svg viewBox="0 0 24 24">
                     <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                home
+                <span class="hide-mobile">Piana BI Hub</span>
             </a>
-            <div class="nav-links">
-                <a href="/dashboard">dashboard</a>
-                <a href="/events">events</a>
-                <a href="/archive">archive</a>
+
+            <!-- Desktop Navigation -->
+            <div class="nav-links hide-mobile">
+                <a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">dashboard</a>
+                <a href="/events" class="{{ 'active' if '/events' in request.path else '' }}">events</a>
+                <a href="/archive" class="{{ 'active' if request.path == '/archive' else '' }}">archive</a>
             </div>
+
+            <!-- Hamburger Button (Mobile) -->
+            <button class="hamburger-btn show-mobile" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                <span class="hamburger-icon"></span>
+            </button>
         </div>
     </nav>
 
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="mobile-menu-close" onclick="toggleMobileMenu()" aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+        </button>
+        <a href="/" onclick="toggleMobileMenu()">Home</a>
+        <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
+        <a href="/events" onclick="toggleMobileMenu()">Events</a>
+        <a href="/archive" onclick="toggleMobileMenu()">Archive</a>
+    </div>
+
+    <!-- Main Content -->
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-content">
+            <a href="/" class="bottom-nav-item {{ 'active' if request.path == '/' else '' }}">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Home</span>
+            </a>
+            <a href="/dashboard" class="bottom-nav-item {{ 'active' if request.path == '/dashboard' else '' }}">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Intel</span>
+            </a>
+            <a href="/events" class="bottom-nav-item {{ 'active' if '/events' in request.path else '' }}">
+                <svg viewBox="0 0 24 24">
+                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Events</span>
+            </a>
+            <a href="/archive" class="bottom-nav-item {{ 'active' if request.path == '/archive' else '' }}">
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Archive</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- JavaScript for Mobile Menu -->
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const btn = document.querySelector('.hamburger-btn');
+            menu.classList.toggle('active');
+            btn.classList.toggle('active');
+            document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
+        }
+
+        // Close menu on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const menu = document.getElementById('mobileMenu');
+                if (menu.classList.contains('active')) {
+                    toggleMobileMenu();
+                }
+            }
+        });
+    </script>
 
 </body>
 </html>

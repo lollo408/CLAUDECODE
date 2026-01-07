@@ -1,0 +1,300 @@
+/* ==========================================================================
+   Piana BI Hub - Base CSS
+   CSS Variables, Reset, Typography, and Core Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   CSS Custom Properties (Variables)
+   -------------------------------------------------------------------------- */
+:root {
+    /* Background colors */
+    --bg-primary: #0a0a0a;
+    --bg-card: #111;
+    --bg-card-hover: #151515;
+    --bg-overlay: rgba(10, 10, 10, 0.95);
+
+    /* Border colors */
+    --border-color: #222;
+    --border-hover: #333;
+    --border-active: #444;
+
+    /* Text colors */
+    --text-primary: #e5e5e5;
+    --text-secondary: #888;
+    --text-muted: #666;
+    --text-link: #a78bfa;
+    --text-link-hover: #c4b5fd;
+
+    /* Industry colors */
+    --hospitality: #f59e0b;
+    --hospitality-bg: rgba(245, 158, 11, 0.1);
+    --hospitality-border: rgba(245, 158, 11, 0.3);
+
+    --automotive: #06b6d4;
+    --automotive-bg: rgba(6, 182, 212, 0.1);
+    --automotive-border: rgba(6, 182, 212, 0.3);
+
+    --bedding: #a855f7;
+    --bedding-bg: rgba(168, 85, 247, 0.1);
+    --bedding-border: rgba(168, 85, 247, 0.3);
+
+    --textiles: #22c55e;
+    --textiles-bg: rgba(34, 197, 94, 0.1);
+    --textiles-border: rgba(34, 197, 94, 0.3);
+
+    /* Accent colors */
+    --accent-purple: #8b5cf6;
+    --accent-purple-dark: #6d28d9;
+    --accent-cyan: #06b6d4;
+    --accent-green: #22c55e;
+    --accent-red: #ef4444;
+
+    /* Gradient accents */
+    --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    --gradient-header: linear-gradient(135deg, #fff 0%, #888 100%);
+    --gradient-glow: linear-gradient(90deg, #8b5cf6, #06b6d4);
+
+    /* Spacing scale */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 40px;
+    --space-2xl: 60px;
+
+    /* Border radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    /* Typography */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* Font sizes */
+    --text-xs: 0.7rem;
+    --text-sm: 0.85rem;
+    --text-base: 0.95rem;
+    --text-lg: 1.1rem;
+    --text-xl: 1.2rem;
+    --text-2xl: 1.4rem;
+    --text-3xl: 1.8rem;
+    --text-4xl: 2.5rem;
+
+    /* Touch targets (WCAG minimum) */
+    --touch-min: 44px;
+
+    /* Z-index scale */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-fixed: 300;
+    --z-modal: 400;
+    --z-overlay: 500;
+
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-base: 0.2s ease;
+    --transition-slow: 0.3s ease;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 40px rgba(88, 28, 135, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   Reset & Base Styles
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* Safe area for notched phones */
+@supports (padding: max(0px)) {
+    body {
+        padding-left: max(0px, env(safe-area-inset-left));
+        padding-right: max(0px, env(safe-area-inset-right));
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+h1 {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+}
+
+h2 {
+    font-size: var(--text-2xl);
+}
+
+h3 {
+    font-size: var(--text-xl);
+}
+
+p {
+    margin-bottom: var(--space-md);
+}
+
+a {
+    color: var(--text-link);
+    text-decoration: none;
+    transition: color var(--transition-base);
+}
+
+a:hover {
+    color: var(--text-link-hover);
+}
+
+/* Monospace text */
+.mono {
+    font-family: var(--font-mono);
+}
+
+/* Gradient text effect */
+.gradient-text {
+    background: var(--gradient-header);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* --------------------------------------------------------------------------
+   Layout Utilities
+   -------------------------------------------------------------------------- */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg);
+}
+
+/* Responsive container padding */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 var(--space-md);
+    }
+}
+
+/* Flexbox utilities */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-xs { gap: var(--space-xs); }
+.gap-sm { gap: var(--space-sm); }
+.gap-md { gap: var(--space-md); }
+.gap-lg { gap: var(--space-lg); }
+
+/* Grid utilities */
+.grid { display: grid; }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-auto { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+@media (max-width: 768px) {
+    .grid-cols-2,
+    .grid-cols-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Interactive States
+   -------------------------------------------------------------------------- */
+/* Focus visible for keyboard navigation */
+:focus-visible {
+    outline: 2px solid var(--accent-purple);
+    outline-offset: 2px;
+}
+
+/* Remove default focus for mouse users */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Minimum touch target size */
+.touch-target {
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+}
+
+/* --------------------------------------------------------------------------
+   Scrollbar Styling
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-hover);
+}
+
+/* --------------------------------------------------------------------------
+   Selection Styling
+   -------------------------------------------------------------------------- */
+::selection {
+    background: rgba(139, 92, 246, 0.3);
+    color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoint Helpers
+   -------------------------------------------------------------------------- */
+/* Hide on mobile */
+@media (max-width: 767px) {
+    .hide-mobile { display: none !important; }
+}
+
+/* Hide on desktop */
+@media (min-width: 768px) {
+    .hide-desktop { display: none !important; }
+}
+
+/* Show only on mobile */
+.show-mobile {
+    display: none !important;
+}
+
+@media (max-width: 767px) {
+    .show-mobile { display: block !important; }
+    .show-mobile.flex { display: flex !important; }
+}
