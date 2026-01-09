@@ -30,40 +30,7 @@
         color: #666;
     }
 
-    .tabs {
-        display: flex;
-        gap: 4px;
-        background: #111;
-        padding: 6px;
-        border-radius: 10px;
-        border: 1px solid #222;
-        margin-bottom: 30px;
-        overflow-x: auto;
-    }
-
-    .tab-btn {
-        background: transparent;
-        border: none;
-        padding: 12px 24px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        font-family: 'JetBrains Mono', monospace;
-        color: #666;
-        cursor: pointer;
-        border-radius: 6px;
-        transition: all 0.2s ease;
-        white-space: nowrap;
-    }
-
-    .tab-btn:hover {
-        color: #fff;
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .tab-btn.active {
-        color: #fff;
-        background: #222;
-    }
+    /* Vertical selector - always visible */
 
     .tab-content {
         display: none;
@@ -231,6 +198,48 @@
         margin: 0;
     }
 
+    /* Vertical selector - always visible */
+    .vertical-selector {
+        margin-bottom: 30px;
+        max-width: 300px;
+    }
+
+    .vertical-selector .filter-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #666;
+        text-transform: lowercase;
+        letter-spacing: 0.05em;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .vertical-selector .filter-select {
+        width: 100%;
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 1rem;
+        font-family: 'JetBrains Mono', monospace;
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 44px;
+    }
+
+    .vertical-selector .filter-select:hover {
+        border-color: #333;
+        background: #151515;
+    }
+
+    .vertical-selector .filter-select:focus {
+        outline: none;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+    }
+
     @media (max-width: 768px) {
         .dashboard-container {
             padding: 20px 15px 60px;
@@ -238,12 +247,8 @@
         .dashboard-header h1 {
             font-size: 1.8rem;
         }
-        .tabs {
-            padding: 4px;
-        }
-        .tab-btn {
-            padding: 10px 16px;
-            font-size: 0.8rem;
+        .vertical-selector {
+            max-width: 100%;
         }
         .vertical-header {
             flex-direction: column;
@@ -262,11 +267,15 @@
         <p>// select a vertical to view latest insights</p>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="openTab(event, 'Hospitality')">hospitality</button>
-        <button class="tab-btn" onclick="openTab(event, 'Automotive')">automotive</button>
-        <button class="tab-btn" onclick="openTab(event, 'Bedding')">bedding</button>
-        <button class="tab-btn" onclick="openTab(event, 'Textiles')">textiles</button>
+    <!-- Dropdown selector (always visible) -->
+    <div class="vertical-selector">
+        <label for="verticalSelect" class="filter-label">// select vertical</label>
+        <select id="verticalSelect" class="filter-select" onchange="openTabFromSelect(this.value)">
+            <option value="Hospitality">Hospitality</option>
+            <option value="Automotive">Automotive</option>
+            <option value="Bedding">Bedding</option>
+            <option value="Textiles">Textiles</option>
+        </select>
     </div>
 
     <div id="Hospitality" class="tab-content">
@@ -399,35 +408,33 @@
 </div>
 
 <script>
-function openTab(evt, tabName) {
+function openTabFromSelect(tabName) {
+    // Hide all tabs
     var tabcontent = document.getElementsByClassName("tab-content");
     for (var i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
 
-    var tablinks = document.getElementsByClassName("tab-btn");
-    for (var i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-
+    // Show selected tab
     document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
+
+    // Persist selection
+    localStorage.setItem('activeTab', tabName);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     var hash = window.location.hash.replace('#', '');
     var savedTab = localStorage.getItem('activeTab');
     var tabToOpen = hash || savedTab || 'Hospitality';
-    
-    var tabBtn = document.querySelector('.tab-btn');
-    if (tabBtn) {
-        var allTabs = document.querySelectorAll('.tab-btn');
-        allTabs.forEach(function(btn) {
-            if (btn.textContent.toLowerCase() === tabToOpen.toLowerCase()) {
-                btn.click();
-            }
-        });
+
+    // Set dropdown value
+    var selectEl = document.getElementById('verticalSelect');
+    if (selectEl) {
+        selectEl.value = tabToOpen;
     }
+
+    // Show the selected tab
+    openTabFromSelect(tabToOpen);
 });
 </script>
 {% endblock %}

@@ -4,7 +4,7 @@
 <style>
     .hero {
         text-align: center;
-        padding: 100px 40px 80px;
+        padding: 100px 40px 60px;
         max-width: 900px;
         margin: 0 auto;
         position: relative;
@@ -20,6 +20,7 @@
         height: 600px;
         background: radial-gradient(circle, rgba(88, 28, 135, 0.3) 0%, transparent 70%);
         pointer-events: none;
+        z-index: 0;
     }
 
     .hero h1 {
@@ -33,6 +34,7 @@
         background-clip: text;
         position: relative;
         padding-bottom: 4px;
+        z-index: 1;
     }
 
     .hero p {
@@ -41,30 +43,36 @@
         margin-top: 20px;
         font-family: 'JetBrains Mono', monospace;
         font-weight: 400;
+        position: relative;
+        z-index: 1;
     }
 
-    .terminal-grid {
+    .main-grid {
         max-width: 1000px;
         margin: 0 auto 100px;
-        padding: 0 40px;
+        padding: 0 40px 80px;
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
     }
 
-    .terminal-card {
+    .main-card {
         background: #111;
         border: 1px solid #222;
-        border-radius: 12px;
-        padding: 30px;
+        border-radius: 16px;
+        padding: 40px 30px;
         text-decoration: none;
         color: inherit;
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
 
-    .terminal-card::before {
+    .main-card::before {
         content: '';
         position: absolute;
         top: 0;
@@ -74,16 +82,17 @@
         background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
     }
 
-    .terminal-card:hover {
+    .main-card:hover {
         border-color: #444;
-        box-shadow: 0 0 40px rgba(88, 28, 135, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 40px rgba(88, 28, 135, 0.25);
     }
 
-    .terminal-card:hover .glow-line {
+    .main-card:hover .glow-line {
         opacity: 1;
     }
 
-    .terminal-card:hover .card-icon svg {
+    .main-card:hover .card-icon svg {
         stroke: #fff;
     }
 
@@ -92,31 +101,27 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 2px;
+        height: 3px;
         opacity: 0;
         transition: opacity 0.3s;
     }
 
-    .terminal-card.hospitality .glow-line {
-        background: linear-gradient(90deg, #f59e0b, #ef4444);
+    .main-card.intel .glow-line {
+        background: linear-gradient(90deg, #a78bfa, #8b5cf6, #7c3aed);
     }
 
-    .terminal-card.automotive .glow-line {
-        background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+    .main-card.events .glow-line {
+        background: linear-gradient(90deg, #06b6d4, #0ea5e9, #0284c7);
     }
 
-    .terminal-card.bedding .glow-line {
-        background: linear-gradient(90deg, #a855f7, #ec4899);
-    }
-
-    .terminal-card.textiles .glow-line {
-        background: linear-gradient(90deg, #22c55e, #06b6d4);
+    .main-card.archive .glow-line {
+        background: linear-gradient(90deg, #f59e0b, #f97316, #ea580c);
     }
 
     .card-icon {
-        width: 40px;
-        height: 40px;
-        margin-bottom: 20px;
+        width: 56px;
+        height: 56px;
+        margin-bottom: 24px;
     }
 
     .card-icon svg {
@@ -128,58 +133,63 @@
         transition: stroke 0.3s ease;
     }
 
-    .terminal-card.hospitality:hover .card-icon svg { stroke: #f59e0b; }
-    .terminal-card.automotive:hover .card-icon svg { stroke: #06b6d4; }
-    .terminal-card.bedding:hover .card-icon svg { stroke: #a855f7; }
-    .terminal-card.textiles:hover .card-icon svg { stroke: #22c55e; }
+    .main-card.intel:hover .card-icon svg { stroke: #a78bfa; }
+    .main-card.events:hover .card-icon svg { stroke: #06b6d4; }
+    .main-card.archive:hover .card-icon svg { stroke: #f59e0b; }
 
     .card-title {
-        font-size: 1.4rem;
+        font-size: 1.8rem;
         font-weight: 600;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
+        transition: color 0.3s;
     }
 
-    .terminal-card.hospitality .card-title { color: #f59e0b; }
-    .terminal-card.automotive .card-title { color: #06b6d4; }
-    .terminal-card.bedding .card-title { color: #a855f7; }
-    .terminal-card.textiles .card-title { color: #22c55e; }
+    .main-card.intel .card-title { color: #a78bfa; }
+    .main-card.events .card-title { color: #06b6d4; }
+    .main-card.archive .card-title { color: #f59e0b; }
+
+    .main-card:hover .card-title {
+        color: #fff;
+    }
 
     .card-desc {
-        font-size: 0.9rem;
-        color: #666;
-        font-family: 'JetBrains Mono', monospace;
-    }
-
-    .card-footer {
-        margin-top: 20px;
-        padding-top: 16px;
-        border-top: 1px solid #222;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .card-metric {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.8rem;
+        font-size: 0.95rem;
         color: #888;
+        font-family: 'JetBrains Mono', monospace;
+        line-height: 1.6;
+        margin-bottom: 24px;
     }
 
-    .card-arrow {
-        color: #444;
+    .card-cta {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
         transition: all 0.3s;
     }
 
-    .terminal-card:hover .card-arrow {
+    .main-card:hover .card-cta {
         color: #fff;
         transform: translateX(5px);
     }
 
-    @media (max-width: 768px) {
-        .terminal-grid {
+    .card-cta svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 2;
+    }
+
+    @media (max-width: 968px) {
+        .main-grid {
             grid-template-columns: 1fr;
-            padding: 0 20px;
+            padding: 0 20px 80px;
+            gap: 16px;
         }
+    }
+
+    @media (max-width: 768px) {
         .hero {
             padding: 60px 20px 40px;
         }
@@ -189,100 +199,70 @@
         .hero p {
             font-size: 1rem;
         }
+        .main-card {
+            padding: 32px 24px;
+        }
+        .card-title {
+            font-size: 1.5rem;
+        }
     }
 </style>
 
 <section class="hero">
-    <h1>Market Intelligence Hub</h1>
-    <p>// real-time insights across core verticals</p>
+    <h1>Piana BI Hub</h1>
+    <p>// market intelligence & event tracking</p>
 </section>
 
-<div class="terminal-grid">
-    <a href="/dashboard#Hospitality" class="terminal-card hospitality" onclick="selectTab('Hospitality')">
+<div class="main-grid">
+    <a href="/dashboard" class="main-card intel">
         <div class="glow-line"></div>
         <div class="card-icon">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/>
-                <path d="M3 21h18"/>
-                <path d="M9 7h1"/>
-                <path d="M9 11h1"/>
-                <path d="M9 15h1"/>
-                <path d="M14 7h1"/>
-                <path d="M14 11h1"/>
-                <path d="M14 15h1"/>
+                <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
-        <h3 class="card-title">Hospitality</h3>
-        <p class="card-desc">Hotels, Travel & Guest Experience</p>
-        <div class="card-footer">
-            <span class="card-metric">View latest intel</span>
-            <span class="card-arrow">→</span>
-        </div>
+        <h3 class="card-title">Intelligence</h3>
+        <p class="card-desc">Weekly reports across Hospitality, Automotive, Bedding & Textiles verticals</p>
+        <span class="card-cta">
+            View dashboard
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </span>
     </a>
 
-    <a href="/dashboard#Automotive" class="terminal-card automotive" onclick="selectTab('Automotive')">
+    <a href="/events" class="main-card events">
         <div class="glow-line"></div>
         <div class="card-icon">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/>
-                <path d="M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/>
-                <path d="M5 17H3v-4l2-5h10l4 5h2v4h-2"/>
-                <path d="M9 17h6"/>
-                <path d="M5 8V6"/>
-                <path d="M19 8V6"/>
+                <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
-        <h3 class="card-title">Automotive</h3>
-        <p class="card-desc">Mobility, EV & Interior Trends</p>
-        <div class="card-footer">
-            <span class="card-metric">View latest intel</span>
-            <span class="card-arrow">→</span>
-        </div>
+        <h3 class="card-title">Events</h3>
+        <p class="card-desc">Industry conferences, trade shows & exhibitions with AI-powered summaries</p>
+        <span class="card-cta">
+            Browse events
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </span>
     </a>
 
-    <a href="/dashboard#Bedding" class="terminal-card bedding" onclick="selectTab('Bedding')">
+    <a href="/archive" class="main-card archive">
         <div class="glow-line"></div>
         <div class="card-icon">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 12h20"/>
-                <path d="M2 20v-8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v8"/>
-                <path d="M2 20h20"/>
-                <path d="M6 12V8"/>
-                <path d="M18 12V8"/>
-                <path d="M2 8a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2"/>
-                <path d="M14 8a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2"/>
+                <path d="M5 8h14M5 8a2 2 0 1 1 0-4h14a2 2 0 1 1 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
-        <h3 class="card-title">Bedding</h3>
-        <p class="card-desc">Sleep Tech & Mattress Innovation</p>
-        <div class="card-footer">
-            <span class="card-metric">View latest intel</span>
-            <span class="card-arrow">→</span>
-        </div>
-    </a>
-
-    <a href="/dashboard#Textiles" class="terminal-card textiles" onclick="selectTab('Textiles')">
-        <div class="glow-line"></div>
-        <div class="card-icon">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 3v18"/>
-                <path d="M8 6c0-1.5 1.5-3 4-3s4 1.5 4 3-1.5 2-4 2-4 .5-4 2 1.5 3 4 3 4-1.5 4-3"/>
-                <path d="M8 18c0 1.5 1.5 3 4 3s4-1.5 4-3"/>
-                <path d="M6 12h12"/>
+        <h3 class="card-title">Archive</h3>
+        <p class="card-desc">Historical intelligence reports with searchable filters by vertical & timeframe</p>
+        <span class="card-cta">
+            Search archive
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-        </div>
-        <h3 class="card-title">Textiles</h3>
-        <p class="card-desc">Non-Wovens & Sustainable Materials</p>
-        <div class="card-footer">
-            <span class="card-metric">View latest intel</span>
-            <span class="card-arrow">→</span>
-        </div>
+        </span>
     </a>
 </div>
-
-<script>
-    function selectTab(tabName) {
-        localStorage.setItem('activeTab', tabName);
-    }
-</script>
 {% endblock %}

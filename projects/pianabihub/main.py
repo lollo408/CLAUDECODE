@@ -145,30 +145,62 @@ def dashboard():
 
 @app.route('/archive')
 def archive():
+    """Archive page with search/filter capability."""
     try:
-        response = supabase.table('intelligence_reports') \
-            .select("*") \
-            .order('created_at', desc=True) \
-            .execute()
-        return render_template('archive.html', reports=response.data)
+        from datetime import timedelta
+
+        # Get filter parameters
+        vertical = request.args.get('vertical', 'all')
+        timeframe = request.args.get('timeframe', '3months')
+
+        # Build query
+        query = supabase.table('intelligence_reports').select("*")
+
+        # Filter by vertical
+        if vertical and vertical != 'all':
+            query = query.eq('vertical', vertical.lower())
+
+        # Filter by timeframe
+        today = date.today()
+        if timeframe == '1month':
+            cutoff = (today - timedelta(days=30)).isoformat()
+            query = query.gte('created_at', cutoff)
+        elif timeframe == '3months':
+            cutoff = (today - timedelta(days=90)).isoformat()
+            query = query.gte('created_at', cutoff)
+        # No 'all' option - only 1 month or 3 months
+
+        # Order and limit results (max 8)
+        response = query.order('created_at', desc=True).limit(8).execute()
+
+        return render_template('archive.html',
+                             reports=response.data,
+                             current_vertical=vertical,
+                             current_timeframe=timeframe)
     except Exception as e:
-        return f"<h3>Archive Crashed: {e}</h3>", 500
+        return f"<h3>Archive Error: {e}</h3>", 500
 
 
 # --- EVENTS ROUTES ---
 
 @app.route('/events')
 def events():
-    """Events listing page with filters and upcoming notifications."""
+    """Events listing page with filters, upcoming notifications, and pagination."""
     filter_type = request.args.get('filter', '3months')
     industry = request.args.get('industry', 'all')
+    page = int(request.args.get('page', 1))
 
-    events_list = get_all_events(filter_type, industry)
+    # Pagination settings
+    per_page = 8
+    offset = (page - 1) * per_page
+
+    # Get all events (for count and upcoming section)
+    all_events = get_all_events(filter_type, industry)
     today = date.today()
 
     # Process events for display
     upcoming_events = []
-    for event in events_list:
+    for event in all_events:
         if not event:
             continue
         try:
@@ -194,11 +226,20 @@ def events():
     # Sort upcoming by soonest first
     upcoming_events.sort(key=lambda x: x.get('days_until', 999))
 
+    # Paginate main events list
+    total_events = len(all_events)
+    total_pages = (total_events + per_page - 1) // per_page  # Ceiling division
+    events_list = all_events[offset:offset + per_page]
+
     return render_template('events.html',
                            events=events_list,
                            upcoming_events=upcoming_events,
                            current_filter=filter_type,
-                           current_industry=industry)
+                           current_industry=industry,
+                           current_page=page,
+                           total_pages=total_pages,
+                           has_next=page < total_pages,
+                           has_prev=page > 1)
 
 
 @app.route('/events/<event_id>')
