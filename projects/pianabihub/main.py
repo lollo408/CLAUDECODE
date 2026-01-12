@@ -342,6 +342,20 @@ def offline():
     return render_template('offline.html')
 
 
+@app.route('/manifest.json')
+def manifest():
+    """Serve PWA manifest file"""
+    from flask import send_from_directory
+    return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
+
+
+@app.route('/service-worker.js')
+def service_worker():
+    """Serve service worker file"""
+    from flask import send_from_directory
+    return send_from_directory('static', 'service-worker.js', mimetype='application/javascript')
+
+
 # --- API ENDPOINTS ---
 
 @app.route('/api/generate-summary', methods=['POST'])
