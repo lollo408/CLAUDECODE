@@ -4,8 +4,8 @@
   "description": "Business Intelligence Dashboard for Tintoria Piana",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#7c3aed",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "orientation": "portrait-primary",
   "icons": [
     {

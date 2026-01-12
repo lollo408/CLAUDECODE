@@ -170,47 +170,69 @@ name, industry, start_date, end_date, location, country, website, description
 ---
 
 ### PWA Conversion (Subproject)
-**Status:** Phase 1 Complete (Jan 2026)
+**Status:** ✅ COMPLETE & DEPLOYED (Jan 12, 2026)
 **Goal:** Convert web app into Progressive Web App for "Add to Home Screen" functionality and offline support
 
-**Completed Features:**
-- [x] PWA manifest.json with app metadata
-- [x] App icons (192x192 and 512x512 PNG)
+**Live URL:** https://pianabihub.vercel.app
+
+**Completed & Deployed:**
+- [x] PWA manifest.json with Piana branding
+- [x] Custom app icons with Piana Technology logo on white background
 - [x] Service Worker with smart caching strategies
 - [x] Offline fallback page (`/offline`)
 - [x] PWA meta tags (iOS + Android support)
 - [x] Service Worker registration
 - [x] Install prompt UI (mobile-only banner)
+- [x] Fixed Vercel deployment issues (project linking)
+- [x] Fixed database connection (SUPABASE_URL newline error)
+- [x] Fixed static file serving (manifest.json 401 errors)
+- [x] Mobile bottom navigation on all pages
+- [x] White theme colors for professional appearance
 
-**New Files Created:**
-- `static/manifest.json` - PWA configuration
-- `static/service-worker.js` - Caching and offline functionality
-- `static/icons/icon-192.png` & `icon-512.png` - App icons
+**Branding:**
+- App Name: Piana BI Hub
+- Colors: White background (#FFFFFF), Piana logo colors (orange-green gradient)
+- Icons: Piana Technology logo centered on white background
+
+**Files Created/Modified:**
+- `static/manifest.json` - PWA config with white theme
+- `static/service-worker.js` - Caching and offline support
+- `static/icons/icon-192.png` & `icon-512.png` - Piana logo icons
+- `static/piana_logo.png` - Source logo file
 - `templates/offline.html` - Offline fallback page
-- `generate_icons.py` - Icon generation script
+- `templates/base.html` - PWA meta tags, white theme
+- `templates/home.html` - Mobile nav padding fixes
+- `vercel.json` - Minimal config (reverted from legacy v2)
+- `generate_pwa_icons.py` - Icon generation script
 
-**Modified Files:**
-- `templates/base.html` - Added PWA meta tags, install banner, service worker registration
-- `main.py` - Added `/offline` route
+**Deployment Workflow:**
+```bash
+cd "C:\Users\LLeprotti\OneDrive - Tintoria-Piana US Inc\Claude Code\projects\pianabihub"
+vercel --prod
+```
+
+**Issues Resolved (Jan 12, 2026):**
+1. Database connection - Fixed newline character in SUPABASE_URL environment variable
+2. Static files 401 errors - Simplified vercel.json configuration
+3. Empty dashboard/events - Re-added environment variables to new Vercel project
+4. PWA branding - Replaced purple theme with white + Piana logo
+5. Mobile navigation - Added bottom nav to all pages including home
 
 **Caching Strategy:**
 - Static assets (CSS, JS, images): Cache-first (instant load)
 - HTML pages: Network-first (fresh content, offline fallback)
 - API calls: Network-only (no caching for dynamic data)
 
-**How to Use:**
-1. Visit site on mobile device
-2. See "Install Piana BI Hub" banner
-3. Tap "Install" → App icon appears on home screen
-4. Open app → Runs in standalone mode (no browser UI)
-5. Works offline with cached pages
+**How to Update Installed PWA:**
+- Automatic: Updates check every 24 hours
+- Manual: Close app completely and reopen
+- Clean install: Uninstall → Visit site → Reinstall
 
-**Testing:**
-- Chrome DevTools → Application tab → Check manifest, service worker, cache
-- Mobile device → Install app → Test offline mode
+**Known Minor Issue:**
+- Home page bottom nav may not show consistently in standalone mode on some devices
+- Workaround: Use other pages or reinstall app
 
-**Phase 2 (Deferred):**
-- Push notifications infrastructure
+**Phase 2 (Future Enhancements):**
+- Push notifications (event summaries, weekly reminders)
 - Microsoft 365 authentication
-- Weekly report reminders
-- Event summary notifications
+- Real-time updates via Supabase subscriptions
