@@ -517,6 +517,17 @@ a.card {
     }
 }
 
+/* Show bottom nav in PWA standalone mode (all pages) */
+@media (display-mode: standalone) {
+    .bottom-nav {
+        display: block;
+    }
+
+    main {
+        padding-bottom: 80px;
+    }
+}
+
 /* --------------------------------------------------------------------------
    Responsive - Tablet Adjustments
    -------------------------------------------------------------------------- */
