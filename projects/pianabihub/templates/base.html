@@ -7,6 +7,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/components.css">
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Piana BI">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+    <meta name="description" content="Business Intelligence Dashboard for Tintoria Piana">
 </head>
 <body>
 
@@ -45,6 +54,20 @@
         <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
         <a href="/events" onclick="toggleMobileMenu()">Events</a>
         <a href="/archive" onclick="toggleMobileMenu()">Archive</a>
+    </div>
+
+    <!-- PWA Install Prompt (Mobile Only) -->
+    <div id="installBanner" class="install-banner" style="display: none;">
+        <div class="install-banner-content">
+            <div class="install-banner-text">
+                <strong>Install Piana BI Hub</strong>
+                <span>Quick access from your home screen</span>
+            </div>
+            <div class="install-banner-actions">
+                <button id="installButton" class="install-btn">Install</button>
+                <button id="dismissButton" class="dismiss-btn">×</button>
+            </div>
+        </div>
     </div>
 
     <!-- Main Content -->
@@ -102,6 +125,185 @@
             }
         });
     </script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/service-worker.js')
+                    .then(registration => {
+                        console.log('[PWA] Service Worker registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('[PWA] Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+
+    <!-- PWA Install Prompt Handler -->
+    <script>
+        let deferredPrompt;
+        const installBanner = document.getElementById('installBanner');
+        const installButton = document.getElementById('installButton');
+        const dismissButton = document.getElementById('dismissButton');
+
+        // Check if user previously dismissed the banner
+        const dismissed = localStorage.getItem('pwa-install-dismissed');
+
+        // Check if already installed (running in standalone mode)
+        const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+                           window.navigator.standalone === true;
+
+        // Listen for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent default browser install prompt
+            e.preventDefault();
+
+            // Save the event for later use
+            deferredPrompt = e;
+
+            // Show banner only on mobile and if not dismissed or installed
+            const isMobile = window.innerWidth < 768;
+            if (isMobile && !dismissed && !isInstalled) {
+                installBanner.style.display = 'block';
+            }
+
+            console.log('[PWA] Install prompt available');
+        });
+
+        // Handle install button click
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                return;
+            }
+
+            // Show the browser's install prompt
+            deferredPrompt.prompt();
+
+            // Wait for the user's response
+            const { outcome } = await deferredPrompt.userChoice;
+
+            console.log('[PWA] User choice:', outcome);
+
+            // Clear the prompt
+            deferredPrompt = null;
+
+            // Hide the banner
+            installBanner.style.display = 'none';
+        });
+
+        // Handle dismiss button click
+        dismissButton.addEventListener('click', () => {
+            installBanner.style.display = 'none';
+            localStorage.setItem('pwa-install-dismissed', 'true');
+        });
+
+        // Listen for app installed event
+        window.addEventListener('appinstalled', () => {
+            console.log('[PWA] App installed successfully');
+            installBanner.style.display = 'none';
+            deferredPrompt = null;
+        });
+    </script>
+
+    <!-- PWA Install Banner Styles -->
+    <style>
+        .install-banner {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .install-banner-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .install-banner-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .install-banner-text strong {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .install-banner-text span {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .install-banner-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .install-btn {
+            padding: 0.5rem 1rem;
+            background: white;
+            color: var(--purple);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .install-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .dismiss-btn {
+            padding: 0.25rem 0.5rem;
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            font-size: 1.25rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dismiss-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Hide on desktop */
+        @media (min-width: 769px) {
+            .install-banner {
+                display: none !important;
+            }
+        }
+    </style>
 
 </body>
 </html>

@@ -336,6 +336,12 @@ def upload_events():
     return render_template('upload_events.html')
 
 
+@app.route('/offline')
+def offline():
+    """Offline fallback page for PWA"""
+    return render_template('offline.html')
+
+
 # --- API ENDPOINTS ---
 
 @app.route('/api/generate-summary', methods=['POST'])
