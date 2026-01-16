@@ -457,6 +457,7 @@ vercel --prod
 ### Upcoming Tasks
 - [ ] **NEXT SESSION:** Set maintenance mode, deploy version update to force mobile PWA refresh
 - [ ] **NEXT SESSION:** Fix login page and user dropdown visual styling (alignment, mobile optimization)
+- [ ] **NEXT SESSION:** Add "Stay signed in" checkbox on login page
 - [ ] Upload 2026 Q2 events (April-June) when dates available
 - [ ] Monitor Make.com automation for Q1 2026 event summaries
 - [ ] Push notifications (future enhancement)
