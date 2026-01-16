@@ -9,10 +9,12 @@ from supabase import create_client, Client
 from services.perplexity_service import generate_event_summary
 
 # Try to import msal, but don't crash if it fails
+MSAL_IMPORT_ERROR = None
 try:
     import msal
     MSAL_AVAILABLE = True
-except ImportError as e:
+except Exception as e:
+    MSAL_IMPORT_ERROR = str(e)
     print(f"[Auth] MSAL import failed: {e}")
     MSAL_AVAILABLE = False
     msal = None
@@ -698,6 +700,7 @@ def api_auth_status():
     """Debug endpoint to check auth configuration."""
     return jsonify({
         'msal_available': MSAL_AVAILABLE,
+        'msal_import_error': MSAL_IMPORT_ERROR,
         'azure_auth_enabled': AZURE_AUTH_ENABLED,
         'has_client_id': bool(AZURE_CLIENT_ID),
         'has_tenant_id': bool(AZURE_TENANT_ID),
