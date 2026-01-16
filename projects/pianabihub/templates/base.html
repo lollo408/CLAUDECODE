@@ -35,6 +35,14 @@
                 <a href="/events" class="{{ 'active' if '/events' in request.path else '' }}">events</a>
                 <a href="/archive" class="{{ 'active' if request.path == '/archive' else '' }}">archive</a>
                 <a href="/admin" class="{{ 'active' if '/admin' in request.path else '' }}">admin</a>
+                {% if auth_enabled %}
+                    {% if current_user %}
+                        <span class="nav-user">{{ current_user.name.split(' ')[0] }}</span>
+                        <a href="/logout" class="nav-logout">logout</a>
+                    {% else %}
+                        <a href="/login">sign in</a>
+                    {% endif %}
+                {% endif %}
             </div>
 
             <!-- Hamburger Button (Mobile) -->
@@ -51,10 +59,23 @@
                 <path d="M18 6L6 18M6 6l12 12"/>
             </svg>
         </button>
+        {% if auth_enabled and current_user %}
+            <div class="mobile-user-info">
+                <span class="mobile-user-name">{{ current_user.name }}</span>
+                <span class="mobile-user-email">{{ current_user.email }}</span>
+            </div>
+        {% endif %}
         <a href="/" onclick="toggleMobileMenu()">Home</a>
         <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
         <a href="/events" onclick="toggleMobileMenu()">Events</a>
         <a href="/archive" onclick="toggleMobileMenu()">Archive</a>
+        {% if auth_enabled %}
+            {% if current_user %}
+                <a href="/logout" onclick="toggleMobileMenu()" class="mobile-logout">Sign Out</a>
+            {% else %}
+                <a href="/login" onclick="toggleMobileMenu()" class="mobile-login">Sign In with Microsoft</a>
+            {% endif %}
+        {% endif %}
     </div>
 
     <!-- PWA Install Prompt (Mobile Only) -->

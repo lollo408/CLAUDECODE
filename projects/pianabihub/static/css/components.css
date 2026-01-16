@@ -77,6 +77,25 @@
     background: rgba(255, 255, 255, 0.05);
 }
 
+/* User info in navigation */
+.nav-user {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    font-family: var(--font-mono);
+    padding: var(--space-sm) var(--space-md);
+    border-left: 1px solid var(--border-color);
+    margin-left: var(--space-sm);
+}
+
+.nav-logout {
+    color: var(--text-muted) !important;
+    font-size: var(--text-xs) !important;
+}
+
+.nav-logout:hover {
+    color: var(--red) !important;
+}
+
 /* --------------------------------------------------------------------------
    Navigation - Hamburger Menu (Mobile)
    -------------------------------------------------------------------------- */
@@ -157,6 +176,43 @@
 
 .mobile-menu a:hover {
     background: rgba(255, 255, 255, 0.05);
+}
+
+/* Mobile user info */
+.mobile-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-lg) var(--space-md);
+    margin-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-user-name {
+    color: var(--text-primary);
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+.mobile-user-email {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-family: var(--font-mono);
+}
+
+.mobile-login {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: white !important;
+    text-align: center;
+    margin-top: var(--space-lg);
+}
+
+.mobile-logout {
+    color: var(--text-muted) !important;
+    text-align: center;
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    padding-top: var(--space-lg) !important;
 }
 
 .mobile-menu-close {

@@ -1,6 +1,7 @@
 import os
 import json
-import ast  # <--- NEW: Add this library
+import ast
+import msal
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from datetime import date, datetime
 import csv
@@ -10,6 +11,72 @@ from services.perplexity_service import generate_event_summary
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
+
+
+@app.context_processor
+def inject_user():
+    """Make user info available in all templates."""
+    return {
+        'current_user': session.get('user', None),
+        'auth_enabled': all([
+            os.environ.get('AZURE_CLIENT_ID'),
+            os.environ.get('AZURE_CLIENT_SECRET'),
+            os.environ.get('AZURE_TENANT_ID')
+        ])
+    }
+
+
+# --- MICROSOFT AZURE AD CONFIGURATION ---
+AZURE_CLIENT_ID = os.environ.get('AZURE_CLIENT_ID')
+AZURE_CLIENT_SECRET = os.environ.get('AZURE_CLIENT_SECRET')
+AZURE_TENANT_ID = os.environ.get('AZURE_TENANT_ID')
+AZURE_AUTHORITY = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}" if AZURE_TENANT_ID else None
+AZURE_REDIRECT_PATH = "/callback"
+AZURE_SCOPE = ["User.Read"]  # Basic profile info
+
+# Check if Azure AD is configured
+AZURE_AUTH_ENABLED = all([AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID])
+
+
+def get_msal_app():
+    """Create MSAL confidential client application."""
+    if not AZURE_AUTH_ENABLED:
+        return None
+    return msal.ConfidentialClientApplication(
+        AZURE_CLIENT_ID,
+        authority=AZURE_AUTHORITY,
+        client_credential=AZURE_CLIENT_SECRET
+    )
+
+
+def get_auth_url():
+    """Generate Microsoft login URL."""
+    msal_app = get_msal_app()
+    if not msal_app:
+        return None
+
+    # Build redirect URI from request
+    redirect_uri = request.url_root.rstrip('/') + AZURE_REDIRECT_PATH
+
+    auth_url = msal_app.get_authorization_request_url(
+        scopes=AZURE_SCOPE,
+        redirect_uri=redirect_uri,
+        state=request.args.get('next', '/')
+    )
+    return auth_url
+
+
+def is_user_authenticated():
+    """Check if current user is authenticated."""
+    if not AZURE_AUTH_ENABLED:
+        return True  # If auth not configured, allow access
+    return 'user' in session
+
+
+def get_current_user():
+    """Get current user info from session."""
+    return session.get('user', None)
+
 
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
@@ -52,14 +119,16 @@ def update_app_config(key, value):
         return False
 
 
-# --- MAINTENANCE MODE MIDDLEWARE ---
+# --- AUTHENTICATION & MAINTENANCE MIDDLEWARE ---
 @app.before_request
-def check_maintenance_mode():
-    """Check if app is in maintenance mode before every request."""
-    # Allow these paths even during maintenance
-    allowed_paths = [
+def check_auth_and_maintenance():
+    """Check authentication and maintenance mode before every request."""
+    # Paths that don't require auth or maintenance check
+    public_paths = [
+        '/login',
+        '/callback',
+        '/logout',
         '/maintenance',
-        '/admin',
         '/static/',
         '/api/version',
         '/manifest.json',
@@ -67,12 +136,22 @@ def check_maintenance_mode():
         '/offline'
     ]
 
-    # Check if current path is allowed
-    for path in allowed_paths:
+    # Check if current path is public
+    for path in public_paths:
         if request.path.startswith(path):
             return None
 
-    # Admin bypass: ?admin_key=secret
+    # Admin paths have their own auth
+    if request.path.startswith('/admin'):
+        return None
+
+    # Check authentication (if Azure AD is enabled)
+    if AZURE_AUTH_ENABLED and not is_user_authenticated():
+        # Store the intended destination
+        session['next_url'] = request.url
+        return redirect(url_for('login'))
+
+    # Admin bypass for maintenance: ?admin_key=secret
     admin_secret = os.environ.get('ADMIN_SECRET', 'piana2026')
     if request.args.get('admin_key') == admin_secret:
         return None
@@ -83,6 +162,76 @@ def check_maintenance_mode():
         return redirect(url_for('maintenance'))
 
     return None
+
+
+# --- AUTHENTICATION ROUTES ---
+@app.route('/login')
+def login():
+    """Redirect to Microsoft login page."""
+    if not AZURE_AUTH_ENABLED:
+        return redirect(url_for('home'))
+
+    auth_url = get_auth_url()
+    if auth_url:
+        return redirect(auth_url)
+    return "Authentication not configured", 500
+
+
+@app.route('/callback')
+def callback():
+    """Handle the callback from Microsoft after login."""
+    if not AZURE_AUTH_ENABLED:
+        return redirect(url_for('home'))
+
+    # Check for errors
+    if 'error' in request.args:
+        error_desc = request.args.get('error_description', 'Unknown error')
+        return f"Login failed: {error_desc}", 400
+
+    # Get the authorization code
+    code = request.args.get('code')
+    if not code:
+        return "No authorization code received", 400
+
+    # Build redirect URI (must match what was used in auth request)
+    redirect_uri = request.url_root.rstrip('/') + AZURE_REDIRECT_PATH
+
+    # Exchange code for tokens
+    msal_app = get_msal_app()
+    result = msal_app.acquire_token_by_authorization_code(
+        code,
+        scopes=AZURE_SCOPE,
+        redirect_uri=redirect_uri
+    )
+
+    if 'error' in result:
+        return f"Token error: {result.get('error_description', result.get('error'))}", 400
+
+    # Store user info in session
+    if 'id_token_claims' in result:
+        session['user'] = {
+            'name': result['id_token_claims'].get('name', 'User'),
+            'email': result['id_token_claims'].get('preferred_username', ''),
+            'oid': result['id_token_claims'].get('oid', '')
+        }
+        session.permanent = True
+
+    # Redirect to original destination or home
+    next_url = request.args.get('state', '/') or session.pop('next_url', '/')
+    return redirect(next_url)
+
+
+@app.route('/logout')
+def logout():
+    """Log out the user."""
+    session.clear()
+
+    if AZURE_AUTH_ENABLED:
+        # Redirect to Microsoft logout
+        logout_url = f"{AZURE_AUTHORITY}/oauth2/v2.0/logout?post_logout_redirect_uri={request.url_root}"
+        return redirect(logout_url)
+
+    return redirect(url_for('home'))
 
 
 # --- HELPER FUNCTION: Fetch & Clean Data ---
