@@ -1,13 +1,21 @@
 import os
 import json
 import ast
-import msal
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from datetime import date, datetime
 import csv
 import io
 from supabase import create_client, Client
 from services.perplexity_service import generate_event_summary
+
+# Try to import msal, but don't crash if it fails
+try:
+    import msal
+    MSAL_AVAILABLE = True
+except ImportError as e:
+    print(f"[Auth] MSAL import failed: {e}")
+    MSAL_AVAILABLE = False
+    msal = None
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -34,19 +42,28 @@ AZURE_AUTHORITY = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}" if AZUR
 AZURE_REDIRECT_PATH = "/callback"
 AZURE_SCOPE = ["User.Read"]  # Basic profile info
 
-# Check if Azure AD is configured
-AZURE_AUTH_ENABLED = all([AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID])
+# Check if Azure AD is configured AND msal is available
+AZURE_AUTH_ENABLED = MSAL_AVAILABLE and all([AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID])
+
+if AZURE_AUTH_ENABLED:
+    print(f"[Auth] Azure AD authentication enabled")
+else:
+    print(f"[Auth] Azure AD authentication disabled (MSAL: {MSAL_AVAILABLE}, Client: {bool(AZURE_CLIENT_ID)}, Tenant: {bool(AZURE_TENANT_ID)}, Secret: {bool(AZURE_CLIENT_SECRET)})")
 
 
 def get_msal_app():
     """Create MSAL confidential client application."""
-    if not AZURE_AUTH_ENABLED:
+    if not AZURE_AUTH_ENABLED or not msal:
         return None
-    return msal.ConfidentialClientApplication(
-        AZURE_CLIENT_ID,
-        authority=AZURE_AUTHORITY,
-        client_credential=AZURE_CLIENT_SECRET
-    )
+    try:
+        return msal.ConfidentialClientApplication(
+            AZURE_CLIENT_ID,
+            authority=AZURE_AUTHORITY,
+            client_credential=AZURE_CLIENT_SECRET
+        )
+    except Exception as e:
+        print(f"[Auth] Failed to create MSAL app: {e}")
+        return None
 
 
 def get_auth_url():
