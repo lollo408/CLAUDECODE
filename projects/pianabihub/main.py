@@ -148,6 +148,7 @@ def check_auth_and_maintenance():
         '/maintenance',
         '/static/',
         '/api/version',
+        '/api/auth-status',
         '/manifest.json',
         '/service-worker.js',
         '/offline'
@@ -690,6 +691,19 @@ def admin_logout():
     """Logout from admin panel."""
     session.pop('admin_authenticated', None)
     return redirect(url_for('home'))
+
+
+@app.route('/api/auth-status')
+def api_auth_status():
+    """Debug endpoint to check auth configuration."""
+    return jsonify({
+        'msal_available': MSAL_AVAILABLE,
+        'azure_auth_enabled': AZURE_AUTH_ENABLED,
+        'has_client_id': bool(AZURE_CLIENT_ID),
+        'has_tenant_id': bool(AZURE_TENANT_ID),
+        'has_client_secret': bool(AZURE_CLIENT_SECRET),
+        'client_id_preview': AZURE_CLIENT_ID[:8] + '...' if AZURE_CLIENT_ID else None
+    })
 
 
 @app.route('/api/version')
