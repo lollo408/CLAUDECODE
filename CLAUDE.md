@@ -455,6 +455,7 @@ vercel --prod
 ---
 
 ### Upcoming Tasks
+- [ ] **NEXT SESSION:** Set maintenance mode, deploy version update to force mobile PWA refresh
 - [ ] Upload 2026 Q2 events (April-June) when dates available
 - [ ] Monitor Make.com automation for Q1 2026 event summaries
 - [ ] Push notifications (future enhancement)
