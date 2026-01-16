@@ -65,6 +65,37 @@
 - Environment variables pulled from Vercel: `vercel env pull .env.local`
 - Vercel CLI linked: `vercel link` (one-time setup)
 
+**Troubleshooting: Vercel Auto-Deploy Not Working**
+
+If you can't select "main" as production branch or auto-deploy stops working:
+
+1. **Make Repo Public (if collaboration error):**
+   - GitHub → lollo408/CLAUDECODE → Settings → Make public
+   - This allows free collaboration on Vercel
+
+2. **Verify Vercel Settings (CRITICAL):**
+   - Root Directory: `projects/pianabihub` ← MUST be set, Flask app lives here
+   - Production Branch: `main`
+   - Framework Preset: Other (Python auto-detected)
+
+3. **If "No flask entrypoint found" error:**
+   - Root Directory is wrong - set it to `projects/pianabihub`
+
+4. **Re-authorize GitHub Access (if branch selection broken):**
+   - GitHub.com → Settings → Applications → Authorized OAuth Apps
+   - Find "Vercel" → Revoke access
+   - Vercel Dashboard → Project Settings → Git → Disconnect
+   - Reconnect and re-authorize
+
+5. **Trigger Deploy via Git Push:**
+   ```bash
+   cd "C:\Users\LLeprotti\OneDrive - Tintoria-Piana US Inc\Claude Code"
+   git commit --allow-empty -m "Trigger deploy"
+   git push origin main
+   ```
+
+**Note:** CLI deploy (`vercel --prod`) may have permission issues due to git author mismatch. Use GitHub push for auto-deploy instead.
+
 ### Event Tracker (Subproject)
 **Status:** Phase 2 Complete, Phase 3 Complete
 **Goal:** Track industry events, send in-app notifications, auto-generate post-event summaries
@@ -217,6 +248,14 @@ vercel --prod
 3. Empty dashboard/events - Re-added environment variables to new Vercel project
 4. PWA branding - Replaced purple theme with white + Piana logo
 5. Mobile navigation - Added bottom nav to all pages including home
+6. ✅ **Bedding industry report broken links** - Fixed Make.com workflow HTTP module (Jan 12 PM)
+7. ✅ **Manifest.json 401 errors** - Added Flask routes for PWA files (Jan 12 PM)
+8. ✅ **Home page mobile layout** - Fixed media queries and bottom nav display (Jan 12 PM)
+
+**Recent Commits (Jan 12, 2026 - Evening Session):**
+- `f9d0f0e` - Fix bottom navigation display on home page (PWA standalone mode detection)
+- `e89947b` - Fix PWA static file serving (resolve manifest.json 401 errors)
+- `fca33c0` - Fix home page mobile layout and bottom navigation (align with other pages)
 
 **Caching Strategy:**
 - Static assets (CSS, JS, images): Cache-first (instant load)
@@ -228,11 +267,105 @@ vercel --prod
 - Manual: Close app completely and reopen
 - Clean install: Uninstall → Visit site → Reinstall
 
-**Known Minor Issue:**
-- Home page bottom nav may not show consistently in standalone mode on some devices
-- Workaround: Use other pages or reinstall app
+**Session Summary (Jan 12, 2026 - Evening):**
+
+*Issue 1: Bedding Industry Reports - Broken Links*
+- **Problem:** All links in Bedding vertical showing 404 errors (SOURCE_URL_1, SOURCE_URL_2 placeholders)
+- **Root Cause:** Make.com workflow had outdated HTTP module not extracting real URLs
+- **Solution:** Updated Make.com HTTP module, relinked variables in workflow
+- **Status:** ✅ Fixed - Bedding reports now have working URLs like other verticals
+
+*Issue 2: Home Page Bottom Navigation*
+- **Problem:** Bottom nav not showing on home page (mobile/PWA mode), page not optimized for mobile
+- **Root Cause:** Multiple issues:
+  - Manifest.json returning 401 errors (blocked PWA features)
+  - Service worker couldn't load (401 errors)
+  - Home page media queries misaligned with other pages
+  - Desktop-first CSS causing mobile overflow
+- **Solution:**
+  - Added Flask routes for `/manifest.json` and `/service-worker.js`
+  - Updated base.html to use root-level paths
+  - Fixed home page media queries (767px breakpoint, 60px padding)
+  - Aligned mobile styles with dashboard/events/archive pages
+- **Status:** ✅ Fixed - Tested in incognito mode, works perfectly across all pages
+
+**Known Issue (To Address Tomorrow):**
+- ⚠️ iOS doesn't show automatic install prompt on first visit
+- Current workaround: Share button → "Add to Home Screen"
+- **Next task:** Add manual install button that works across iOS/Android
+- **Implementation notes:** Button should detect iOS vs Android and show appropriate install instructions
 
 **Phase 2 (Future Enhancements):**
+- Manual PWA install button (cross-platform iOS/Android support)
 - Push notifications (event summaries, weekly reminders)
 - Microsoft 365 authentication
 - Real-time updates via Supabase subscriptions
+
+---
+
+### Maintenance & Update System (Subproject)
+**Status:** ✅ COMPLETE & DEPLOYED (Jan 16, 2026)
+**Goal:** Control app availability and silently push updates to users
+
+**Features:**
+- **Maintenance Mode:** Full lockout - redirect all users to maintenance page
+- **Silent Auto-Updates:** Automatic cache clearing and reload when new version detected (no user prompt)
+- **Admin Control Panel:** Mobile-friendly admin page to toggle settings
+- **Version Tracking:** `/api/version` endpoint for debugging
+
+**Admin Control Panel:**
+- **URL:** `https://pianabihub.vercel.app/admin?key=piana2026`
+- **Features:**
+  - Toggle maintenance mode on/off
+  - Set custom maintenance message
+  - Update app version (triggers silent auto-update for all users)
+  - Health status indicator (Supabase connection)
+  - Quick links to Supabase and Vercel dashboards
+
+**How It Works:**
+
+1. **Maintenance Mode**
+   - Toggle via Admin Control Panel or Supabase `app_config` table
+   - When `maintenance_mode.enabled = true`, all routes redirect to `/maintenance`
+   - Admin bypass: Add `?admin_key=piana2026` to URL
+   - Maintenance page auto-polls every 30 seconds to check when back online
+
+2. **Silent Auto-Updates**
+   - Version stored in Supabase: `app_version.version` and `app_version.min_version`
+   - On page load and when app becomes visible, JavaScript checks `/api/version`
+   - If local version < `min_version`, silently clears cache and reloads (like Clash Royale updates)
+   - No user prompt - happens automatically in background
+   - Prevents infinite reload loops with sessionStorage flag
+
+**How to Enable Maintenance Mode:**
+1. Go to `https://pianabihub.vercel.app/admin?key=piana2026`
+2. Toggle the Maintenance Mode switch to ON
+3. Optionally add a custom message
+4. Click Enable/Update → App immediately shows maintenance page to all users
+5. To disable: Toggle switch back to OFF
+
+**How to Push an Update:**
+1. Deploy new code to Vercel (push to GitHub)
+2. Go to Admin Control Panel: `https://pianabihub.vercel.app/admin?key=piana2026`
+3. Under "App Version", enter new version (e.g., `1.1.0`)
+4. Click "Deploy Version Update"
+5. All users silently get updated on their next visit (no prompt needed)
+
+**Supabase Tables:**
+- `app_config` - Stores `maintenance_mode` and `app_version` as JSONB
+
+**Files Created/Modified (Jan 16, 2026):**
+- `main.py` - Added `/admin` route, `get_app_config()`, `update_app_config()`, maintenance middleware
+- `templates/admin.html` - Admin control panel (mobile-friendly)
+- `static/service-worker.js` - Added message handler for `FORCE_UPDATE` cache clearing
+- `templates/base.html` - Silent auto-update JavaScript (version checking, cache clearing)
+- `templates/maintenance.html` - Maintenance page with auto-polling
+
+**Troubleshooting:**
+- If admin page returns 403, check that `ADMIN_SECRET` env var in Vercel doesn't have trailing newline
+- To fix: Vercel Dashboard → Settings → Environment Variables → Delete and re-add ADMIN_SECRET
+
+**Next Phase: Microsoft 365 Authentication**
+- Waiting on IT to register app in Azure AD
+- Will add "Sign in with Microsoft" to protect all routes
+- Only Tintoria-Piana employees will be able to access
