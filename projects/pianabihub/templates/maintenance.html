@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Under Maintenance - Piana BI Hub{% endblock %}
+
+{% block content %}
+<style>
+  .maintenance-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .maintenance-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+  }
+
+  .maintenance-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+
+  .maintenance-message {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    max-width: 500px;
+    line-height: 1.6;
+  }
+
+  .maintenance-custom-message {
+    font-size: 1rem;
+    color: var(--purple);
+    font-weight: 500;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    padding: 1rem;
+    background: var(--purple-light);
+    border-radius: 8px;
+    border-left: 4px solid var(--purple);
+  }
+
+  .maintenance-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 1rem;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--purple);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .maintenance-info {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    max-width: 500px;
+  }
+
+  .maintenance-info h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .maintenance-info p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 768px) {
+    .maintenance-title {
+      font-size: 1.5rem;
+    }
+
+    .maintenance-message {
+      font-size: 1rem;
+    }
+
+    .maintenance-container {
+      padding: 1rem;
+    }
+  }
+</style>
+
+<div class="maintenance-container">
+  <div class="maintenance-icon">🔧</div>
+
+  <h1 class="maintenance-title">Under Maintenance</h1>
+
+  <p class="maintenance-message">
+    We're currently performing scheduled maintenance to improve your experience.
+    Please check back shortly.
+  </p>
+
+  {% if message %}
+  <div class="maintenance-custom-message">
+    {{ message }}
+  </div>
+  {% endif %}
+
+  <div class="maintenance-status">
+    <div class="spinner"></div>
+    <span>Checking status...</span>
+  </div>
+
+  <div class="maintenance-info">
+    <h3>What's happening?</h3>
+    <p>
+      We're updating Piana BI Hub with new features and improvements.
+      This page will automatically refresh when we're back online.
+    </p>
+  </div>
+</div>
+
+<script>
+  // Auto-check every 30 seconds if maintenance is over
+  let checkCount = 0;
+  const maxChecks = 60; // Stop after 30 minutes
+
+  async function checkMaintenanceStatus() {
+    checkCount++;
+
+    try {
+      const response = await fetch('/api/version', { cache: 'no-store' });
+      if (response.ok) {
+        // If we can reach the version endpoint, try loading the home page
+        // The server will redirect back here if still in maintenance
+        const testResponse = await fetch('/', {
+          method: 'HEAD',
+          cache: 'no-store',
+          redirect: 'manual'
+        });
+
+        // If no redirect, maintenance is over
+        if (testResponse.type !== 'opaqueredirect') {
+          window.location.href = '/';
+          return;
+        }
+      }
+    } catch (e) {
+      console.log('Still in maintenance or offline');
+    }
+
+    // Update status text
+    const statusEl = document.querySelector('.maintenance-status span');
+    if (statusEl && checkCount < maxChecks) {
+      statusEl.textContent = `Checking status... (${checkCount * 30}s)`;
+    } else if (statusEl) {
+      statusEl.textContent = 'Please refresh manually';
+    }
+  }
+
+  // Check every 30 seconds
+  setInterval(checkMaintenanceStatus, 30000);
+
+  // Also check immediately on page load
+  setTimeout(checkMaintenanceStatus, 5000);
+</script>
+{% endblock %}

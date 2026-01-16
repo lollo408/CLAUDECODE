@@ -23,6 +23,53 @@ except Exception as e:
     raise ValueError(f"Failed to create Supabase client. Error: {e}")
 
 
+# --- APP CONFIG HELPER FUNCTIONS ---
+def get_app_config(key):
+    """Fetches a config value from app_config table."""
+    try:
+        response = supabase.table('app_config') \
+            .select('value') \
+            .eq('key', key) \
+            .limit(1) \
+            .execute()
+        return response.data[0]['value'] if response.data else None
+    except Exception as e:
+        print(f"Error fetching app config {key}: {e}")
+        return None
+
+
+# --- MAINTENANCE MODE MIDDLEWARE ---
+@app.before_request
+def check_maintenance_mode():
+    """Check if app is in maintenance mode before every request."""
+    # Allow these paths even during maintenance
+    allowed_paths = [
+        '/maintenance',
+        '/static/',
+        '/api/version',
+        '/manifest.json',
+        '/service-worker.js',
+        '/offline'
+    ]
+
+    # Check if current path is allowed
+    for path in allowed_paths:
+        if request.path.startswith(path):
+            return None
+
+    # Admin bypass: ?admin_key=secret
+    admin_secret = os.environ.get('ADMIN_SECRET', 'piana2026')
+    if request.args.get('admin_key') == admin_secret:
+        return None
+
+    # Check maintenance mode from Supabase
+    maintenance_config = get_app_config('maintenance_mode')
+    if maintenance_config and maintenance_config.get('enabled'):
+        return redirect(url_for('maintenance'))
+
+    return None
+
+
 # --- HELPER FUNCTION: Fetch & Clean Data ---
 def get_latest_report(vertical_name):
     """Fetches and cleans the latest report for a given vertical."""
@@ -340,6 +387,32 @@ def upload_events():
 def offline():
     """Offline fallback page for PWA"""
     return render_template('offline.html')
+
+
+@app.route('/maintenance')
+def maintenance():
+    """Maintenance mode page - shown when app is under maintenance."""
+    maintenance_config = get_app_config('maintenance_mode')
+    message = ""
+    if maintenance_config:
+        message = maintenance_config.get('message', '')
+    return render_template('maintenance.html', message=message)
+
+
+@app.route('/api/version')
+def api_version():
+    """Returns app version info for service worker update checks."""
+    version_config = get_app_config('app_version')
+    if version_config:
+        return jsonify({
+            'version': version_config.get('version', '1.0.0'),
+            'min_version': version_config.get('min_version', '1.0.0')
+        })
+    # Default if config not found
+    return jsonify({
+        'version': '1.0.0',
+        'min_version': '1.0.0'
+    })
 
 
 @app.route('/manifest.json')

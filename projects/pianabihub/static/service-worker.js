@@ -1,15 +1,16 @@
 /**
  * Service Worker for Piana BI Hub PWA
- * Handles caching strategies and offline functionality
+ * Handles caching strategies, offline functionality, and forced updates
  */
 
-const CACHE_VERSION = 'piana-bi-v1';
+const CACHE_VERSION = 'piana-bi-v2';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install
 const PRECACHE_ASSETS = [
   '/',
   '/offline',
+  '/maintenance',
   '/static/css/base.css',
   '/static/css/components.css',
   '/static/icons/icon-192.png',
@@ -49,6 +50,32 @@ self.addEventListener('activate', (event) => {
       })
       .then(() => self.clients.claim()) // Take control immediately
   );
+});
+
+// Listen for messages from the main page
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'FORCE_UPDATE') {
+    console.log('[Service Worker] Received force update command');
+
+    // Clear all caches
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            console.log('[Service Worker] Clearing cache:', cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      }).then(() => {
+        // Notify all clients that cache is cleared
+        self.clients.matchAll().then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: 'CACHE_CLEARED' });
+          });
+        });
+      })
+    );
+  }
 });
 
 // Fetch event: Implement caching strategies
@@ -166,5 +193,6 @@ function isHTMLPage(pathname) {
          pathname.startsWith('/archive') ||
          pathname.startsWith('/home') ||
          pathname === '/offline' ||
+         pathname === '/maintenance' ||
          (!pathname.includes('.') && !pathname.startsWith('/api/'));
 }

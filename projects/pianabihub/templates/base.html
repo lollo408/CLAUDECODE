@@ -70,6 +70,23 @@
         </div>
     </div>
 
+    <!-- Forced Update Overlay (Non-dismissible) -->
+    <div id="updateOverlay" class="update-overlay" style="display: none;">
+        <div class="update-overlay-content">
+            <div class="update-icon">🔄</div>
+            <h2 class="update-title">Update Required</h2>
+            <p class="update-message">
+                A new version of Piana BI Hub is available with important improvements and security updates.
+            </p>
+            <button id="updateButton" class="update-btn">
+                <span>Update Now</span>
+            </button>
+            <p class="update-note">
+                This will refresh the app with the latest version.
+            </p>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main>
         {% block content %}{% endblock %}
@@ -303,7 +320,233 @@
                 display: none !important;
             }
         }
+
+        /* Forced Update Overlay Styles */
+        .update-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .update-overlay-content {
+            background: var(--bg-primary, #fff);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .update-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .update-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1a1a1a);
+            margin-bottom: 1rem;
+        }
+
+        .update-message {
+            font-size: 1rem;
+            color: var(--text-secondary, #666);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .update-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .update-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .update-btn:active {
+            transform: translateY(0);
+        }
+
+        .update-note {
+            font-size: 0.85rem;
+            color: var(--text-secondary, #666);
+            margin-top: 1rem;
+            opacity: 0.8;
+        }
     </style>
+
+    <!-- Version Checking and Forced Update Handler -->
+    <script>
+        (function() {
+            const VERSION_KEY = 'piana-bi-app-version';
+            const updateOverlay = document.getElementById('updateOverlay');
+            const updateButton = document.getElementById('updateButton');
+
+            // Compare semver versions (returns true if v1 < v2)
+            function isVersionLower(v1, v2) {
+                if (!v1 || !v2) return false;
+                const parts1 = v1.split('.').map(Number);
+                const parts2 = v2.split('.').map(Number);
+
+                for (let i = 0; i < 3; i++) {
+                    const p1 = parts1[i] || 0;
+                    const p2 = parts2[i] || 0;
+                    if (p1 < p2) return true;
+                    if (p1 > p2) return false;
+                }
+                return false;
+            }
+
+            // Check version against server
+            async function checkVersion() {
+                try {
+                    const response = await fetch('/api/version', {
+                        cache: 'no-store',
+                        headers: { 'Cache-Control': 'no-cache' }
+                    });
+
+                    if (!response.ok) {
+                        console.log('[Version] Could not fetch version info');
+                        return;
+                    }
+
+                    const serverVersion = await response.json();
+                    const localVersion = localStorage.getItem(VERSION_KEY);
+
+                    console.log('[Version] Server:', serverVersion.version, 'Min:', serverVersion.min_version, 'Local:', localVersion);
+
+                    // If no local version, store current and continue
+                    if (!localVersion) {
+                        localStorage.setItem(VERSION_KEY, serverVersion.version);
+                        console.log('[Version] First visit, storing version:', serverVersion.version);
+                        return;
+                    }
+
+                    // Check if local version is below minimum required
+                    if (isVersionLower(localVersion, serverVersion.min_version)) {
+                        console.log('[Version] Update required! Local:', localVersion, 'Min:', serverVersion.min_version);
+                        showUpdateOverlay();
+                    }
+                    // Also update stored version if server has newer
+                    else if (isVersionLower(localVersion, serverVersion.version)) {
+                        localStorage.setItem(VERSION_KEY, serverVersion.version);
+                        console.log('[Version] Updated local version to:', serverVersion.version);
+                    }
+                } catch (error) {
+                    console.log('[Version] Check failed (may be offline):', error);
+                }
+            }
+
+            // Show the forced update overlay
+            function showUpdateOverlay() {
+                if (updateOverlay) {
+                    updateOverlay.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            // Handle update button click
+            async function handleUpdate() {
+                if (updateButton) {
+                    updateButton.disabled = true;
+                    updateButton.innerHTML = '<span>Updating...</span>';
+                }
+
+                try {
+                    // Tell service worker to clear all caches
+                    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({ type: 'FORCE_UPDATE' });
+
+                        // Wait a moment for cache clearing
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+
+                    // Clear local version so it gets re-set on reload
+                    localStorage.removeItem(VERSION_KEY);
+
+                    // Force reload from server (bypass cache)
+                    window.location.reload(true);
+                } catch (error) {
+                    console.error('[Version] Update failed:', error);
+                    // Try simple reload as fallback
+                    window.location.reload(true);
+                }
+            }
+
+            // Listen for cache cleared message from service worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data && event.data.type === 'CACHE_CLEARED') {
+                        console.log('[Version] Cache cleared, reloading...');
+                        window.location.reload(true);
+                    }
+                });
+            }
+
+            // Set up update button
+            if (updateButton) {
+                updateButton.addEventListener('click', handleUpdate);
+            }
+
+            // Check version on page load
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', checkVersion);
+            } else {
+                checkVersion();
+            }
+
+            // Also check when app becomes visible (user returns to app)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    checkVersion();
+                }
+            });
+        })();
+    </script>
 
 </body>
 </html>
