@@ -84,9 +84,7 @@ def get_auth_url():
 
 
 def is_user_authenticated():
-    """Check if current user is authenticated."""
-    if not AZURE_AUTH_ENABLED:
-        return True  # If auth not configured, allow access
+    """Check if current user is authenticated (Microsoft or Guest)."""
     return 'user' in session
 
 
@@ -143,6 +141,8 @@ def check_auth_and_maintenance():
     # Paths that don't require auth or maintenance check
     public_paths = [
         '/login',
+        '/auth/',
+        '/guest',
         '/callback',
         '/logout',
         '/maintenance',
@@ -162,8 +162,8 @@ def check_auth_and_maintenance():
     if request.path.startswith('/admin'):
         return None
 
-    # Check authentication (if Azure AD is enabled)
-    if AZURE_AUTH_ENABLED and not is_user_authenticated():
+    # Always require login (user must be in session - either Microsoft or Guest)
+    if not is_user_authenticated():
         # Store the intended destination
         session['next_url'] = request.url
         return redirect(url_for('login'))
@@ -184,14 +184,40 @@ def check_auth_and_maintenance():
 # --- AUTHENTICATION ROUTES ---
 @app.route('/login')
 def login():
+    """Show login page with options."""
+    # If already logged in, go to home
+    if is_user_authenticated():
+        return redirect(url_for('home'))
+
+    error = request.args.get('error')
+    return render_template('login.html',
+                         auth_available=AZURE_AUTH_ENABLED,
+                         error=error)
+
+
+@app.route('/auth/microsoft')
+def auth_microsoft():
     """Redirect to Microsoft login page."""
     if not AZURE_AUTH_ENABLED:
-        return redirect(url_for('home'))
+        return redirect(url_for('login', error='Microsoft authentication not configured'))
 
     auth_url = get_auth_url()
     if auth_url:
         return redirect(auth_url)
-    return "Authentication not configured", 500
+    return redirect(url_for('login', error='Failed to generate login URL'))
+
+
+@app.route('/guest')
+def guest_login():
+    """Allow guest access without Microsoft login."""
+    session['user'] = {
+        'name': 'Guest',
+        'email': 'guest@piana.com',
+        'is_guest': True
+    }
+    session.permanent = True
+    next_url = session.pop('next_url', '/')
+    return redirect(next_url)
 
 
 @app.route('/callback')
