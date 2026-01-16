@@ -62,12 +62,31 @@
         <div class="install-banner-content">
             <div class="install-banner-text">
                 <strong>Install Piana BI Hub</strong>
-                <span>Quick access from your home screen</span>
+                <span id="installSubtext">Quick access from your home screen</span>
             </div>
             <div class="install-banner-actions">
                 <button id="installButton" class="install-btn">Install</button>
                 <button id="dismissButton" class="dismiss-btn">×</button>
             </div>
+        </div>
+        <!-- iOS Instructions (shown when Install clicked on iOS) -->
+        <div id="iosInstructions" class="ios-instructions" style="display: none;">
+            <div class="ios-step">
+                <span class="ios-step-num">1</span>
+                <span>Tap the <strong>Share</strong> button</span>
+                <svg class="ios-share-icon" viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M12 2l4 4-1.4 1.4L13 5.8V15h-2V5.8L9.4 7.4 8 6l4-4zm-7 9v9h14v-9h2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9h2z" fill="currentColor"/>
+                </svg>
+            </div>
+            <div class="ios-step">
+                <span class="ios-step-num">2</span>
+                <span>Scroll down and tap <strong>Add to Home Screen</strong></span>
+            </div>
+            <div class="ios-step">
+                <span class="ios-step-num">3</span>
+                <span>Tap <strong>Add</strong> in the top right</span>
+            </div>
+            <button id="iosGotIt" class="ios-got-it-btn">Got it</button>
         </div>
     </div>
 
@@ -144,68 +163,97 @@
 
     <!-- PWA Install Prompt Handler -->
     <script>
-        let deferredPrompt;
-        const installBanner = document.getElementById('installBanner');
-        const installButton = document.getElementById('installButton');
-        const dismissButton = document.getElementById('dismissButton');
+        (function() {
+            let deferredPrompt = null;
+            const installBanner = document.getElementById('installBanner');
+            const installButton = document.getElementById('installButton');
+            const dismissButton = document.getElementById('dismissButton');
+            const installSubtext = document.getElementById('installSubtext');
+            const iosInstructions = document.getElementById('iosInstructions');
+            const iosGotIt = document.getElementById('iosGotIt');
 
-        // Check if user previously dismissed the banner
-        const dismissed = localStorage.getItem('pwa-install-dismissed');
+            // Detect iOS (iPhone, iPad, iPod)
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-        // Check if already installed (running in standalone mode)
-        const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
-                           window.navigator.standalone === true;
+            // Detect if running in Safari (not Chrome/Firefox on iOS)
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-        // Listen for the beforeinstallprompt event
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent default browser install prompt
-            e.preventDefault();
+            // Check if already installed (running in standalone mode)
+            const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+                               window.navigator.standalone === true;
 
-            // Save the event for later use
-            deferredPrompt = e;
+            // Check if user previously dismissed the banner
+            const dismissed = localStorage.getItem('pwa-install-dismissed');
 
-            // Show banner only on mobile and if not dismissed or installed
+            // Check if mobile
             const isMobile = window.innerWidth < 768;
-            if (isMobile && !dismissed && !isInstalled) {
+
+            console.log('[PWA] iOS:', isIOS, 'Safari:', isSafari, 'Installed:', isInstalled, 'Mobile:', isMobile);
+
+            // iOS-specific: Show banner immediately (no beforeinstallprompt event)
+            if (isIOS && !isInstalled && !dismissed && isMobile) {
+                installSubtext.textContent = 'Add to your home screen for quick access';
+                installButton.textContent = 'How to Install';
                 installBanner.style.display = 'block';
+                console.log('[PWA] Showing iOS install banner');
             }
 
-            console.log('[PWA] Install prompt available');
-        });
+            // Listen for the beforeinstallprompt event (Android/Chrome)
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
 
-        // Handle install button click
-        installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) {
-                return;
+                // Show banner on mobile if not dismissed or installed
+                if (isMobile && !dismissed && !isInstalled) {
+                    installButton.textContent = 'Install';
+                    installSubtext.textContent = 'Quick access from your home screen';
+                    installBanner.style.display = 'block';
+                }
+
+                console.log('[PWA] Android install prompt available');
+            });
+
+            // Handle install button click
+            installButton.addEventListener('click', async () => {
+                // iOS: Show step-by-step instructions
+                if (isIOS) {
+                    document.querySelector('.install-banner-content').style.display = 'none';
+                    iosInstructions.style.display = 'block';
+                    console.log('[PWA] Showing iOS instructions');
+                    return;
+                }
+
+                // Android/Chrome: Use native prompt
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('[PWA] User choice:', outcome);
+                    deferredPrompt = null;
+                    installBanner.style.display = 'none';
+                }
+            });
+
+            // Handle "Got it" button for iOS instructions
+            if (iosGotIt) {
+                iosGotIt.addEventListener('click', () => {
+                    installBanner.style.display = 'none';
+                    localStorage.setItem('pwa-install-dismissed', 'true');
+                });
             }
 
-            // Show the browser's install prompt
-            deferredPrompt.prompt();
+            // Handle dismiss button click
+            dismissButton.addEventListener('click', () => {
+                installBanner.style.display = 'none';
+                localStorage.setItem('pwa-install-dismissed', 'true');
+            });
 
-            // Wait for the user's response
-            const { outcome } = await deferredPrompt.userChoice;
-
-            console.log('[PWA] User choice:', outcome);
-
-            // Clear the prompt
-            deferredPrompt = null;
-
-            // Hide the banner
-            installBanner.style.display = 'none';
-        });
-
-        // Handle dismiss button click
-        dismissButton.addEventListener('click', () => {
-            installBanner.style.display = 'none';
-            localStorage.setItem('pwa-install-dismissed', 'true');
-        });
-
-        // Listen for app installed event
-        window.addEventListener('appinstalled', () => {
-            console.log('[PWA] App installed successfully');
-            installBanner.style.display = 'none';
-            deferredPrompt = null;
-        });
+            // Listen for app installed event
+            window.addEventListener('appinstalled', () => {
+                console.log('[PWA] App installed successfully');
+                installBanner.style.display = 'none';
+                deferredPrompt = null;
+            });
+        })();
     </script>
 
     <!-- PWA Install Banner Styles -->
@@ -296,6 +344,65 @@
 
         .dismiss-btn:hover {
             background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* iOS Instructions Styles */
+        .ios-instructions {
+            padding: 0.5rem 0;
+        }
+
+        .ios-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .ios-step:last-of-type {
+            border-bottom: none;
+        }
+
+        .ios-step-num {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .ios-step span {
+            font-size: 0.9rem;
+        }
+
+        .ios-share-icon {
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 0.25rem;
+        }
+
+        .ios-got-it-btn {
+            width: 100%;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: white;
+            color: #7c3aed;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ios-got-it-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         /* Hide on desktop */
