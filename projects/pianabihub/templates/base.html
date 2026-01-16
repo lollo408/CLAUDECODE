@@ -35,8 +35,21 @@
                 <a href="/events" class="{{ 'active' if '/events' in request.path else '' }}">events</a>
                 <a href="/archive" class="{{ 'active' if request.path == '/archive' else '' }}">archive</a>
                 {% if current_user %}
-                    <span class="nav-user">{{ current_user.name.split(' ')[0] }}</span>
-                    <a href="/logout" class="nav-logout">logout</a>
+                    <div class="nav-user-dropdown">
+                        <button class="nav-user-btn" onclick="toggleUserMenu()">
+                            {{ current_user.name.split(' ')[0] }}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                        </button>
+                        <div class="nav-user-menu" id="userMenu">
+                            <div class="nav-user-info">
+                                <span class="nav-user-name">{{ current_user.name }}</span>
+                                <span class="nav-user-email">{{ current_user.email }}</span>
+                            </div>
+                            <a href="/logout" class="nav-user-logout">Sign Out</a>
+                        </div>
+                    </div>
                 {% else %}
                     <a href="/login">sign in</a>
                 {% endif %}
@@ -158,6 +171,24 @@
                 if (menu.classList.contains('active')) {
                     toggleMobileMenu();
                 }
+                // Also close user dropdown
+                const userMenu = document.getElementById('userMenu');
+                if (userMenu) userMenu.classList.remove('active');
+            }
+        });
+
+        // User dropdown toggle
+        function toggleUserMenu() {
+            const menu = document.getElementById('userMenu');
+            if (menu) menu.classList.toggle('active');
+        }
+
+        // Close user dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.nav-user-dropdown');
+            const userMenu = document.getElementById('userMenu');
+            if (dropdown && userMenu && !dropdown.contains(e.target)) {
+                userMenu.classList.remove('active');
             }
         });
     </script>
