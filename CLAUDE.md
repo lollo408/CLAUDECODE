@@ -289,16 +289,12 @@ vercel --prod
   - Aligned mobile styles with dashboard/events/archive pages
 - **Status:** ✅ Fixed - Tested in incognito mode, works perfectly across all pages
 
-**Known Issue (To Address Tomorrow):**
-- ⚠️ iOS doesn't show automatic install prompt on first visit
-- Current workaround: Share button → "Add to Home Screen"
-- **Next task:** Add manual install button that works across iOS/Android
-- **Implementation notes:** Button should detect iOS vs Android and show appropriate install instructions
+**Resolved Issues:**
+- ✅ iOS install prompt - Added "How to Install" button with step-by-step instructions (Jan 16, 2026)
+- ✅ Microsoft 365 authentication - Implemented (Jan 16, 2026)
 
 **Phase 2 (Future Enhancements):**
-- Manual PWA install button (cross-platform iOS/Android support)
 - Push notifications (event summaries, weekly reminders)
-- Microsoft 365 authentication
 - Real-time updates via Supabase subscriptions
 
 ---
@@ -369,7 +365,97 @@ vercel --prod
 - If admin page returns 403, check that `ADMIN_SECRET` env var in Vercel doesn't have trailing newline
 - To fix: Vercel Dashboard → Settings → Environment Variables → Delete and re-add ADMIN_SECRET
 
-**Next Phase: Microsoft 365 Authentication**
-- Waiting on IT to register app in Azure AD
-- Will add "Sign in with Microsoft" to protect all routes
-- Only Tintoria-Piana employees will be able to access
+---
+
+### Microsoft 365 Authentication (Subproject)
+**Status:** ✅ COMPLETE & DEPLOYED (Jan 16, 2026)
+**Goal:** Secure app with Microsoft 365 login, restrict to Tintoria-Piana employees
+
+**Features:**
+- **Microsoft Sign-In:** OAuth2 flow with Azure AD
+- **Guest Access:** "Continue as Guest" option for quick access
+- **Login Page:** Dedicated `/login` page with both options
+- **User Dropdown:** Name in nav with dropdown showing email + sign out
+- **Session Management:** Persistent login (stays logged in)
+
+**How It Works:**
+1. User visits any protected page → Redirected to `/login`
+2. User chooses "Sign in with Microsoft" or "Continue as Guest"
+3. Microsoft login: Redirects to Microsoft, then back with user info
+4. Guest login: Creates guest session immediately
+5. User sees their name in nav with dropdown for sign out
+
+**Azure AD Setup (Already Done):**
+- App registered in Azure AD portal
+- Redirect URI: `https://pianabihub.vercel.app/callback`
+- Permissions: `User.Read` (basic profile)
+- Single tenant (Tintoria-Piana only)
+
+**Environment Variables (Vercel):**
+- `AZURE_CLIENT_ID` - Application (Client) ID from Azure
+- `AZURE_TENANT_ID` - Directory (Tenant) ID from Azure
+- `AZURE_CLIENT_SECRET` - Client secret value
+
+**Routes:**
+- `/login` - Login page with Microsoft + Guest options
+- `/auth/microsoft` - Initiates Microsoft OAuth flow
+- `/guest` - Creates guest session
+- `/callback` - Handles Microsoft OAuth callback
+- `/logout` - Clears session, redirects to Microsoft logout
+
+**Technical Notes:**
+- Uses manual OAuth2 flow with `requests` library (MSAL didn't work on Vercel)
+- Fetches user info from Microsoft Graph API
+- Admin link moved from nav to bottom of homepage (desktop only)
+
+**Debug Endpoint:**
+- `/api/auth-status` - Shows auth configuration status
+
+**Files Modified (Jan 16, 2026):**
+- `main.py` - OAuth2 routes, middleware, user session management
+- `templates/login.html` - New login page
+- `templates/base.html` - User dropdown, mobile menu updates
+- `static/css/components.css` - Dropdown styles
+
+---
+
+### PWA Install Button (Subproject)
+**Status:** ✅ COMPLETE & DEPLOYED (Jan 16, 2026)
+**Goal:** Fix iOS install prompt, optimize for both platforms
+
+**Features:**
+- **iOS:** "How to Install" button shows step-by-step instructions (Share → Add to Home Screen)
+- **Android:** Native install prompt via `beforeinstallprompt` event
+- **Smart Detection:** Automatically detects platform and shows appropriate UI
+
+**Files Modified:**
+- `templates/base.html` - iOS detection, step-by-step instructions UI
+
+---
+
+### Security Improvements (Jan 16, 2026)
+**Status:** ✅ COMPLETE
+
+**Completed:**
+- [x] Enabled RLS on all Supabase tables
+- [x] No public policies = anon key blocked from direct access
+- [x] Flask uses service role key for full server-side access
+- [x] No client-side Supabase calls (key never exposed)
+- [x] Microsoft 365 authentication for user access control
+
+**Supabase RLS Status:**
+| Table | RLS | Policies |
+|-------|-----|----------|
+| `app_config` | ✅ | Read: public, Write: blocked |
+| `events` | ✅ | None (service role only) |
+| `event_summaries` | ✅ | None (service role only) |
+| `intelligence_reports` | ✅ | None (service role only) |
+| `industry_events` | ✅ | None (service role only) |
+
+---
+
+### Upcoming Tasks
+- [ ] Upload 2026 Q2 events (April-June) when dates available
+- [ ] Monitor Make.com automation for Q1 2026 event summaries
+- [ ] Push notifications (future enhancement)
+- [ ] Real-time updates via Supabase subscriptions (future enhancement)
