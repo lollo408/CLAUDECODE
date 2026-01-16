@@ -314,20 +314,23 @@ vercel --prod
 - **Version Tracking:** `/api/version` endpoint for debugging
 
 **Admin Control Panel:**
-- **URL:** `https://pianabihub.vercel.app/admin?key=piana2026`
+- **URL:** `https://pianabihub.vercel.app/admin` (click "Admin" in desktop nav)
+- **Access:** Password login (session-based, stays logged in 31 days)
+- **Visibility:** Desktop navigation only (hidden from mobile menu)
 - **Features:**
   - Toggle maintenance mode on/off
   - Set custom maintenance message
   - Update app version (triggers silent auto-update for all users)
   - Health status indicator (Supabase connection)
   - Quick links to Supabase and Vercel dashboards
+  - Logout button
 
 **How It Works:**
 
 1. **Maintenance Mode**
    - Toggle via Admin Control Panel or Supabase `app_config` table
    - When `maintenance_mode.enabled = true`, all routes redirect to `/maintenance`
-   - Admin bypass: Add `?admin_key=piana2026` to URL
+   - Maintenance page has "Admin Login" link at bottom for easy access
    - Maintenance page auto-polls every 30 seconds to check when back online
 
 2. **Silent Auto-Updates**
@@ -338,15 +341,16 @@ vercel --prod
    - Prevents infinite reload loops with sessionStorage flag
 
 **How to Enable Maintenance Mode:**
-1. Go to `https://pianabihub.vercel.app/admin?key=piana2026`
-2. Toggle the Maintenance Mode switch to ON
-3. Optionally add a custom message
-4. Click Enable/Update → App immediately shows maintenance page to all users
-5. To disable: Toggle switch back to OFF
+1. Go to `https://pianabihub.vercel.app/admin` (or click "Admin" in desktop nav)
+2. Enter password to login
+3. Toggle the Maintenance Mode switch to ON
+4. Optionally add a custom message
+5. Click Enable/Update → App immediately shows maintenance page to all users
+6. To disable: Toggle switch back to OFF
 
 **How to Push an Update:**
 1. Deploy new code to Vercel (push to GitHub)
-2. Go to Admin Control Panel: `https://pianabihub.vercel.app/admin?key=piana2026`
+2. Go to Admin Control Panel and login
 3. Under "App Version", enter new version (e.g., `1.1.0`)
 4. Click "Deploy Version Update"
 5. All users silently get updated on their next visit (no prompt needed)
