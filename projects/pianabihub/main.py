@@ -1,7 +1,7 @@
 import os
 import json
 import ast  # <--- NEW: Add this library
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from datetime import date, datetime
 import csv
 import io
@@ -9,6 +9,7 @@ from supabase import create_client, Client
 from services.perplexity_service import generate_event_summary
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
 
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
@@ -416,13 +417,29 @@ def maintenance():
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     """Admin control panel for app management."""
-    # Admin protection
     admin_secret = os.environ.get('ADMIN_SECRET', 'piana2026')
-    if request.args.get('key') != admin_secret:
-        return "<h3>Unauthorized - Admin access required</h3><p>Add ?key=your_admin_key to the URL</p>", 403
+
+    # Check if already authenticated via session or URL key (for backwards compatibility)
+    is_authenticated = session.get('admin_authenticated') or request.args.get('key') == admin_secret
 
     message = None
     error = None
+
+    # Handle login attempt
+    if request.method == 'POST' and request.form.get('action') == 'login':
+        password = request.form.get('password', '')
+        if password == admin_secret:
+            session['admin_authenticated'] = True
+            session.permanent = True  # Keep session for 31 days
+            return redirect(url_for('admin'))
+        else:
+            return render_template('admin.html',
+                                   authenticated=False,
+                                   login_error="Invalid password")
+
+    # If not authenticated, show login form
+    if not is_authenticated:
+        return render_template('admin.html', authenticated=False)
 
     if request.method == 'POST':
         action = request.form.get('action')
@@ -468,12 +485,19 @@ def admin():
         health['status'] = 'database error'
 
     return render_template('admin.html',
+                           authenticated=True,
                            maintenance=maintenance_config,
                            version=version_config,
                            health=health,
                            message=message,
-                           error=error,
-                           admin_key=admin_secret)
+                           error=error)
+
+
+@app.route('/admin/logout')
+def admin_logout():
+    """Logout from admin panel."""
+    session.pop('admin_authenticated', None)
+    return redirect(url_for('home'))
 
 
 @app.route('/api/version')

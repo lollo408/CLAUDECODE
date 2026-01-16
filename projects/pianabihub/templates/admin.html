@@ -28,6 +28,23 @@
         font-size: 0.9rem;
     }
 
+    .logout-link {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .logout-link:hover {
+        color: #ef4444;
+        border-color: #ef4444;
+    }
+
     .status-badge {
         display: inline-flex;
         align-items: center;
@@ -257,10 +274,11 @@
 
     .info-box {
         padding: 1rem;
-        background: var(--purple-light, #f3e8ff);
+        background: rgba(124, 58, 237, 0.15);
+        border: 1px solid rgba(124, 58, 237, 0.3);
         border-radius: 8px;
         font-size: 0.85rem;
-        color: var(--purple);
+        color: #c4b5fd;
         margin-top: 1rem;
     }
 
@@ -308,6 +326,31 @@
 </style>
 
 <div class="admin-container">
+    {% if not authenticated %}
+    <!-- Login Form -->
+    <div class="admin-header">
+        <h1>Admin Login</h1>
+        <p>Enter password to access Control Panel</p>
+    </div>
+
+    {% if login_error %}
+    <div class="alert alert-error">{{ login_error }}</div>
+    {% endif %}
+
+    <div class="admin-card">
+        <form method="POST">
+            <input type="hidden" name="action" value="login">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter admin password" required autofocus>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                Login
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <!-- Authenticated: Show Control Panel -->
     <div class="admin-header">
         <h1>Control Panel</h1>
         <p>Manage Piana BI Hub</p>
@@ -315,6 +358,7 @@
             <span class="status-dot"></span>
             <span>{{ health.status | capitalize }}</span>
         </div>
+        <a href="/admin/logout" class="logout-link">Logout</a>
     </div>
 
     {% if message %}
@@ -356,7 +400,7 @@
         </form>
 
         <div class="info-box">
-            When enabled, all users see the maintenance page. You can still access the app with <code>?admin_key={{ admin_key }}</code>
+            When enabled, all users see the maintenance page. You can still access it since you're logged in.
         </div>
     </div>
 
@@ -398,5 +442,6 @@
             <a href="https://vercel.com/dashboard" target="_blank" class="quick-link">▲ Vercel</a>
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}

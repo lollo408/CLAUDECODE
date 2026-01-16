@@ -34,6 +34,7 @@
                 <a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">dashboard</a>
                 <a href="/events" class="{{ 'active' if '/events' in request.path else '' }}">events</a>
                 <a href="/archive" class="{{ 'active' if request.path == '/archive' else '' }}">archive</a>
+                <a href="/admin" class="{{ 'active' if '/admin' in request.path else '' }}">admin</a>
             </div>
 
             <!-- Hamburger Button (Mobile) -->
@@ -54,6 +55,7 @@
         <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
         <a href="/events" onclick="toggleMobileMenu()">Events</a>
         <a href="/archive" onclick="toggleMobileMenu()">Archive</a>
+        <a href="/admin" onclick="toggleMobileMenu()">Admin</a>
     </div>
 
     <!-- PWA Install Prompt (Mobile Only) -->
