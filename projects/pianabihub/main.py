@@ -38,6 +38,19 @@ def get_app_config(key):
         return None
 
 
+def update_app_config(key, value):
+    """Updates a config value in app_config table."""
+    try:
+        response = supabase.table('app_config') \
+            .update({'value': value}) \
+            .eq('key', key) \
+            .execute()
+        return True
+    except Exception as e:
+        print(f"Error updating app config {key}: {e}")
+        return False
+
+
 # --- MAINTENANCE MODE MIDDLEWARE ---
 @app.before_request
 def check_maintenance_mode():
@@ -45,6 +58,7 @@ def check_maintenance_mode():
     # Allow these paths even during maintenance
     allowed_paths = [
         '/maintenance',
+        '/admin',
         '/static/',
         '/api/version',
         '/manifest.json',
@@ -397,6 +411,69 @@ def maintenance():
     if maintenance_config:
         message = maintenance_config.get('message', '')
     return render_template('maintenance.html', message=message)
+
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    """Admin control panel for app management."""
+    # Admin protection
+    admin_secret = os.environ.get('ADMIN_SECRET', 'piana2026')
+    if request.args.get('key') != admin_secret:
+        return "<h3>Unauthorized - Admin access required</h3><p>Add ?key=your_admin_key to the URL</p>", 403
+
+    message = None
+    error = None
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'toggle_maintenance':
+            enabled = request.form.get('enabled') == 'true'
+            maint_message = request.form.get('message', '')
+            success = update_app_config('maintenance_mode', {
+                'enabled': enabled,
+                'message': maint_message
+            })
+            if success:
+                message = f"Maintenance mode {'enabled' if enabled else 'disabled'}"
+            else:
+                error = "Failed to update maintenance mode"
+
+        elif action == 'update_version':
+            new_version = request.form.get('version', '').strip()
+            if new_version:
+                current = get_app_config('app_version') or {}
+                success = update_app_config('app_version', {
+                    'version': new_version,
+                    'min_version': new_version  # Force update for all users
+                })
+                if success:
+                    message = f"Version updated to {new_version} - users will auto-update"
+                else:
+                    error = "Failed to update version"
+            else:
+                error = "Version cannot be empty"
+
+    # Get current config
+    maintenance_config = get_app_config('maintenance_mode') or {'enabled': False, 'message': ''}
+    version_config = get_app_config('app_version') or {'version': '1.0.0', 'min_version': '1.0.0'}
+
+    # Health check
+    health = {'supabase': False, 'status': 'unknown'}
+    try:
+        test = supabase.table('app_config').select('key').limit(1).execute()
+        health['supabase'] = True
+        health['status'] = 'healthy'
+    except:
+        health['status'] = 'database error'
+
+    return render_template('admin.html',
+                           maintenance=maintenance_config,
+                           version=version_config,
+                           health=health,
+                           message=message,
+                           error=error,
+                           admin_key=admin_secret)
 
 
 @app.route('/api/version')

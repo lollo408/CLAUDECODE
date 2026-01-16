@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Control Panel - Piana BI Hub{% endblock %}
+
+{% block content %}
+<style>
+    .admin-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        padding-bottom: 100px;
+    }
+
+    .admin-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .admin-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .admin-header p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-top: 1rem;
+    }
+
+    .status-badge.healthy {
+        background: #22c55e20;
+        color: #22c55e;
+    }
+
+    .status-badge.error {
+        background: #ef444420;
+        color: #ef4444;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .admin-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .admin-card h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .admin-card h2 .icon {
+        font-size: 1.25rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-group input[type="text"],
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .form-group textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--purple);
+    }
+
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: var(--bg-primary);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .toggle-label {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .toggle-status {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .toggle-switch {
+        position: relative;
+        width: 50px;
+        height: 28px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.3s;
+        border-radius: 28px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: var(--purple);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(22px);
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: var(--purple);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--purple-dark);
+        transform: translateY(-1px);
+    }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+
+    .btn-success {
+        background: #22c55e;
+        color: white;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+    }
+
+    .alert-success {
+        background: #22c55e20;
+        color: #22c55e;
+        border: 1px solid #22c55e40;
+    }
+
+    .alert-error {
+        background: #ef444420;
+        color: #ef4444;
+        border: 1px solid #ef444440;
+    }
+
+    .current-value {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        background: var(--bg-primary);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .current-value .label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .current-value .value {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-family: var(--font-mono, monospace);
+    }
+
+    .info-box {
+        padding: 1rem;
+        background: var(--purple-light, #f3e8ff);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: var(--purple);
+        margin-top: 1rem;
+    }
+
+    .quick-links {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .quick-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .quick-link:hover {
+        border-color: var(--purple);
+        color: var(--purple);
+    }
+
+    @media (max-width: 480px) {
+        .admin-container {
+            padding: 1rem;
+        }
+
+        .admin-card {
+            padding: 1rem;
+        }
+
+        .quick-links {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Control Panel</h1>
+        <p>Manage Piana BI Hub</p>
+        <div class="status-badge {{ 'healthy' if health.supabase else 'error' }}">
+            <span class="status-dot"></span>
+            <span>{{ health.status | capitalize }}</span>
+        </div>
+    </div>
+
+    {% if message %}
+    <div class="alert alert-success">{{ message }}</div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <!-- Maintenance Mode Card -->
+    <div class="admin-card">
+        <h2><span class="icon">🔧</span> Maintenance Mode</h2>
+
+        <form method="POST">
+            <input type="hidden" name="action" value="toggle_maintenance">
+
+            <div class="toggle-container">
+                <div>
+                    <div class="toggle-label">Maintenance Mode</div>
+                    <div class="toggle-status">
+                        Currently: <strong>{{ 'ON' if maintenance.enabled else 'OFF' }}</strong>
+                    </div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="enabled" value="true" {{ 'checked' if maintenance.enabled else '' }} onchange="this.form.submit()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="maint-message">Maintenance Message (optional)</label>
+                <textarea id="maint-message" name="message" placeholder="e.g., Updating security features, back in 30 minutes">{{ maintenance.message }}</textarea>
+            </div>
+
+            <button type="submit" class="btn {{ 'btn-danger' if not maintenance.enabled else 'btn-success' }}">
+                {{ 'Enable Maintenance' if not maintenance.enabled else 'Update Message' }}
+            </button>
+        </form>
+
+        <div class="info-box">
+            When enabled, all users see the maintenance page. You can still access the app with <code>?admin_key={{ admin_key }}</code>
+        </div>
+    </div>
+
+    <!-- Version Control Card -->
+    <div class="admin-card">
+        <h2><span class="icon">🚀</span> App Version</h2>
+
+        <div class="current-value">
+            <span class="label">Current Version</span>
+            <span class="value">{{ version.version }}</span>
+        </div>
+
+        <form method="POST">
+            <input type="hidden" name="action" value="update_version">
+
+            <div class="form-group">
+                <label for="new-version">New Version</label>
+                <input type="text" id="new-version" name="version" placeholder="e.g., 1.1.0" pattern="[0-9]+\.[0-9]+\.[0-9]+" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Deploy Version Update
+            </button>
+        </form>
+
+        <div class="info-box">
+            When you update the version, all users will automatically get the new version on their next visit. No prompt needed - it happens silently.
+        </div>
+    </div>
+
+    <!-- Quick Links Card -->
+    <div class="admin-card">
+        <h2><span class="icon">🔗</span> Quick Links</h2>
+
+        <div class="quick-links">
+            <a href="/" class="quick-link">🏠 Home</a>
+            <a href="/dashboard" class="quick-link">📊 Dashboard</a>
+            <a href="https://supabase.com/dashboard" target="_blank" class="quick-link">🗄️ Supabase</a>
+            <a href="https://vercel.com/dashboard" target="_blank" class="quick-link">▲ Vercel</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
