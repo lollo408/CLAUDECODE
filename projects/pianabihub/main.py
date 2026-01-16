@@ -8,16 +8,8 @@ import io
 from supabase import create_client, Client
 from services.perplexity_service import generate_event_summary
 
-# Try to import msal, but don't crash if it fails
-MSAL_IMPORT_ERROR = None
-try:
-    import msal
-    MSAL_AVAILABLE = True
-except Exception as e:
-    MSAL_IMPORT_ERROR = str(e)
-    print(f"[Auth] MSAL import failed: {e}")
-    MSAL_AVAILABLE = False
-    msal = None
+import requests as http_requests  # Rename to avoid confusion with flask.request
+import secrets
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -36,53 +28,88 @@ def inject_user():
     }
 
 
-# --- MICROSOFT AZURE AD CONFIGURATION ---
+# --- MICROSOFT AZURE AD CONFIGURATION (Manual OAuth2) ---
 AZURE_CLIENT_ID = os.environ.get('AZURE_CLIENT_ID')
 AZURE_CLIENT_SECRET = os.environ.get('AZURE_CLIENT_SECRET')
 AZURE_TENANT_ID = os.environ.get('AZURE_TENANT_ID')
-AZURE_AUTHORITY = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}" if AZURE_TENANT_ID else None
 AZURE_REDIRECT_PATH = "/callback"
-AZURE_SCOPE = ["User.Read"]  # Basic profile info
+AZURE_SCOPE = "openid profile email User.Read"
 
-# Check if Azure AD is configured AND msal is available
-AZURE_AUTH_ENABLED = MSAL_AVAILABLE and all([AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID])
+# Azure OAuth2 endpoints
+AZURE_AUTH_ENDPOINT = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/oauth2/v2.0/authorize" if AZURE_TENANT_ID else None
+AZURE_TOKEN_ENDPOINT = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/oauth2/v2.0/token" if AZURE_TENANT_ID else None
+AZURE_LOGOUT_ENDPOINT = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/oauth2/v2.0/logout" if AZURE_TENANT_ID else None
+
+# Check if Azure AD is configured
+AZURE_AUTH_ENABLED = all([AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID])
 
 if AZURE_AUTH_ENABLED:
-    print(f"[Auth] Azure AD authentication enabled")
+    print(f"[Auth] Azure AD authentication enabled (manual OAuth2)")
 else:
-    print(f"[Auth] Azure AD authentication disabled (MSAL: {MSAL_AVAILABLE}, Client: {bool(AZURE_CLIENT_ID)}, Tenant: {bool(AZURE_TENANT_ID)}, Secret: {bool(AZURE_CLIENT_SECRET)})")
+    print(f"[Auth] Azure AD authentication disabled (Client: {bool(AZURE_CLIENT_ID)}, Tenant: {bool(AZURE_TENANT_ID)}, Secret: {bool(AZURE_CLIENT_SECRET)})")
 
 
-def get_msal_app():
-    """Create MSAL confidential client application."""
-    if not AZURE_AUTH_ENABLED or not msal:
+def get_auth_url(redirect_uri, state=None):
+    """Generate Microsoft OAuth2 authorization URL."""
+    if not AZURE_AUTH_ENABLED:
         return None
+
+    # Generate a random state for CSRF protection if not provided
+    if not state:
+        state = secrets.token_urlsafe(32)
+
+    params = {
+        'client_id': AZURE_CLIENT_ID,
+        'response_type': 'code',
+        'redirect_uri': redirect_uri,
+        'scope': AZURE_SCOPE,
+        'response_mode': 'query',
+        'state': state
+    }
+
+    query_string = '&'.join(f"{k}={v}" for k, v in params.items())
+    return f"{AZURE_AUTH_ENDPOINT}?{query_string}"
+
+
+def exchange_code_for_tokens(code, redirect_uri):
+    """Exchange authorization code for tokens."""
+    if not AZURE_AUTH_ENABLED:
+        return None
+
+    data = {
+        'client_id': AZURE_CLIENT_ID,
+        'client_secret': AZURE_CLIENT_SECRET,
+        'code': code,
+        'redirect_uri': redirect_uri,
+        'grant_type': 'authorization_code',
+        'scope': AZURE_SCOPE
+    }
+
     try:
-        return msal.ConfidentialClientApplication(
-            AZURE_CLIENT_ID,
-            authority=AZURE_AUTHORITY,
-            client_credential=AZURE_CLIENT_SECRET
-        )
+        response = http_requests.post(AZURE_TOKEN_ENDPOINT, data=data)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"[Auth] Token exchange failed: {response.status_code} - {response.text}")
+            return None
     except Exception as e:
-        print(f"[Auth] Failed to create MSAL app: {e}")
+        print(f"[Auth] Token exchange error: {e}")
         return None
 
 
-def get_auth_url():
-    """Generate Microsoft login URL."""
-    msal_app = get_msal_app()
-    if not msal_app:
+def get_user_info(access_token):
+    """Get user info from Microsoft Graph API."""
+    try:
+        headers = {'Authorization': f'Bearer {access_token}'}
+        response = http_requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"[Auth] User info fetch failed: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"[Auth] User info error: {e}")
         return None
-
-    # Build redirect URI from request
-    redirect_uri = request.url_root.rstrip('/') + AZURE_REDIRECT_PATH
-
-    auth_url = msal_app.get_authorization_request_url(
-        scopes=AZURE_SCOPE,
-        redirect_uri=redirect_uri,
-        state=request.args.get('next', '/')
-    )
-    return auth_url
 
 
 def is_user_authenticated():
@@ -204,7 +231,14 @@ def auth_microsoft():
     if not AZURE_AUTH_ENABLED:
         return redirect(url_for('login', error='Microsoft authentication not configured'))
 
-    auth_url = get_auth_url()
+    # Build redirect URI
+    redirect_uri = request.url_root.rstrip('/') + AZURE_REDIRECT_PATH
+
+    # Generate state and store in session for CSRF protection
+    state = secrets.token_urlsafe(32)
+    session['oauth_state'] = state
+
+    auth_url = get_auth_url(redirect_uri, state)
     if auth_url:
         return redirect(auth_url)
     return redirect(url_for('login', error='Failed to generate login URL'))
@@ -232,38 +266,42 @@ def callback():
     # Check for errors
     if 'error' in request.args:
         error_desc = request.args.get('error_description', 'Unknown error')
-        return f"Login failed: {error_desc}", 400
+        return redirect(url_for('login', error=error_desc))
 
     # Get the authorization code
     code = request.args.get('code')
     if not code:
-        return "No authorization code received", 400
+        return redirect(url_for('login', error='No authorization code received'))
 
     # Build redirect URI (must match what was used in auth request)
     redirect_uri = request.url_root.rstrip('/') + AZURE_REDIRECT_PATH
 
     # Exchange code for tokens
-    msal_app = get_msal_app()
-    result = msal_app.acquire_token_by_authorization_code(
-        code,
-        scopes=AZURE_SCOPE,
-        redirect_uri=redirect_uri
-    )
+    tokens = exchange_code_for_tokens(code, redirect_uri)
+    if not tokens:
+        return redirect(url_for('login', error='Failed to authenticate with Microsoft'))
 
-    if 'error' in result:
-        return f"Token error: {result.get('error_description', result.get('error'))}", 400
+    # Get user info from Microsoft Graph
+    access_token = tokens.get('access_token')
+    if access_token:
+        user_info = get_user_info(access_token)
+        if user_info:
+            session['user'] = {
+                'name': user_info.get('displayName', 'User'),
+                'email': user_info.get('mail') or user_info.get('userPrincipalName', ''),
+                'id': user_info.get('id', '')
+            }
+            session.permanent = True
+        else:
+            return redirect(url_for('login', error='Failed to get user information'))
+    else:
+        return redirect(url_for('login', error='No access token received'))
 
-    # Store user info in session
-    if 'id_token_claims' in result:
-        session['user'] = {
-            'name': result['id_token_claims'].get('name', 'User'),
-            'email': result['id_token_claims'].get('preferred_username', ''),
-            'oid': result['id_token_claims'].get('oid', '')
-        }
-        session.permanent = True
+    # Clear OAuth state
+    session.pop('oauth_state', None)
 
     # Redirect to original destination or home
-    next_url = request.args.get('state', '/') or session.pop('next_url', '/')
+    next_url = session.pop('next_url', '/')
     return redirect(next_url)
 
 
@@ -272,12 +310,12 @@ def logout():
     """Log out the user."""
     session.clear()
 
-    if AZURE_AUTH_ENABLED:
+    if AZURE_AUTH_ENABLED and AZURE_LOGOUT_ENDPOINT:
         # Redirect to Microsoft logout
-        logout_url = f"{AZURE_AUTHORITY}/oauth2/v2.0/logout?post_logout_redirect_uri={request.url_root}"
+        logout_url = f"{AZURE_LOGOUT_ENDPOINT}?post_logout_redirect_uri={request.url_root}"
         return redirect(logout_url)
 
-    return redirect(url_for('home'))
+    return redirect(url_for('login'))
 
 
 # --- HELPER FUNCTION: Fetch & Clean Data ---
@@ -699,8 +737,7 @@ def admin_logout():
 def api_auth_status():
     """Debug endpoint to check auth configuration."""
     return jsonify({
-        'msal_available': MSAL_AVAILABLE,
-        'msal_import_error': MSAL_IMPORT_ERROR,
+        'auth_method': 'manual_oauth2',
         'azure_auth_enabled': AZURE_AUTH_ENABLED,
         'has_client_id': bool(AZURE_CLIENT_ID),
         'has_tenant_id': bool(AZURE_TENANT_ID),
