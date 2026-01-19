@@ -47,18 +47,41 @@
 4. Make changes to files → Refresh browser to see updates
 5. Stop server: `Ctrl+C` in terminal
 
-**Deploy to Production (Vercel):**
-1. Test changes locally (see above)
-2. Commit changes:
+**Safe Deployment Workflow (Two-Branch System):**
+
+We use a `develop` → `main` workflow to prevent accidental production deployments:
+
+| Branch | What happens on push |
+|--------|---------------------|
+| `develop` | Preview URL only (safe to push anytime) |
+| `main` | Production deployment (requires manual merge) |
+
+**Day-to-day development:**
+1. Make sure you're on develop branch:
+   ```
+   git checkout develop
+   ```
+2. Make changes, then commit and push:
    ```
    git add .
    git commit -m "Your commit message"
+   git push origin develop
    ```
-3. Push to GitHub:
-   ```
-   git push origin main
-   ```
-4. Vercel auto-deploys (1-2 minutes) - no manual action needed
+3. Vercel creates a preview URL (like `pianabihub-abc123.vercel.app`) - production is NOT affected
+
+**Deploy to Production:**
+1. Test changes on the preview URL
+2. Go to GitHub: https://github.com/lollo408/CLAUDECODE
+3. Click "Pull requests" → "New pull request"
+4. Set: `base: main` ← `compare: develop`
+5. Review changes, then "Create pull request" → "Merge pull request"
+6. Production auto-deploys only after you merge (1-2 minutes)
+
+**Why this workflow:**
+- Safe to push code anytime without affecting production
+- Manual approval step before production deployment
+- No weekend surprises or accidental crashes
+- Preview URLs let you test before going live
 
 **Prerequisites:**
 - Dependencies installed: `pip install -r requirements.txt`
@@ -454,10 +477,17 @@ vercel --prod
 
 ---
 
-### Upcoming Tasks
-- [ ] **NEXT SESSION:** Set maintenance mode, deploy version update to force mobile PWA refresh
-- [ ] **NEXT SESSION:** Fix login page and user dropdown visual styling (alignment, mobile optimization)
-- [ ] **NEXT SESSION:** Add "Stay signed in" checkbox on login page
+### Session Notes (Jan 17, 2026)
+- Investigated intermittent 404 error on guest login - likely caused by Vercel deployment in progress
+- Set up two-branch deployment workflow (`develop` → `main`) for safer deployments
+- Mobile PWA still on older version - will push version update when ready (not during weekend)
+
+### Upcoming Tasks (Monday)
+- [ ] Test making GitHub repo private (check if Vercel auto-deploy still works)
+- [ ] Deploy version update to force mobile PWA refresh
+- [ ] Fix event automation flow issue (Make.com)
+- [ ] Fix login page and user dropdown visual styling (alignment, mobile optimization)
+- [ ] Add "Stay signed in" checkbox on login page
 - [ ] Upload 2026 Q2 events (April-June) when dates available
 - [ ] Monitor Make.com automation for Q1 2026 event summaries
 - [ ] Push notifications (future enhancement)

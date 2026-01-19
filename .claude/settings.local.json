@@ -19,7 +19,9 @@
       "Bash(git remote:*)",
       "Bash(git merge:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:pianabihub.vercel.app)",
+      "Bash(git checkout:*)"
     ]
   }
 }
