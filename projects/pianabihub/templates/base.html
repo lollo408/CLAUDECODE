@@ -19,6 +19,14 @@
 </head>
 <body>
 
+    <!-- Admin Mode Banner (shown when admin is browsing during maintenance) -->
+    {% if is_admin and maintenance_active %}
+    <div class="admin-mode-banner">
+        <span>ADMIN MODE - Site is in maintenance for other users</span>
+        <a href="/admin">Control Panel</a>
+    </div>
+    {% endif %}
+
     <!-- Main Navigation -->
     <nav class="main-nav">
         <div class="nav-content">
@@ -457,6 +465,51 @@
             .install-banner {
                 display: none !important;
             }
+        }
+
+        /* Admin Mode Banner */
+        .admin-mode-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #dc2626;
+            color: white;
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .admin-mode-banner a {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+
+        .admin-mode-banner a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Push nav down when admin banner is showing */
+        body:has(.admin-mode-banner) .main-nav {
+            top: 36px;
+        }
+
+        body:has(.admin-mode-banner) .install-banner {
+            top: 96px;
+        }
+
+        body:has(.admin-mode-banner) main {
+            padding-top: 36px;
         }
 
     </style>
