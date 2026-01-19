@@ -18,8 +18,20 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-pr
 @app.context_processor
 def inject_user():
     """Make user info available in all templates."""
+    # Check maintenance status for admin indicator
+    is_admin = session.get('admin_authenticated', False)
+    maintenance_active = False
+    if is_admin:
+        try:
+            maint_config = get_app_config('maintenance_mode')
+            maintenance_active = maint_config.get('enabled', False) if maint_config else False
+        except:
+            pass
+
     return {
         'current_user': session.get('user', None),
+        'is_admin': is_admin,
+        'maintenance_active': maintenance_active,
         'auth_enabled': all([
             os.environ.get('AZURE_CLIENT_ID'),
             os.environ.get('AZURE_CLIENT_SECRET'),
@@ -198,14 +210,12 @@ def check_auth_and_maintenance():
         session['next_url'] = request.url
         return redirect(url_for('login'))
 
-    # Admin bypass for maintenance: ?admin_key=secret
-    admin_secret = os.environ.get('ADMIN_SECRET', 'piana2026')
-    if request.args.get('admin_key') == admin_secret:
-        return None
-
     # Check maintenance mode from Supabase
     maintenance_config = get_app_config('maintenance_mode')
     if maintenance_config and maintenance_config.get('enabled'):
+        # Admin bypass: if user is admin-authenticated, allow full site access
+        if session.get('admin_authenticated'):
+            return None
         return redirect(url_for('maintenance'))
 
     return None
