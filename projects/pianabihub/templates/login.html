@@ -116,6 +116,28 @@
             font-size: var(--text-xs);
         }
 
+        .login-remember {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            margin-top: var(--space-lg);
+            color: var(--text-secondary);
+            font-size: var(--text-sm);
+        }
+
+        .login-remember input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .login-remember label {
+            cursor: pointer;
+            user-select: none;
+        }
+
         .login-error {
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid var(--red);
@@ -156,7 +178,7 @@
 
         <div class="login-buttons">
             {% if auth_available %}
-            <a href="/auth/microsoft" class="login-btn login-btn-microsoft">
+            <a href="#" onclick="loginMicrosoft(); return false;" class="login-btn login-btn-microsoft">
                 <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
                     <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
                     <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
@@ -169,14 +191,31 @@
             <div class="login-divider">or</div>
             {% endif %}
 
-            <a href="/guest" class="login-btn login-btn-guest">
+            <a href="#" onclick="loginGuest(); return false;" class="login-btn login-btn-guest">
                 Continue as Guest
             </a>
+        </div>
+
+        <div class="login-remember">
+            <input type="checkbox" id="remember-me" checked>
+            <label for="remember-me">Stay signed in</label>
         </div>
 
         <p class="login-footer">
             Tintoria Piana Internal Tool
         </p>
     </div>
+
+    <script>
+        function loginMicrosoft() {
+            const remember = document.getElementById('remember-me').checked;
+            window.location.href = '/auth/microsoft?remember=' + (remember ? '1' : '0');
+        }
+
+        function loginGuest() {
+            const remember = document.getElementById('remember-me').checked;
+            window.location.href = '/guest?remember=' + (remember ? '1' : '0');
+        }
+    </script>
 </body>
 </html>

@@ -243,6 +243,10 @@ def auth_microsoft():
     if not AZURE_AUTH_ENABLED:
         return redirect(url_for('login', error='Microsoft authentication not configured'))
 
+    # Store remember preference for use after OAuth callback
+    remember = request.args.get('remember', '1') == '1'
+    session['remember_me'] = remember
+
     # Build redirect URI
     redirect_uri = request.url_root.rstrip('/') + AZURE_REDIRECT_PATH
 
@@ -259,12 +263,14 @@ def auth_microsoft():
 @app.route('/guest')
 def guest_login():
     """Allow guest access without Microsoft login."""
+    remember = request.args.get('remember', '1') == '1'
     session['user'] = {
         'name': 'Guest',
         'email': 'guest@piana.com',
         'is_guest': True
     }
-    session.permanent = True
+    # Only set permanent session if user wants to stay signed in
+    session.permanent = remember
     next_url = session.pop('next_url', '/')
     return redirect(next_url)
 
@@ -303,7 +309,9 @@ def callback():
                 'email': user_info.get('mail') or user_info.get('userPrincipalName', ''),
                 'id': user_info.get('id', '')
             }
-            session.permanent = True
+            # Only set permanent session if user wants to stay signed in
+            remember = session.pop('remember_me', True)
+            session.permanent = remember
         else:
             return redirect(url_for('login', error='Failed to get user information'))
     else:
