@@ -482,10 +482,31 @@ vercel --prod
 - Set up two-branch deployment workflow (`develop` → `main`) for safer deployments
 - Mobile PWA still on older version - will push version update when ready (not during weekend)
 
-### Upcoming Tasks (Monday)
+### Session Notes (Jan 19, 2026)
+**Major Fixes:**
+- [x] Fixed admin maintenance mode bypass - admins can now browse full site while maintenance is ON
+- [x] Added red "ADMIN MODE" banner when viewing during maintenance
+- [x] Fixed Make.com intelligence report workflows - URLs now work (was returning example.com)
+- [x] Restructured all 4 Make.com flows (Hospitality, Automotive, Bedding, Textiles) with new prompts
+- [x] Display now shows 5 stories instead of 3 (label: "top stories this week")
+- [x] PDFs now have clean formatting with one source link per story
+- [x] Fixed logout flow - now instant (removed slow Microsoft redirect)
+- [x] Added "signed out successfully" message on login page
+- [x] Deployed PWA version update to 1.1.0
+- [x] Merged Saturday work (develop branch) with Monday updates
+- [x] Cleaned up test data from Supabase (bad reports with example.com URLs)
+
+**Make.com Workflow Structure (all 4 verticals):**
+1. Perplexity → Research 5 news items with citation markers [1], [2], etc.
+2. OpenAI 1 → Format as clean HTML with real links (for PDF)
+3. OpenAI 2 → Convert to JSON array (for website)
+4. Router/Filter → Check for bad URLs (retry if example.com detected)
+5. PDF.co → Generate PDF
+6. HTTP → Get PDF URL
+7. Supabase → Upload file + create row
+
+### Upcoming Tasks
 - [ ] Test making GitHub repo private (check if Vercel auto-deploy still works)
-- [ ] Deploy version update to force mobile PWA refresh
-- [ ] Fix event automation flow issue (Make.com)
 - [ ] Fix login page and user dropdown visual styling (alignment, mobile optimization)
 - [ ] Add "Stay signed in" checkbox on login page
 - [ ] Upload 2026 Q2 events (April-June) when dates available
