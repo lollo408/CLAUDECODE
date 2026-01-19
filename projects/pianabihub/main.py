@@ -230,9 +230,11 @@ def login():
         return redirect(url_for('home'))
 
     error = request.args.get('error')
+    logged_out = request.args.get('logged_out') == 'true'
     return render_template('login.html',
                          auth_available=AZURE_AUTH_ENABLED,
-                         error=error)
+                         error=error,
+                         logged_out=logged_out)
 
 
 @app.route('/auth/microsoft')
@@ -318,14 +320,13 @@ def callback():
 @app.route('/logout')
 def logout():
     """Log out the user."""
+    was_microsoft_user = session.get('user', {}).get('id')  # Microsoft users have 'id'
     session.clear()
 
-    if AZURE_AUTH_ENABLED and AZURE_LOGOUT_ENDPOINT:
-        # Redirect to Microsoft logout
-        logout_url = f"{AZURE_LOGOUT_ENDPOINT}?post_logout_redirect_uri={request.url_root}"
-        return redirect(logout_url)
-
-    return redirect(url_for('login'))
+    # Always redirect to login page directly (faster, no double redirect)
+    # Skip Microsoft's logout endpoint - it's slow and unnecessary for our use case
+    # The session is already cleared, so the user is logged out on our side
+    return redirect(url_for('login', logged_out='true'))
 
 
 # --- HELPER FUNCTION: Fetch & Clean Data ---
