@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .settings-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+    }
+
+    .settings-header {
+        margin-bottom: 40px;
+    }
+
+    .settings-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, #fff 0%, #888 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
+
+    .settings-header p {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .settings-card {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+    }
+
+    .settings-section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 8px;
+    }
+
+    .settings-section-desc {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 16px;
+    }
+
+    .settings-form {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-group label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #666;
+        text-transform: lowercase;
+        letter-spacing: 0.05em;
+    }
+
+    .form-group select {
+        background: #0a0a0a;
+        border: 1px solid #222;
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 1rem;
+        font-family: 'JetBrains Mono', monospace;
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 44px;
+    }
+
+    .form-group select:hover {
+        border-color: #333;
+        background: #151515;
+    }
+
+    .form-group select:focus {
+        outline: none;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: #8b5cf6;
+        cursor: pointer;
+    }
+
+    .checkbox-group span {
+        font-size: 0.95rem;
+        color: #ccc;
+    }
+
+    .divider {
+        border: 0;
+        border-top: 1px solid #222;
+        margin: 8px 0;
+    }
+
+    .coming-soon {
+        opacity: 0.5;
+    }
+
+    .coming-soon-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        font-weight: 500;
+        margin-left: 8px;
+    }
+
+    .btn-save {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 14px 28px;
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+        width: 100%;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+    }
+
+    .success-banner {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #22c55e;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+    }
+
+    .error-banner {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+    }
+
+    .guest-notice {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: #f59e0b;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+        .settings-container {
+            padding: 20px 15px 100px;
+        }
+        .settings-header h1 {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+
+<div class="settings-container">
+    <div class="settings-header">
+        <h1>Settings</h1>
+        <p>// personalize your experience</p>
+    </div>
+
+    {% if message %}
+    <div class="success-banner">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error-banner">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    {% if is_guest %}
+    <div class="guest-notice">
+        <span>Guest Mode</span>
+        <span>Your settings will be saved for this session only. Sign in with Microsoft to save permanently.</span>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="settings-form">
+        <div class="settings-card">
+            <div class="settings-section-title">Default Industry</div>
+            <div class="settings-section-desc">Your dashboard and events will default to this industry.</div>
+
+            <div class="form-group">
+                <label for="preferred_industry">// select your preferred industry</label>
+                <select id="preferred_industry" name="preferred_industry">
+                    <option value="" {{ 'selected' if not preferences.preferred_industry else '' }}>No preference (show all)</option>
+                    <option value="Hospitality" {{ 'selected' if preferences.preferred_industry == 'Hospitality' else '' }}>Hospitality</option>
+                    <option value="Automotive" {{ 'selected' if preferences.preferred_industry == 'Automotive' else '' }}>Automotive</option>
+                    <option value="Bedding" {{ 'selected' if preferences.preferred_industry == 'Bedding' else '' }}>Bedding</option>
+                    <option value="Textiles" {{ 'selected' if preferences.preferred_industry == 'Textiles' else '' }}>Textiles</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="settings-card coming-soon">
+            <div class="settings-section-title">
+                Notifications
+                <span class="coming-soon-badge">Coming Soon</span>
+            </div>
+            <div class="settings-section-desc">Get notified about new reports and upcoming events.</div>
+
+            <hr class="divider">
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="notifications_enabled" name="notifications_enabled"
+                       {{ 'checked' if preferences.notifications_enabled else '' }} disabled>
+                <span>Enable notifications</span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-save">
+            Save Settings
+        </button>
+    </form>
+</div>
+{% endblock %}

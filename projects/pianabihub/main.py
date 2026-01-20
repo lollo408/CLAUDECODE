@@ -175,6 +175,84 @@ def update_app_config(key, value):
         return False
 
 
+# --- USER PREFERENCES HELPER FUNCTIONS ---
+def get_user_preferences(user):
+    """
+    Fetches user preferences.
+    - Microsoft users: from Supabase user_preferences table
+    - Guest users: from session
+    Returns dict with preferred_industry, notifications_enabled
+    """
+    if not user:
+        return {'preferred_industry': None, 'notifications_enabled': True}
+
+    # Guest users: use session storage
+    if user.get('is_guest'):
+        return session.get('user_preferences', {
+            'preferred_industry': None,
+            'notifications_enabled': True
+        })
+
+    # Microsoft users: fetch from database
+    user_id = user.get('id')
+    if not user_id:
+        return {'preferred_industry': None, 'notifications_enabled': True}
+
+    try:
+        response = supabase.table('user_preferences') \
+            .select('*') \
+            .eq('user_id', user_id) \
+            .limit(1) \
+            .execute()
+
+        if response.data:
+            prefs = response.data[0]
+            return {
+                'preferred_industry': prefs.get('preferred_industry'),
+                'notifications_enabled': prefs.get('notifications_enabled', True)
+            }
+        return {'preferred_industry': None, 'notifications_enabled': True}
+    except Exception as e:
+        print(f"Error fetching user preferences: {e}")
+        return {'preferred_industry': None, 'notifications_enabled': True}
+
+
+def save_user_preferences(user, prefs):
+    """
+    Saves user preferences.
+    - Microsoft users: to Supabase user_preferences table
+    - Guest users: to session
+    Returns True on success, False on failure.
+    """
+    if not user:
+        return False
+
+    # Guest users: save to session
+    if user.get('is_guest'):
+        session['user_preferences'] = prefs
+        return True
+
+    # Microsoft users: upsert to database
+    user_id = user.get('id')
+    if not user_id:
+        return False
+
+    try:
+        # Upsert: insert or update if exists
+        response = supabase.table('user_preferences') \
+            .upsert({
+                'user_id': user_id,
+                'preferred_industry': prefs.get('preferred_industry'),
+                'notifications_enabled': prefs.get('notifications_enabled', True),
+                'updated_at': datetime.now().isoformat()
+            }, on_conflict='user_id') \
+            .execute()
+        return True
+    except Exception as e:
+        print(f"Error saving user preferences: {e}")
+        return False
+
+
 # --- AUTHENTICATION & MAINTENANCE MIDDLEWARE ---
 @app.before_request
 def check_auth_and_maintenance():
@@ -443,6 +521,50 @@ def home():
     return render_template('home.html')
 
 
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    """
+    User settings page for personalization preferences.
+    GET: Display current settings
+    POST: Save updated settings
+    """
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('login'))
+
+    message = None
+    error = None
+
+    if request.method == 'POST':
+        # Get form values
+        preferred_industry = request.form.get('preferred_industry', '').strip()
+        notifications_enabled = request.form.get('notifications_enabled') == 'on'
+
+        # Clean up empty strings to None
+        if not preferred_industry:
+            preferred_industry = None
+
+        # Save preferences
+        prefs = {
+            'preferred_industry': preferred_industry,
+            'notifications_enabled': notifications_enabled
+        }
+
+        if save_user_preferences(user, prefs):
+            message = "Settings saved successfully"
+        else:
+            error = "Failed to save settings. Please try again."
+
+    # Get current preferences
+    current_prefs = get_user_preferences(user)
+
+    return render_template('settings.html',
+                           preferences=current_prefs,
+                           message=message,
+                           error=error,
+                           is_guest=user.get('is_guest', False))
+
+
 @app.route('/dashboard')
 def dashboard():
     """
@@ -455,12 +577,18 @@ def dashboard():
     bedding = get_latest_report('bedding')
     textiles = get_latest_report('textiles')
 
+    # Get user's preferred industry for default tab
+    user = get_current_user()
+    prefs = get_user_preferences(user)
+    default_industry = prefs.get('preferred_industry') or 'Hospitality'
+
     # Render with all datasets
     return render_template('index.html',
                            hospitality_data=hospitality,
                            automotive_data=automotive,
                            bedding_data=bedding,
-                           textiles_data=textiles)
+                           textiles_data=textiles,
+                           default_industry=default_industry)
 
 
 @app.route('/archive')
@@ -507,7 +635,17 @@ def archive():
 def events():
     """Events listing page with filters, upcoming notifications, and pagination."""
     filter_type = request.args.get('filter', '3months')
-    industry = request.args.get('industry', 'all')
+
+    # Use user's preferred industry as default if no industry param in URL
+    industry = request.args.get('industry')
+    if industry is None:
+        # No industry param in URL - check user preference
+        user = get_current_user()
+        prefs = get_user_preferences(user)
+        industry = prefs.get('preferred_industry') or 'all'
+    elif industry == '':
+        industry = 'all'
+
     page = int(request.args.get('page', 1))
 
     # Pagination settings

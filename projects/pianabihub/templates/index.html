@@ -418,14 +418,16 @@ function openTabFromSelect(tabName) {
     // Show selected tab
     document.getElementById(tabName).style.display = "block";
 
-    // Persist selection
+    // Persist selection for this session
     localStorage.setItem('activeTab', tabName);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Priority: URL hash > localStorage > user preference > Hospitality
     var hash = window.location.hash.replace('#', '');
     var savedTab = localStorage.getItem('activeTab');
-    var tabToOpen = hash || savedTab || 'Hospitality';
+    var userDefault = '{{ default_industry }}';
+    var tabToOpen = hash || savedTab || userDefault || 'Hospitality';
 
     // Set dropdown value
     var selectEl = document.getElementById('verticalSelect');
