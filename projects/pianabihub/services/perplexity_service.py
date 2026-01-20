@@ -6,7 +6,7 @@ Uses the sonar-pro model for web-grounded research.
 import os
 import requests
 
-PERPLEXITY_API_KEY = os.environ.get('PERPLEXITY_API_KEY')
+PERPLEXITY_API_KEY = os.environ.get('PERPLEXITY_API_KEY', '').strip()
 PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
 
 

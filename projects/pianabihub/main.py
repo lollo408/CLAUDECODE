@@ -1,12 +1,14 @@
 import os
 import json
 import ast
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+import string
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, make_response
 from datetime import date, datetime
 import csv
 import io
 from supabase import create_client, Client
 from services.perplexity_service import generate_event_summary
+from werkzeug.security import generate_password_hash, check_password_hash
 
 import requests as http_requests  # Rename to avoid confusion with flask.request
 import secrets
@@ -28,8 +30,19 @@ def inject_user():
         except:
             pass
 
+    user = session.get('user', None)
+    user_type = None
+    if user:
+        if user.get('is_guest'):
+            user_type = 'guest'
+        elif user.get('user_type') == 'partner':
+            user_type = 'partner'
+        else:
+            user_type = 'employee'
+
     return {
-        'current_user': session.get('user', None),
+        'current_user': user,
+        'user_type': user_type,
         'is_admin': is_admin,
         'maintenance_active': maintenance_active,
         'auth_enabled': all([
@@ -76,7 +89,8 @@ def get_auth_url(redirect_uri, state=None):
         'redirect_uri': redirect_uri,
         'scope': AZURE_SCOPE,
         'response_mode': 'query',
-        'state': state
+        'state': state,
+        'prompt': 'select_account'  # Always show account picker
     }
 
     query_string = '&'.join(f"{k}={v}" for k, v in params.items())
@@ -175,6 +189,229 @@ def update_app_config(key, value):
         return False
 
 
+# --- USER PREFERENCES HELPER FUNCTIONS ---
+def get_user_preferences(user):
+    """
+    Fetches user preferences.
+    - Microsoft users: from Supabase user_preferences table
+    - Guest users: from session
+    Returns dict with preferred_industry, notifications_enabled
+    """
+    if not user:
+        return {'preferred_industry': None, 'notifications_enabled': True}
+
+    # Guest users: use session storage
+    if user.get('is_guest'):
+        return session.get('user_preferences', {
+            'preferred_industry': None,
+            'notifications_enabled': True
+        })
+
+    # Microsoft users: fetch from database
+    user_id = user.get('id')
+    if not user_id:
+        return {'preferred_industry': None, 'notifications_enabled': True}
+
+    try:
+        response = supabase.table('user_preferences') \
+            .select('*') \
+            .eq('user_id', user_id) \
+            .limit(1) \
+            .execute()
+
+        if response.data:
+            prefs = response.data[0]
+            return {
+                'preferred_industry': prefs.get('preferred_industry'),
+                'notifications_enabled': prefs.get('notifications_enabled', True)
+            }
+        return {'preferred_industry': None, 'notifications_enabled': True}
+    except Exception as e:
+        print(f"Error fetching user preferences: {e}")
+        return {'preferred_industry': None, 'notifications_enabled': True}
+
+
+def save_user_preferences(user, prefs):
+    """
+    Saves user preferences.
+    - Microsoft users: to Supabase user_preferences table
+    - Guest users: to session
+    Returns True on success, False on failure.
+    """
+    if not user:
+        return False
+
+    # Guest users: save to session
+    if user.get('is_guest'):
+        session['user_preferences'] = prefs
+        return True
+
+    # Microsoft users and Partners: upsert to database
+    user_id = user.get('id')
+    if not user_id:
+        return False
+
+    try:
+        # Upsert: insert or update if exists
+        response = supabase.table('user_preferences') \
+            .upsert({
+                'user_id': user_id,
+                'preferred_industry': prefs.get('preferred_industry'),
+                'notifications_enabled': prefs.get('notifications_enabled', True),
+                'updated_at': datetime.now().isoformat()
+            }, on_conflict='user_id') \
+            .execute()
+        return True
+    except Exception as e:
+        print(f"Error saving user preferences: {e}")
+        return False
+
+
+# --- PARTNER AUTHENTICATION HELPER FUNCTIONS ---
+def generate_invite_code(length=8):
+    """Generate a random invite code (uppercase letters and digits)."""
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(length))
+
+
+def validate_invite_code(code):
+    """
+    Check if an invite code is valid (exists, not used, not expired).
+    Returns the invite record if valid, None otherwise.
+    """
+    if not code:
+        return None
+
+    try:
+        response = supabase.table('invite_codes') \
+            .select('*') \
+            .eq('code', code.upper()) \
+            .is_('used_by', 'null') \
+            .limit(1) \
+            .execute()
+
+        if not response.data:
+            return None
+
+        invite = response.data[0]
+
+        # Check expiration if set
+        if invite.get('expires_at'):
+            expires = datetime.fromisoformat(invite['expires_at'].replace('Z', '+00:00'))
+            if datetime.now(expires.tzinfo) > expires:
+                return None
+
+        return invite
+    except Exception as e:
+        print(f"Error validating invite code: {e}")
+        return None
+
+
+def create_partner_user(email, password, company_name, invite_code):
+    """
+    Create a new partner user account.
+    Returns (user_dict, error_message) tuple.
+    """
+    email = email.lower().strip()
+
+    # Check if email already exists
+    try:
+        existing = supabase.table('partner_users') \
+            .select('id') \
+            .eq('email', email) \
+            .limit(1) \
+            .execute()
+
+        if existing.data:
+            return None, "An account with this email already exists"
+    except Exception as e:
+        print(f"Error checking existing user: {e}")
+        return None, "Registration failed. Please try again."
+
+    # Create the user
+    try:
+        password_hash = generate_password_hash(password)
+
+        response = supabase.table('partner_users') \
+            .insert({
+                'email': email,
+                'password_hash': password_hash,
+                'company_name': company_name.strip()
+            }) \
+            .execute()
+
+        if not response.data:
+            return None, "Registration failed. Please try again."
+
+        new_user = response.data[0]
+
+        # Mark invite code as used
+        supabase.table('invite_codes') \
+            .update({
+                'used_by': new_user['id'],
+                'used_at': datetime.now().isoformat()
+            }) \
+            .eq('code', invite_code.upper()) \
+            .execute()
+
+        return new_user, None
+
+    except Exception as e:
+        print(f"Error creating partner user: {e}")
+        return None, "Registration failed. Please try again."
+
+
+def authenticate_partner(email, password):
+    """
+    Authenticate a partner user with email and password.
+    Returns (user_dict, error_message) tuple.
+    """
+    email = email.lower().strip()
+
+    try:
+        response = supabase.table('partner_users') \
+            .select('*') \
+            .eq('email', email) \
+            .eq('is_active', True) \
+            .limit(1) \
+            .execute()
+
+        if not response.data:
+            return None, "Invalid email or password"
+
+        user = response.data[0]
+
+        # Verify password
+        if not check_password_hash(user['password_hash'], password):
+            return None, "Invalid email or password"
+
+        # Update last login
+        supabase.table('partner_users') \
+            .update({'last_login': datetime.now().isoformat()}) \
+            .eq('id', user['id']) \
+            .execute()
+
+        return user, None
+
+    except Exception as e:
+        print(f"Error authenticating partner: {e}")
+        return None, "Login failed. Please try again."
+
+
+def get_user_type(user):
+    """
+    Returns the user type: 'guest', 'partner', or 'employee'.
+    """
+    if not user:
+        return None
+    if user.get('is_guest'):
+        return 'guest'
+    if user.get('user_type') == 'partner':
+        return 'partner'
+    # Microsoft users (have 'id' from Azure AD)
+    return 'employee'
+
+
 # --- AUTHENTICATION & MAINTENANCE MIDDLEWARE ---
 @app.before_request
 def check_auth_and_maintenance():
@@ -182,6 +419,7 @@ def check_auth_and_maintenance():
     # Paths that don't require auth or maintenance check
     public_paths = [
         '/login',
+        '/register',
         '/auth/',
         '/guest',
         '/callback',
@@ -206,8 +444,10 @@ def check_auth_and_maintenance():
 
     # Always require login (user must be in session - either Microsoft or Guest)
     if not is_user_authenticated():
-        # Store the intended destination
-        session['next_url'] = request.url
+        # Only store actual page paths as next_url (not assets like favicon.ico)
+        # This prevents redirect issues when browser auto-requests favicon
+        if not request.path.startswith('/favicon') and '.' not in request.path:
+            session['next_url'] = request.path
         return redirect(url_for('login'))
 
     # Check maintenance mode from Supabase
@@ -243,6 +483,10 @@ def auth_microsoft():
     if not AZURE_AUTH_ENABLED:
         return redirect(url_for('login', error='Microsoft authentication not configured'))
 
+    # Store remember preference for use after OAuth callback
+    remember = request.args.get('remember', '1') == '1'
+    session['remember_me'] = remember
+
     # Build redirect URI
     redirect_uri = request.url_root.rstrip('/') + AZURE_REDIRECT_PATH
 
@@ -259,13 +503,19 @@ def auth_microsoft():
 @app.route('/guest')
 def guest_login():
     """Allow guest access without Microsoft login."""
+    remember = request.args.get('remember', '1') == '1'
     session['user'] = {
         'name': 'Guest',
         'email': 'guest@piana.com',
         'is_guest': True
     }
-    session.permanent = True
-    next_url = session.pop('next_url', '/')
+    session.permanent = remember
+
+    # Get stored destination, default to home
+    next_url = session.pop('next_url', None)
+    if not next_url or next_url == '/login':
+        next_url = '/'
+
     return redirect(next_url)
 
 
@@ -303,7 +553,9 @@ def callback():
                 'email': user_info.get('mail') or user_info.get('userPrincipalName', ''),
                 'id': user_info.get('id', '')
             }
-            session.permanent = True
+            # Only set permanent session if user wants to stay signed in
+            remember = session.pop('remember_me', True)
+            session.permanent = remember
         else:
             return redirect(url_for('login', error='Failed to get user information'))
     else:
@@ -327,6 +579,92 @@ def logout():
     # Skip Microsoft's logout endpoint - it's slow and unnecessary for our use case
     # The session is already cleared, so the user is logged out on our side
     return redirect(url_for('login', logged_out='true'))
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """Partner registration with invite code."""
+    # If already logged in, go to home
+    if is_user_authenticated():
+        return redirect(url_for('home'))
+
+    invite_code = request.args.get('invite', '').upper()
+    error = None
+    success = False
+
+    # Validate invite code on GET
+    invite = validate_invite_code(invite_code) if invite_code else None
+
+    if request.method == 'POST':
+        invite_code = request.form.get('invite_code', '').upper()
+        email = request.form.get('email', '').strip()
+        company_name = request.form.get('company_name', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        # Re-validate invite code
+        invite = validate_invite_code(invite_code)
+
+        if not invite:
+            error = "Invalid or expired invite code"
+        elif not email or '@' not in email:
+            error = "Please enter a valid email address"
+        elif not company_name:
+            error = "Please enter your company name"
+        elif len(password) < 8:
+            error = "Password must be at least 8 characters"
+        elif password != confirm_password:
+            error = "Passwords do not match"
+        else:
+            # Create the account
+            user, err = create_partner_user(email, password, company_name, invite_code)
+            if user:
+                success = True
+            else:
+                error = err
+
+    return render_template('register.html',
+                           invite_code=invite_code,
+                           invite=invite,
+                           error=error,
+                           success=success)
+
+
+@app.route('/auth/partner', methods=['GET', 'POST'])
+def auth_partner():
+    """Partner login with email and password."""
+    # If already logged in, go to home
+    if is_user_authenticated():
+        return redirect(url_for('home'))
+
+    error = None
+
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        remember = request.form.get('remember') == 'on'
+
+        if not email or not password:
+            error = "Please enter your email and password"
+        else:
+            user, err = authenticate_partner(email, password)
+            if user:
+                # Set up session
+                session['user'] = {
+                    'id': user['id'],
+                    'name': user['company_name'],
+                    'email': user['email'],
+                    'user_type': 'partner'
+                }
+                session.permanent = remember
+
+                # Redirect to original destination or home
+                next_url = session.pop('next_url', '/')
+                return redirect(next_url)
+            else:
+                error = err
+
+    return render_template('partner_login.html', error=error)
 
 
 # --- HELPER FUNCTION: Fetch & Clean Data ---
@@ -429,6 +767,50 @@ def home():
     return render_template('home.html')
 
 
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    """
+    User settings page for personalization preferences.
+    GET: Display current settings
+    POST: Save updated settings
+    """
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('login'))
+
+    message = None
+    error = None
+
+    if request.method == 'POST':
+        # Get form values
+        preferred_industry = request.form.get('preferred_industry', '').strip()
+        notifications_enabled = request.form.get('notifications_enabled') == 'on'
+
+        # Clean up empty strings to None
+        if not preferred_industry:
+            preferred_industry = None
+
+        # Save preferences
+        prefs = {
+            'preferred_industry': preferred_industry,
+            'notifications_enabled': notifications_enabled
+        }
+
+        if save_user_preferences(user, prefs):
+            message = "Settings saved successfully"
+        else:
+            error = "Failed to save settings. Please try again."
+
+    # Get current preferences
+    current_prefs = get_user_preferences(user)
+
+    return render_template('settings.html',
+                           preferences=current_prefs,
+                           message=message,
+                           error=error,
+                           is_guest=user.get('is_guest', False))
+
+
 @app.route('/dashboard')
 def dashboard():
     """
@@ -441,12 +823,18 @@ def dashboard():
     bedding = get_latest_report('bedding')
     textiles = get_latest_report('textiles')
 
+    # Get user's preferred industry for default tab
+    user = get_current_user()
+    prefs = get_user_preferences(user)
+    default_industry = prefs.get('preferred_industry') or 'Hospitality'
+
     # Render with all datasets
     return render_template('index.html',
                            hospitality_data=hospitality,
                            automotive_data=automotive,
                            bedding_data=bedding,
-                           textiles_data=textiles)
+                           textiles_data=textiles,
+                           default_industry=default_industry)
 
 
 @app.route('/archive')
@@ -493,7 +881,17 @@ def archive():
 def events():
     """Events listing page with filters, upcoming notifications, and pagination."""
     filter_type = request.args.get('filter', '3months')
-    industry = request.args.get('industry', 'all')
+
+    # Use user's preferred industry as default if no industry param in URL
+    industry = request.args.get('industry')
+    if industry is None:
+        # No industry param in URL - check user preference
+        user = get_current_user()
+        prefs = get_user_preferences(user)
+        industry = prefs.get('preferred_industry') or 'all'
+    elif industry == '':
+        industry = 'all'
+
     page = int(request.args.get('page', 1))
 
     # Pagination settings
@@ -715,6 +1113,22 @@ def admin():
             else:
                 error = "Version cannot be empty"
 
+        elif action == 'create_invite':
+            company_name = request.form.get('company_name', '').strip()
+            code = generate_invite_code()
+            try:
+                supabase.table('invite_codes').insert({
+                    'code': code,
+                    'company_name': company_name if company_name else None,
+                    'created_by': 'admin'
+                }).execute()
+                # Store the full link for display
+                base_url = request.url_root.rstrip('/')
+                session['new_invite_link'] = f"{base_url}/register?invite={code}"
+                message = "Invite link created successfully"
+            except Exception as e:
+                error = f"Failed to create invite code: {e}"
+
     # Get current config
     maintenance_config = get_app_config('maintenance_mode') or {'enabled': False, 'message': ''}
     version_config = get_app_config('app_version') or {'version': '1.0.0', 'min_version': '1.0.0'}
@@ -728,11 +1142,43 @@ def admin():
     except:
         health['status'] = 'database error'
 
+    # Get invite codes (recent 10, unused first)
+    invite_codes = []
+    try:
+        response = supabase.table('invite_codes') \
+            .select('*') \
+            .order('created_at', desc=True) \
+            .limit(10) \
+            .execute()
+        invite_codes = response.data or []
+    except Exception as e:
+        print(f"Error fetching invite codes: {e}")
+
+    # Get partner stats
+    partner_stats = {'total': 0, 'active': 0}
+    try:
+        response = supabase.table('partner_users').select('id, is_active').execute()
+        if response.data:
+            partner_stats['total'] = len(response.data)
+            partner_stats['active'] = sum(1 for p in response.data if p.get('is_active', True))
+    except Exception as e:
+        print(f"Error fetching partner stats: {e}")
+
+    # Build base URL for invite links
+    base_url = request.url_root.rstrip('/')
+
+    # Get newly created invite link (if any) and clear from session
+    new_invite_link = session.pop('new_invite_link', None)
+
     return render_template('admin.html',
                            authenticated=True,
                            maintenance=maintenance_config,
                            version=version_config,
                            health=health,
+                           invite_codes=invite_codes,
+                           partner_stats=partner_stats,
+                           base_url=base_url,
+                           new_invite_link=new_invite_link,
                            message=message,
                            error=error)
 
@@ -832,25 +1278,25 @@ def api_generate_summary():
     )
 
     if result['success']:
-        # Save to event_summaries table
+        # Save to event_summaries table (upsert to prevent duplicates on retry)
         try:
-            supabase.table('event_summaries').insert({
+            supabase.table('event_summaries').upsert({
                 'event_id': event_id,
                 'summary_text': result['summary'],
                 'status': 'completed'
-            }).execute()
+            }, on_conflict='event_id').execute()
 
             return jsonify({'success': True, 'summary': result['summary']})
         except Exception as e:
             return jsonify({'error': f'Failed to save summary: {e}'}), 500
     else:
-        # Log failure
+        # Log failure (upsert to prevent duplicates)
         try:
-            supabase.table('event_summaries').insert({
+            supabase.table('event_summaries').upsert({
                 'event_id': event_id,
                 'summary_text': '',
                 'status': 'failed'
-            }).execute()
+            }, on_conflict='event_id').execute()
         except:
             pass
 
