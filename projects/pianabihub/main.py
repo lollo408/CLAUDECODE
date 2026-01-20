@@ -1278,25 +1278,25 @@ def api_generate_summary():
     )
 
     if result['success']:
-        # Save to event_summaries table
+        # Save to event_summaries table (upsert to prevent duplicates on retry)
         try:
-            supabase.table('event_summaries').insert({
+            supabase.table('event_summaries').upsert({
                 'event_id': event_id,
                 'summary_text': result['summary'],
                 'status': 'completed'
-            }).execute()
+            }, on_conflict='event_id').execute()
 
             return jsonify({'success': True, 'summary': result['summary']})
         except Exception as e:
             return jsonify({'error': f'Failed to save summary: {e}'}), 500
     else:
-        # Log failure
+        # Log failure (upsert to prevent duplicates)
         try:
-            supabase.table('event_summaries').insert({
+            supabase.table('event_summaries').upsert({
                 'event_id': event_id,
                 'summary_text': '',
                 'status': 'failed'
-            }).execute()
+            }, on_conflict='event_id').execute()
         except:
             pass
 
