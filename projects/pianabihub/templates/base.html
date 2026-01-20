@@ -565,8 +565,8 @@
                     // Clear local version so it gets re-set on reload
                     localStorage.removeItem(VERSION_KEY);
 
-                    // Force reload from server (bypass cache)
-                    window.location.reload(true);
+                    // Redirect to login page (clears session so users see new login experience)
+                    window.location.href = '/logout';
                 } catch (error) {
                     console.error('[Version] Silent update failed:', error);
                     sessionStorage.removeItem(UPDATE_IN_PROGRESS_KEY);
