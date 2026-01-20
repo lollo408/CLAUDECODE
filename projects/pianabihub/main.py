@@ -244,6 +244,7 @@ def save_user_preferences(user, prefs):
     # Guest users: save to session
     if user.get('is_guest'):
         session['user_preferences'] = prefs
+        session.modified = True  # Force Flask to save session changes
         return True
 
     # Microsoft users and Partners: upsert to database
