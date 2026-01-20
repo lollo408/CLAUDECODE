@@ -361,7 +361,25 @@
         <a href="/admin/logout" class="logout-link">Logout</a>
     </div>
 
-    {% if message %}
+    {% if new_invite_link %}
+    <div class="alert alert-success" style="text-align: left;">
+        <strong>Invite link created!</strong><br>
+        <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; align-items: center;">
+            <input type="text" id="invite-link" value="{{ new_invite_link }}" readonly
+                   style="flex: 1; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 4px; color: #22c55e; font-family: monospace; font-size: 0.8rem;">
+            <button onclick="copyInviteLink()" style="padding: 0.5rem 1rem; background: #22c55e; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Copy</button>
+        </div>
+    </div>
+    <script>
+        function copyInviteLink() {
+            var input = document.getElementById('invite-link');
+            input.select();
+            document.execCommand('copy');
+            event.target.textContent = 'Copied!';
+            setTimeout(() => event.target.textContent = 'Copy', 2000);
+        }
+    </script>
+    {% elif message %}
     <div class="alert alert-success">{{ message }}</div>
     {% endif %}
 

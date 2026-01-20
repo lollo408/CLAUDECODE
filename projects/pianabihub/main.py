@@ -89,7 +89,8 @@ def get_auth_url(redirect_uri, state=None):
         'redirect_uri': redirect_uri,
         'scope': AZURE_SCOPE,
         'response_mode': 'query',
-        'state': state
+        'state': state,
+        'prompt': 'select_account'  # Always show account picker
     }
 
     query_string = '&'.join(f"{k}={v}" for k, v in params.items())
@@ -1121,7 +1122,10 @@ def admin():
                     'company_name': company_name if company_name else None,
                     'created_by': 'admin'
                 }).execute()
-                message = f"Invite code created: {code}"
+                # Store the full link for display
+                base_url = request.url_root.rstrip('/')
+                session['new_invite_link'] = f"{base_url}/register?invite={code}"
+                message = "Invite link created successfully"
             except Exception as e:
                 error = f"Failed to create invite code: {e}"
 
@@ -1163,6 +1167,9 @@ def admin():
     # Build base URL for invite links
     base_url = request.url_root.rstrip('/')
 
+    # Get newly created invite link (if any) and clear from session
+    new_invite_link = session.pop('new_invite_link', None)
+
     return render_template('admin.html',
                            authenticated=True,
                            maintenance=maintenance_config,
@@ -1171,6 +1178,7 @@ def admin():
                            invite_codes=invite_codes,
                            partner_stats=partner_stats,
                            base_url=base_url,
+                           new_invite_link=new_invite_link,
                            message=message,
                            error=error)
 
