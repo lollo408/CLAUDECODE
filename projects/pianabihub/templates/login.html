@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Piana BI Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/base.css">
     <style>
         body {
@@ -45,10 +45,23 @@
             margin-bottom: var(--space-2xl);
         }
 
+        .login-section {
+            margin-bottom: var(--space-lg);
+        }
+
+        .login-section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: lowercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-sm);
+        }
+
         .login-buttons {
             display: flex;
             flex-direction: column;
-            gap: var(--space-md);
+            gap: var(--space-sm);
         }
 
         .login-btn {
@@ -64,6 +77,7 @@
             transition: all var(--transition-base);
             cursor: pointer;
             border: none;
+            min-height: 48px;
         }
 
         .login-btn-microsoft {
@@ -82,6 +96,16 @@
             height: 20px;
         }
 
+        .login-btn-partner {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: white;
+        }
+
+        .login-btn-partner:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
         .login-btn-guest {
             background: transparent;
             color: var(--text-secondary);
@@ -91,6 +115,7 @@
         .login-btn-guest:hover {
             background: rgba(255, 255, 255, 0.05);
             color: var(--text-primary);
+            border-color: var(--text-secondary);
         }
 
         .login-divider {
@@ -122,6 +147,8 @@
             justify-content: center;
             gap: var(--space-sm);
             margin-top: var(--space-lg);
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--border-color);
             color: var(--text-secondary);
             font-size: var(--text-sm);
         }
@@ -129,7 +156,7 @@
         .login-remember input[type="checkbox"] {
             width: 18px;
             height: 18px;
-            accent-color: var(--primary);
+            accent-color: var(--primary, #8b5cf6);
             cursor: pointer;
         }
 
@@ -157,24 +184,6 @@
             margin-bottom: var(--space-lg);
             font-size: var(--text-sm);
         }
-
-        .partner-link {
-            margin-top: var(--space-xl);
-            padding-top: var(--space-lg);
-            border-top: 1px solid var(--border-color);
-            font-size: var(--text-sm);
-            color: var(--text-muted);
-        }
-
-        .partner-link a {
-            color: var(--accent-purple, #8b5cf6);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .partner-link a:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
@@ -194,21 +203,38 @@
         <div class="login-error">{{ error }}</div>
         {% endif %}
 
+        <!-- Piana Employees -->
+        {% if auth_available %}
+        <div class="login-section">
+            <div class="login-section-label">// piana employees</div>
+            <div class="login-buttons">
+                <a href="#" onclick="loginMicrosoft(); return false;" class="login-btn login-btn-microsoft">
+                    <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                        <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                        <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                    </svg>
+                    Sign in with Microsoft
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Partner Companies -->
+        <div class="login-section">
+            <div class="login-section-label">// partner companies</div>
+            <div class="login-buttons">
+                <a href="/auth/partner" class="login-btn login-btn-partner">
+                    Sign in as Partner
+                </a>
+            </div>
+        </div>
+
+        <div class="login-divider">or</div>
+
+        <!-- Quick Access -->
         <div class="login-buttons">
-            {% if auth_available %}
-            <a href="#" onclick="loginMicrosoft(); return false;" class="login-btn login-btn-microsoft">
-                <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
-                    <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
-                    <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
-                    <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
-                </svg>
-                Sign in with Microsoft
-            </a>
-
-            <div class="login-divider">or</div>
-            {% endif %}
-
             <a href="#" onclick="loginGuest(); return false;" class="login-btn login-btn-guest">
                 Continue as Guest
             </a>
@@ -217,10 +243,6 @@
         <div class="login-remember">
             <input type="checkbox" id="remember-me" checked>
             <label for="remember-me">Stay signed in</label>
-        </div>
-
-        <div class="partner-link">
-            Partner company? <a href="/auth/partner">Sign in here</a>
         </div>
 
         <p class="login-footer">
