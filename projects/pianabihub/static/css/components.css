@@ -154,6 +154,30 @@
     font-family: var(--font-mono);
 }
 
+.nav-user-badge {
+    display: inline-block;
+    margin-top: var(--space-xs);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.nav-user-badge.partner {
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.nav-user-badge.guest {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
 .nav-user-settings {
     display: block;
     padding: var(--space-md);

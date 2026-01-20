@@ -157,6 +157,24 @@
             margin-bottom: var(--space-lg);
             font-size: var(--text-sm);
         }
+
+        .partner-link {
+            margin-top: var(--space-xl);
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--border-color);
+            font-size: var(--text-sm);
+            color: var(--text-muted);
+        }
+
+        .partner-link a {
+            color: var(--accent-purple, #8b5cf6);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .partner-link a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -199,6 +217,10 @@
         <div class="login-remember">
             <input type="checkbox" id="remember-me" checked>
             <label for="remember-me">Stay signed in</label>
+        </div>
+
+        <div class="partner-link">
+            Partner company? <a href="/auth/partner">Sign in here</a>
         </div>
 
         <p class="login-footer">

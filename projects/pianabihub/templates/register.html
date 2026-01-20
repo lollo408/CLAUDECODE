@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Piana BI Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .register-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .register-header p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .register-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #888;
+            text-transform: lowercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 1rem;
+            color: #fff;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .form-group input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-group input::placeholder {
+            color: #555;
+        }
+
+        .form-hint {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 6px;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-register:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .success-banner {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .success-banner h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .success-banner p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+
+        .success-banner a {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #22c55e;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .success-banner a:hover {
+            background: #16a34a;
+        }
+
+        .invalid-code {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .invalid-code h2 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            color: #ef4444;
+        }
+
+        .invalid-code p {
+            color: #888;
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+        }
+
+        .invalid-code a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+
+        .invalid-code a:hover {
+            text-decoration: underline;
+        }
+
+        .company-prefill {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #a78bfa;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .login-link a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: #444;
+            font-size: 0.85rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #333;
+        }
+
+        .divider span {
+            padding: 0 16px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>Piana BI Hub</h1>
+            <p>// create your partner account</p>
+        </div>
+
+        <div class="register-card">
+            {% if success %}
+                <div class="success-banner">
+                    <h3>Account Created</h3>
+                    <p>Your partner account has been created successfully.</p>
+                    <a href="/auth/partner">Sign In Now</a>
+                </div>
+            {% elif not invite and invite_code %}
+                <div class="invalid-code">
+                    <h2>Invalid Invite Code</h2>
+                    <p>This invite code is invalid, has already been used, or has expired.</p>
+                    <p>Please contact your Piana representative for a new invite link.</p>
+                    <a href="/login">Back to Login</a>
+                </div>
+            {% elif not invite_code %}
+                <div class="invalid-code">
+                    <h2>Invite Required</h2>
+                    <p>You need a valid invite link to create an account.</p>
+                    <p>Please use the link provided by your Piana representative.</p>
+                    <a href="/login">Back to Login</a>
+                </div>
+            {% else %}
+                {% if error %}
+                <div class="error-banner">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                {% if invite.company_name %}
+                <div class="company-prefill">
+                    Creating account for <strong>{{ invite.company_name }}</strong>
+                </div>
+                {% endif %}
+
+                <form method="POST">
+                    <input type="hidden" name="invite_code" value="{{ invite_code }}">
+
+                    <div class="form-group">
+                        <label for="email">// email address</label>
+                        <input type="email" id="email" name="email" placeholder="you@company.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="company_name">// company name</label>
+                        <input type="text" id="company_name" name="company_name"
+                               value="{{ invite.company_name or '' }}"
+                               placeholder="Your Company Inc."
+                               {% if invite.company_name %}readonly{% endif %}
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">// password</label>
+                        <input type="password" id="password" name="password" placeholder="Create a password" required>
+                        <div class="form-hint">At least 8 characters</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">// confirm password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+                    </div>
+
+                    <button type="submit" class="btn-register">Create Account</button>
+                </form>
+
+                <div class="divider"><span>or</span></div>
+
+                <div class="login-link">
+                    Already have an account? <a href="/auth/partner">Sign in</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
