@@ -1,7 +1,7 @@
 import os
 import json
 import ast
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, make_response
 from datetime import date, datetime
 import csv
 import io
@@ -206,8 +206,10 @@ def check_auth_and_maintenance():
 
     # Always require login (user must be in session - either Microsoft or Guest)
     if not is_user_authenticated():
-        # Store the intended destination
-        session['next_url'] = request.url
+        # Only store actual page paths as next_url (not assets like favicon.ico)
+        # This prevents redirect issues when browser auto-requests favicon
+        if not request.path.startswith('/favicon') and '.' not in request.path:
+            session['next_url'] = request.path
         return redirect(url_for('login'))
 
     # Check maintenance mode from Supabase
@@ -269,9 +271,13 @@ def guest_login():
         'email': 'guest@piana.com',
         'is_guest': True
     }
-    # Only set permanent session if user wants to stay signed in
     session.permanent = remember
-    next_url = session.pop('next_url', '/')
+
+    # Get stored destination, default to home
+    next_url = session.pop('next_url', None)
+    if not next_url or next_url == '/login':
+        next_url = '/'
+
     return redirect(next_url)
 
 
