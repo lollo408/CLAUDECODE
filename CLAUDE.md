@@ -508,8 +508,42 @@ vercel --prod
 ### Upcoming Tasks
 - [ ] Test making GitHub repo private (check if Vercel auto-deploy still works)
 - [ ] Fix login page and user dropdown visual styling (alignment, mobile optimization)
-- [ ] Add "Stay signed in" checkbox on login page
 - [ ] Upload 2026 Q2 events (April-June) when dates available
 - [ ] Monitor Make.com automation for Q1 2026 event summaries
 - [ ] Push notifications (future enhancement)
 - [ ] Real-time updates via Supabase subscriptions (future enhancement)
+
+---
+
+### Version Roadmap
+
+**Version 1.2.0** ✅ DEPLOYED (Jan 20, 2026)
+- [x] Settings page with default industry preference
+- [x] Partner registration system (invite-based)
+- [x] Partner login (email/password)
+- [x] Login page redesign (clear sections: Microsoft / Partner / Guest)
+- [x] Admin panel: invite link generation with copy button
+- [x] Admin link moved to Settings page
+- [x] Event webhook fix (PERPLEXITY_API_KEY newline + upsert logic)
+- [x] "Stay signed in" checkbox on login page
+- [x] Auto-update redirects users to login page (fresh login experience)
+- [x] Fixed guest preferences not persisting (Flask session fix)
+
+**Version 1.3.0** (Planned)
+- [ ] User-generated ranking/voting (authenticated users only)
+- [ ] Saved articles/bookmarks feature
+- [ ] Additional TBD features
+
+### Session Notes (Jan 20, 2026)
+**v1.2.0 Deployment:**
+- [x] Merged develop → main via GitHub PR
+- [x] Fixed Microsoft login redirect URI mismatch (was using Vercel preview URL instead of production)
+- [x] Hardcoded redirect URI to `https://pianabihub.vercel.app/callback`
+- [x] Updated auto-update behavior: users now redirected to `/logout` after version update (clears session, shows login page)
+- [x] Fixed guest user preferences not saving (added `session.modified = True` for Flask session persistence)
+- [x] Deployed version 1.2.0 via Admin panel
+
+**Technical Notes:**
+- Azure AD OAuth requires exact redirect URI match - dynamic `request.url_root` doesn't work with Vercel preview URLs
+- Flask doesn't auto-detect changes to mutable session objects - must explicitly set `session.modified = True`
+- Partner and Microsoft user preferences stored in Supabase (no session issue)
