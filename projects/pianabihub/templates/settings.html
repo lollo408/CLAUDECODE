@@ -268,5 +268,29 @@
             Save Settings
         </button>
     </form>
+
+    <!-- Admin Access -->
+    <div class="admin-link">
+        <a href="/admin">Admin Panel</a>
+    </div>
 </div>
+
+<style>
+    .admin-link {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #222;
+        text-align: center;
+    }
+    .admin-link a {
+        color: #444;
+        font-size: 0.8rem;
+        font-family: 'JetBrains Mono', monospace;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .admin-link a:hover {
+        color: #8b5cf6;
+    }
+</style>
 {% endblock %}
