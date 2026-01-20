@@ -487,8 +487,8 @@ def auth_microsoft():
     remember = request.args.get('remember', '1') == '1'
     session['remember_me'] = remember
 
-    # Build redirect URI
-    redirect_uri = request.url_root.rstrip('/') + AZURE_REDIRECT_PATH
+    # Build redirect URI - must use production URL to match Azure AD config
+    redirect_uri = 'https://pianabihub.vercel.app' + AZURE_REDIRECT_PATH
 
     # Generate state and store in session for CSRF protection
     state = secrets.token_urlsafe(32)
@@ -536,7 +536,7 @@ def callback():
         return redirect(url_for('login', error='No authorization code received'))
 
     # Build redirect URI (must match what was used in auth request)
-    redirect_uri = request.url_root.rstrip('/') + AZURE_REDIRECT_PATH
+    redirect_uri = 'https://pianabihub.vercel.app' + AZURE_REDIRECT_PATH
 
     # Exchange code for tokens
     tokens = exchange_code_for_tokens(code, redirect_uri)
