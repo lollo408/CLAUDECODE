@@ -431,7 +431,8 @@ def check_auth_and_maintenance():
         '/api/auth-status',
         '/manifest.json',
         '/service-worker.js',
-        '/offline'
+        '/offline',
+        '/partner-login'
     ]
 
     # Check if current path is public
@@ -633,7 +634,13 @@ def register():
 
 @app.route('/auth/partner', methods=['GET', 'POST'])
 def auth_partner():
-    """Partner login with email and password."""
+    """Partner login with email and password (legacy - redirects to new code login)."""
+    return redirect(url_for('partner_login'))
+
+
+@app.route('/partner-login', methods=['GET', 'POST'])
+def partner_login():
+    """Partner login with access code (Speakeasy style)."""
     # If already logged in, go to home
     if is_user_authenticated():
         return redirect(url_for('home'))
@@ -641,31 +648,44 @@ def auth_partner():
     error = None
 
     if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '')
-        remember = request.form.get('remember') == 'on'
+        code = request.form.get('code', '').strip().upper()
 
-        if not email or not password:
-            error = "Please enter your email and password"
+        if not code:
+            error = "Please enter your access code"
         else:
-            user, err = authenticate_partner(email, password)
-            if user:
-                # Set up session
-                session['user'] = {
-                    'id': user['id'],
-                    'name': user['company_name'],
-                    'email': user['email'],
-                    'user_type': 'partner'
-                }
-                session.permanent = remember
+            # Check code in Supabase
+            try:
+                result = supabase.table('access_codes') \
+                    .select('*') \
+                    .eq('code', code) \
+                    .eq('is_active', True) \
+                    .limit(1) \
+                    .execute()
 
-                # Redirect to original destination or home
-                next_url = session.pop('next_url', '/')
-                return redirect(next_url)
-            else:
-                error = err
+                if result.data:
+                    access_code = result.data[0]
+                    session['user'] = {
+                        'name': access_code['partner_name'],
+                        'user_type': 'partner'
+                    }
+                    session.permanent = True
 
-    return render_template('partner_login.html', error=error)
+                    # Update last_used_at
+                    supabase.table('access_codes') \
+                        .update({'last_used_at': datetime.now().isoformat()}) \
+                        .eq('id', access_code['id']) \
+                        .execute()
+
+                    # Redirect to original destination or home
+                    next_url = session.pop('next_url', '/')
+                    return redirect(next_url)
+                else:
+                    error = "Invalid Code"
+            except Exception as e:
+                print(f"Error validating access code: {e}")
+                error = "Login failed. Please try again."
+
+    return render_template('partner_login_code.html', error=error)
 
 
 # --- HELPER FUNCTION: Fetch & Clean Data ---
@@ -1130,6 +1150,34 @@ def admin():
             except Exception as e:
                 error = f"Failed to create invite code: {e}"
 
+        elif action == 'generate_access_code':
+            partner_name = request.form.get('partner_name', '').strip()
+            if not partner_name:
+                error = "Partner name is required"
+            else:
+                code = generate_invite_code()  # Reuse same code generator
+                try:
+                    supabase.table('access_codes').insert({
+                        'code': code,
+                        'partner_name': partner_name
+                    }).execute()
+                    session['new_access_code'] = code
+                    message = f"Access code created for {partner_name}"
+                except Exception as e:
+                    error = f"Failed to create access code: {e}"
+
+        elif action == 'toggle_access_code':
+            code_id = request.form.get('code_id')
+            is_active = request.form.get('is_active') == 'true'
+            try:
+                supabase.table('access_codes') \
+                    .update({'is_active': is_active}) \
+                    .eq('id', code_id) \
+                    .execute()
+                message = f"Access code {'activated' if is_active else 'deactivated'}"
+            except Exception as e:
+                error = f"Failed to update access code: {e}"
+
     # Get current config
     maintenance_config = get_app_config('maintenance_mode') or {'enabled': False, 'message': ''}
     version_config = get_app_config('app_version') or {'version': '1.0.0', 'min_version': '1.0.0'}
@@ -1165,11 +1213,26 @@ def admin():
     except Exception as e:
         print(f"Error fetching partner stats: {e}")
 
+    # Get access codes
+    access_codes = []
+    try:
+        response = supabase.table('access_codes') \
+            .select('*') \
+            .order('created_at', desc=True) \
+            .limit(20) \
+            .execute()
+        access_codes = response.data or []
+    except Exception as e:
+        print(f"Error fetching access codes: {e}")
+
     # Build base URL for invite links
     base_url = request.url_root.rstrip('/')
 
     # Get newly created invite link (if any) and clear from session
     new_invite_link = session.pop('new_invite_link', None)
+
+    # Get newly created access code (if any) and clear from session
+    new_access_code = session.pop('new_access_code', None)
 
     return render_template('admin.html',
                            authenticated=True,
@@ -1177,9 +1240,11 @@ def admin():
                            version=version_config,
                            health=health,
                            invite_codes=invite_codes,
+                           access_codes=access_codes,
                            partner_stats=partner_stats,
                            base_url=base_url,
                            new_invite_link=new_invite_link,
+                           new_access_code=new_access_code,
                            message=message,
                            error=error)
 
