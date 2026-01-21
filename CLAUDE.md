@@ -76,6 +76,8 @@ We use a `develop` → `main` workflow to prevent accidental production deployme
 4. Set: `base: main` ← `compare: develop`
 5. Review changes, then "Create pull request" → "Merge pull request"
 6. Production auto-deploys only after you merge (1-2 minutes)
+7. **Claude will provide the next version number** (e.g., `1.3.0`) after deployment
+8. Go to Admin panel → App Version → enter the version number to push update to PWA users
 
 **Why this workflow:**
 - Safe to push code anytime without affecting production
@@ -506,7 +508,7 @@ vercel --prod
 7. Supabase → Upload file + create row
 
 ### Upcoming Tasks
-- [ ] Test making GitHub repo private (check if Vercel auto-deploy still works)
+- [x] Test making GitHub repo private → Requires paid Vercel plan, keeping public
 - [ ] Upload 2026 Q2 events (April-June) when dates available
 - [x] Fix login page and user dropdown visual styling (alignment, mobile optimization)
 - [x] Monitor Make.com automation for Q1 2026 event summaries
@@ -529,7 +531,14 @@ vercel --prod
 - [x] Auto-update redirects users to login page (fresh login experience)
 - [x] Fixed guest preferences not persisting (Flask session fix)
 
-**Version 1.3.0** (Planned)
+**Version 1.3.0** ✅ DEPLOYED (Jan 21, 2026)
+- [x] Speakeasy Partner Login (access codes replace email/password)
+- [x] Individual partner personalization (name + email per user)
+- [x] Partner profiles stored in Supabase (remembers returning users)
+- [x] "Remember me" checkbox for partner login
+- [x] Admin panel: Access Codes management section
+
+**Version 1.4.0** (Planned)
 - [ ] User-generated ranking/voting (authenticated users only)
 - [ ] Saved articles/bookmarks feature
 - [ ] Additional TBD features
@@ -549,4 +558,22 @@ vercel --prod
 - Partner and Microsoft user preferences stored in Supabase (no session issue)
 
 ### Session Notes (Jan 21, 2026)
-- [x] Testing GitHub private repo + Vercel auto-deploy compatibility
+- [x] Tested GitHub private repo + Vercel auto-deploy → **Requires paid Vercel plan**
+- [x] Decision: Keep repo public (no sensitive code, security is in env vars + RLS + auth)
+- [x] Implemented Speakeasy Partner Login (access codes)
+- [x] Added individual personalization (name + email fields)
+- [x] Created `access_codes` and `partner_profiles` tables in Supabase
+- [x] Added "Remember me" checkbox to partner login
+- [x] Deployed v1.3.0 to production
+
+**New Supabase Tables:**
+| Table | Purpose |
+|-------|---------|
+| `access_codes` | Company-level codes (partner_name, is_active, last_used_at) |
+| `partner_profiles` | Individual users linked to access codes (name, email, last_login_at) |
+
+**Partner Login Flow:**
+1. Partner enters: access code + name + email
+2. Code validates company access
+3. Profile stored if "Remember me" checked
+4. Session shows individual's name in nav
