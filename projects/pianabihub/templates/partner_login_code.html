@@ -124,6 +124,26 @@
             font-size: 1rem;
         }
 
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #8b5cf6;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 0.9rem;
+            color: #888;
+            cursor: pointer;
+        }
+
         .btn-login {
             width: 100%;
             padding: 16px;
@@ -251,12 +271,13 @@
                            required>
                 </div>
 
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember" name="remember" checked>
+                    <label for="remember">Remember me for future visits</label>
+                </div>
+
                 <button type="submit" class="btn-login">Enter</button>
             </form>
-
-            <p class="help-text">
-                Your info is remembered for future visits
-            </p>
 
             <div class="divider"><span>or</span></div>
 

@@ -651,6 +651,7 @@ def partner_login():
         code = request.form.get('code', '').strip().upper()
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip().lower()
+        remember = request.form.get('remember') == 'on'
 
         if not code:
             error = "Please enter your access code"
@@ -671,34 +672,36 @@ def partner_login():
                 if result.data:
                     access_code = result.data[0]
 
-                    # Check if this email already has a profile for this code
-                    profile_result = supabase.table('partner_profiles') \
-                        .select('*') \
-                        .eq('access_code_id', access_code['id']) \
-                        .eq('email', email) \
-                        .limit(1) \
-                        .execute()
+                    # Only save profile if "remember me" is checked
+                    if remember:
+                        # Check if this email already has a profile for this code
+                        profile_result = supabase.table('partner_profiles') \
+                            .select('*') \
+                            .eq('access_code_id', access_code['id']) \
+                            .eq('email', email) \
+                            .limit(1) \
+                            .execute()
 
-                    if profile_result.data:
-                        # Existing user - update last login and name if changed
-                        profile = profile_result.data[0]
-                        supabase.table('partner_profiles') \
-                            .update({
-                                'name': name,
-                                'last_login_at': datetime.now().isoformat()
-                            }) \
-                            .eq('id', profile['id']) \
-                            .execute()
-                    else:
-                        # New user - create profile
-                        supabase.table('partner_profiles') \
-                            .insert({
-                                'access_code_id': access_code['id'],
-                                'name': name,
-                                'email': email,
-                                'last_login_at': datetime.now().isoformat()
-                            }) \
-                            .execute()
+                        if profile_result.data:
+                            # Existing user - update last login and name if changed
+                            profile = profile_result.data[0]
+                            supabase.table('partner_profiles') \
+                                .update({
+                                    'name': name,
+                                    'last_login_at': datetime.now().isoformat()
+                                }) \
+                                .eq('id', profile['id']) \
+                                .execute()
+                        else:
+                            # New user - create profile
+                            supabase.table('partner_profiles') \
+                                .insert({
+                                    'access_code_id': access_code['id'],
+                                    'name': name,
+                                    'email': email,
+                                    'last_login_at': datetime.now().isoformat()
+                                }) \
+                                .execute()
 
                     # Set session with individual's info
                     session['user'] = {
@@ -707,7 +710,7 @@ def partner_login():
                         'company': access_code['partner_name'],
                         'user_type': 'partner'
                     }
-                    session.permanent = True
+                    session.permanent = remember
 
                     # Update access code last_used_at
                     supabase.table('access_codes') \
