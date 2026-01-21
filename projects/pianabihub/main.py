@@ -640,7 +640,7 @@ def auth_partner():
 
 @app.route('/partner-login', methods=['GET', 'POST'])
 def partner_login():
-    """Partner login with access code (Speakeasy style)."""
+    """Partner login with access code + name/email (Speakeasy style with personalization)."""
     # If already logged in, go to home
     if is_user_authenticated():
         return redirect(url_for('home'))
@@ -649,9 +649,15 @@ def partner_login():
 
     if request.method == 'POST':
         code = request.form.get('code', '').strip().upper()
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
 
         if not code:
             error = "Please enter your access code"
+        elif not name:
+            error = "Please enter your name"
+        elif not email or '@' not in email:
+            error = "Please enter a valid email"
         else:
             # Check code in Supabase
             try:
@@ -664,13 +670,46 @@ def partner_login():
 
                 if result.data:
                     access_code = result.data[0]
+
+                    # Check if this email already has a profile for this code
+                    profile_result = supabase.table('partner_profiles') \
+                        .select('*') \
+                        .eq('access_code_id', access_code['id']) \
+                        .eq('email', email) \
+                        .limit(1) \
+                        .execute()
+
+                    if profile_result.data:
+                        # Existing user - update last login and name if changed
+                        profile = profile_result.data[0]
+                        supabase.table('partner_profiles') \
+                            .update({
+                                'name': name,
+                                'last_login_at': datetime.now().isoformat()
+                            }) \
+                            .eq('id', profile['id']) \
+                            .execute()
+                    else:
+                        # New user - create profile
+                        supabase.table('partner_profiles') \
+                            .insert({
+                                'access_code_id': access_code['id'],
+                                'name': name,
+                                'email': email,
+                                'last_login_at': datetime.now().isoformat()
+                            }) \
+                            .execute()
+
+                    # Set session with individual's info
                     session['user'] = {
-                        'name': access_code['partner_name'],
+                        'name': name,
+                        'email': email,
+                        'company': access_code['partner_name'],
                         'user_type': 'partner'
                     }
                     session.permanent = True
 
-                    # Update last_used_at
+                    # Update access code last_used_at
                     supabase.table('access_codes') \
                         .update({'last_used_at': datetime.now().isoformat()}) \
                         .eq('id', access_code['id']) \
