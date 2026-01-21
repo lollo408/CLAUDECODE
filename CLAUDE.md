@@ -185,7 +185,7 @@ name, industry, start_date, end_date, location, country, website, description
 
 **Upcoming Tasks:**
 - [ ] Upload 2026 Q2 events (April-June) when dates available
-- [ ] Monitor Make.com automation for Q1 2026 event summaries
+- [x] Monitor Make.com automation for Q1 2026 event summaries
 
 ---
 
@@ -507,9 +507,9 @@ vercel --prod
 
 ### Upcoming Tasks
 - [ ] Test making GitHub repo private (check if Vercel auto-deploy still works)
-- [ ] Fix login page and user dropdown visual styling (alignment, mobile optimization)
 - [ ] Upload 2026 Q2 events (April-June) when dates available
-- [ ] Monitor Make.com automation for Q1 2026 event summaries
+- [x] Fix login page and user dropdown visual styling (alignment, mobile optimization)
+- [x] Monitor Make.com automation for Q1 2026 event summaries
 - [ ] Push notifications (future enhancement)
 - [ ] Real-time updates via Supabase subscriptions (future enhancement)
 
@@ -547,3 +547,6 @@ vercel --prod
 - Azure AD OAuth requires exact redirect URI match - dynamic `request.url_root` doesn't work with Vercel preview URLs
 - Flask doesn't auto-detect changes to mutable session objects - must explicitly set `session.modified = True`
 - Partner and Microsoft user preferences stored in Supabase (no session issue)
+
+### Session Notes (Jan 21, 2026)
+- [x] Testing GitHub private repo + Vercel auto-deploy compatibility
