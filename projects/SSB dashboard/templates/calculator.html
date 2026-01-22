@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piana Sustainability Calculator</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-section">
+                <div class="logo-placeholder">PIANA</div>
+                <div class="header-text">
+                    <h1>Sustainability Calculator</h1>
+                    <p class="subtitle">CO2 Emissions Estimator for SSB Products</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Calculator Section -->
+        <main class="calculator">
+            <div class="instructions">
+                <p>Add products to calculate your carbon footprint.</p>
+            </div>
+
+            <!-- Order List -->
+            <div class="order-section">
+                <div class="order-header">
+                    <h3>Your Products</h3>
+                    <button class="add-btn" onclick="addRow()">+ Add Product</button>
+                </div>
+
+                <div class="order-list" id="order-list">
+                    <!-- Empty state -->
+                    <div class="empty-state" id="empty-state">
+                        <p>No products added yet</p>
+                        <p class="hint">Click "Add Product" to get started</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel" id="results-panel">
+                <div class="results-header">
+                    <h2>Total Carbon Footprint</h2>
+                </div>
+                <div class="results-main">
+                    <div class="total-emissions">
+                        <span class="value" id="total-kg">0</span>
+                        <span class="unit">kg CO2e</span>
+                    </div>
+                    <div class="total-metric-tons">
+                        <span id="total-tons">0</span> metric tons
+                    </div>
+                </div>
+                <div class="equivalencies">
+                    <div class="equiv-item">
+                        <span class="equiv-icon">🌳</span>
+                        <div class="equiv-text">
+                            <span class="equiv-value" id="trees">0</span>
+                            <span class="equiv-label">trees absorbing CO2 for 1 year</span>
+                        </div>
+                    </div>
+                    <div class="equiv-item">
+                        <span class="equiv-icon">🚗</span>
+                        <div class="equiv-text">
+                            <span class="equiv-value" id="car-miles">0</span>
+                            <span class="equiv-label">miles driven</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="results-note">Based on EPA equivalency factors</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Data source: Piana Georgia Plant | Scope 1, 2, and 3 emissions</p>
+            <p class="copyright">&copy; 2026 Piana Nonwovens</p>
+        </footer>
+    </div>
+
+    <script>
+        let productData = null;
+        let rowCount = 0;
+
+        // Load product data
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                productData = await response.json();
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        // Add a new row
+        function addRow() {
+            const list = document.getElementById('order-list');
+            const emptyState = document.getElementById('empty-state');
+
+            // Hide empty state
+            if (emptyState) emptyState.style.display = 'none';
+
+            const rowId = rowCount++;
+            const row = document.createElement('div');
+            row.className = 'order-row';
+            row.id = `row-${rowId}`;
+            row.innerHTML = `
+                <div class="row-fields">
+                    <div class="field field-product">
+                        <label>Product</label>
+                        <select class="product-select" id="product-${rowId}" onchange="onProductChange(${rowId})">
+                            <option value="">Select product...</option>
+                            ${productData.families.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field field-size" id="size-field-${rowId}" style="display: none;">
+                        <label>Size</label>
+                        <select class="size-select" id="size-${rowId}" onchange="calculateTotal()">
+                            <option value="">Select size...</option>
+                        </select>
+                    </div>
+                    <div class="field field-qty">
+                        <label>Qty</label>
+                        <div class="qty-wrapper">
+                            <input type="number" min="0" placeholder="0"
+                                class="qty-input" id="qty-${rowId}"
+                                oninput="calculateTotal()">
+                            <span class="unit" id="unit-${rowId}">pcs</span>
+                        </div>
+                    </div>
+                    <div class="field field-result">
+                        <label>CO2e</label>
+                        <div class="row-result" id="result-${rowId}">0 kg</div>
+                    </div>
+                </div>
+                <button class="remove-btn" onclick="removeRow(${rowId})" title="Remove">×</button>
+            `;
+            list.appendChild(row);
+        }
+
+        // Handle product selection change
+        function onProductChange(rowId) {
+            const productSelect = document.getElementById(`product-${rowId}`);
+            const sizeField = document.getElementById(`size-field-${rowId}`);
+            const sizeSelect = document.getElementById(`size-${rowId}`);
+            const unitSpan = document.getElementById(`unit-${rowId}`);
+
+            const familyName = productSelect.value;
+            const family = productData.families.find(f => f.name === familyName);
+
+            if (!family) {
+                sizeField.style.display = 'none';
+                return;
+            }
+
+            // Update unit label
+            unitSpan.textContent = family.unit === 'pieces' ? 'pcs' : 'yds';
+
+            if (family.has_sizes) {
+                // Show size dropdown for pads
+                sizeField.style.display = 'block';
+                sizeSelect.innerHTML = `
+                    <option value="">Select size...</option>
+                    ${family.sizes.map(s => `<option value="${s.emission_factor}">${s.size}</option>`).join('')}
+                `;
+            } else {
+                // For rolls, hide size and use first product's factor
+                sizeField.style.display = 'none';
+                sizeSelect.innerHTML = `<option value="${family.products[0].emission_factor}" selected>-</option>`;
+            }
+
+            calculateTotal();
+        }
+
+        // Remove a row
+        function removeRow(rowId) {
+            const row = document.getElementById(`row-${rowId}`);
+            if (row) row.remove();
+
+            // Show empty state if no rows left
+            const list = document.getElementById('order-list');
+            const rows = list.querySelectorAll('.order-row');
+            if (rows.length === 0) {
+                document.getElementById('empty-state').style.display = 'block';
+            }
+
+            calculateTotal();
+        }
+
+        // Calculate totals
+        function calculateTotal() {
+            let grandTotal = 0;
+
+            const rows = document.querySelectorAll('.order-row');
+            rows.forEach(row => {
+                const rowId = row.id.replace('row-', '');
+                const productSelect = document.getElementById(`product-${rowId}`);
+                const sizeSelect = document.getElementById(`size-${rowId}`);
+                const qtyInput = document.getElementById(`qty-${rowId}`);
+                const resultEl = document.getElementById(`result-${rowId}`);
+
+                const familyName = productSelect.value;
+                const family = productData.families.find(f => f.name === familyName);
+
+                let factor = 0;
+                if (family) {
+                    if (family.has_sizes) {
+                        factor = parseFloat(sizeSelect.value) || 0;
+                    } else if (family.products && family.products.length > 0) {
+                        factor = family.products[0].emission_factor;
+                    }
+                }
+
+                const quantity = parseFloat(qtyInput.value) || 0;
+                const emission = factor * quantity;
+
+                resultEl.textContent = formatNumber(emission) + ' kg';
+
+                if (emission > 0) {
+                    row.classList.add('has-value');
+                } else {
+                    row.classList.remove('has-value');
+                }
+
+                grandTotal += emission;
+            });
+
+            // Update totals
+            document.getElementById('total-kg').textContent = formatNumber(grandTotal);
+            document.getElementById('total-tons').textContent = (grandTotal / 1000).toFixed(2);
+
+            // EPA equivalencies
+            const trees = Math.round(grandTotal / 21.77);
+            const carMiles = Math.round(grandTotal / 0.4);
+
+            document.getElementById('trees').textContent = formatNumber(trees);
+            document.getElementById('car-miles').textContent = formatNumber(carMiles);
+
+            // Highlight results panel
+            const resultsPanel = document.getElementById('results-panel');
+            if (grandTotal > 0) {
+                resultsPanel.classList.add('has-results');
+            } else {
+                resultsPanel.classList.remove('has-results');
+            }
+        }
+
+        // Format numbers with commas
+        function formatNumber(num) {
+            return Math.round(num).toLocaleString();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadProducts);
+    </script>
+</body>
+</html>

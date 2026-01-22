@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option C - Corporate Table</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0066CC;
+            --primary-dark: #004C99;
+            --success: #198754;
+            --bg: #F8F9FA;
+            --white: #FFFFFF;
+            --gray-100: #F1F3F5;
+            --gray-200: #DEE2E6;
+            --gray-400: #ADB5BD;
+            --gray-600: #6C757D;
+            --gray-800: #343A40;
+            --gray-900: #212529;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--bg);
+            color: var(--gray-900);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-logo {
+            background: var(--primary);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .nav-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .nav-subtitle {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-100);
+        }
+
+        /* Main Container */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 32px;
+        }
+
+        /* Card */
+        .card {
+            background: var(--white);
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 0;
+        }
+
+        /* Table */
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .product-table th {
+            background: var(--gray-100);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-600);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .product-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            vertical-align: middle;
+        }
+
+        .product-table tr:hover {
+            background: var(--gray-100);
+        }
+
+        .product-table tr.has-value {
+            background: #E8F5E9;
+        }
+
+        .empty-row td {
+            text-align: center;
+            padding: 48px;
+            color: var(--gray-400);
+        }
+
+        select, input[type="number"] {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: white;
+            min-width: 100px;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+        }
+
+        .qty-cell {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .qty-cell input {
+            width: 80px;
+            text-align: right;
+        }
+
+        .qty-cell .unit {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            min-width: 60px;
+        }
+
+        .result-cell {
+            font-weight: 600;
+            color: var(--success);
+            text-align: right;
+            min-width: 100px;
+        }
+
+        .action-cell {
+            width: 40px;
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 1.1rem;
+        }
+
+        .delete-btn:hover {
+            background: #FFEBEE;
+            color: #D32F2F;
+        }
+
+        /* Summary Card */
+        .summary-card {
+            position: sticky;
+            top: 20px;
+        }
+
+        .summary-content {
+            padding: 24px;
+        }
+
+        .summary-total {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+        }
+
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--success);
+            line-height: 1;
+        }
+
+        .summary-unit {
+            font-size: 1rem;
+            color: var(--gray-600);
+            margin-left: 4px;
+        }
+
+        .summary-tons {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+            margin-top: 4px;
+        }
+
+        .equiv-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .equiv-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--gray-100);
+            border-radius: 6px;
+        }
+
+        .equiv-icon {
+            font-size: 1.25rem;
+        }
+
+        .equiv-data {
+            flex: 1;
+        }
+
+        .equiv-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .equiv-label {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--gray-400);
+            font-size: 0.8rem;
+        }
+
+        /* Mobile */
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 1fr;
+                padding: 16px;
+            }
+            .summary-card {
+                position: relative;
+            }
+            .navbar {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px;
+            }
+            .product-table th:nth-child(2),
+            .product-table td:nth-child(2) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="nav-logo">P</div>
+            <div>
+                <div class="nav-title">Piana Sustainability Calculator</div>
+                <div class="nav-subtitle">SSB Product Emissions</div>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-primary" onclick="addRow()">+ Add Product</button>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Product List</span>
+                <span id="item-count" style="font-size: 0.85rem; color: var(--gray-600);">0 items</span>
+            </div>
+            <div class="card-body">
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>OSF</th>
+                            <th>Size</th>
+                            <th>Quantity</th>
+                            <th style="text-align: right;">CO2e</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-list">
+                        <tr class="empty-row" id="empty-state">
+                            <td colspan="6">Click "+ Add Product" to begin calculating emissions</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card summary-card">
+            <div class="card-header">
+                <span class="card-title">Summary</span>
+            </div>
+            <div class="summary-content">
+                <div class="summary-total">
+                    <div class="summary-label">Total Emissions</div>
+                    <span class="summary-value" id="total-kg">0</span>
+                    <span class="summary-unit">kg CO2e</span>
+                    <div class="summary-tons"><span id="total-tons">0</span> metric tons</div>
+                </div>
+
+                <div class="equiv-list">
+                    <div class="equiv-item">
+                        <span class="equiv-icon">🌳</span>
+                        <div class="equiv-data">
+                            <div class="equiv-value" id="trees">0</div>
+                            <div class="equiv-label">trees absorbing CO2 / year</div>
+                        </div>
+                    </div>
+                    <div class="equiv-item">
+                        <span class="equiv-icon">🚗</span>
+                        <div class="equiv-data">
+                            <div class="equiv-value" id="car-miles">0</div>
+                            <div class="equiv-label">miles driven</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        Data source: Piana Georgia Plant | Scope 1, 2 & 3 emissions | EPA equivalency factors
+    </footer>
+
+    <script>
+        let productData = null;
+        let rowCount = 0;
+
+        async function loadProducts() {
+            const response = await fetch('/api/products');
+            productData = await response.json();
+        }
+
+        function updateItemCount() {
+            const count = document.querySelectorAll('.order-row').length;
+            document.getElementById('item-count').textContent = count + ' item' + (count !== 1 ? 's' : '');
+        }
+
+        function addRow() {
+            document.getElementById('empty-state').style.display = 'none';
+            const tbody = document.getElementById('order-list');
+            const rowId = rowCount++;
+
+            const row = document.createElement('tr');
+            row.className = 'order-row';
+            row.id = `row-${rowId}`;
+            row.innerHTML = `
+                <td>
+                    <select id="product-${rowId}" onchange="onProductChange(${rowId})">
+                        <option value="">Select...</option>
+                        <optgroup label="Pads">
+                            ${productData.pads.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+                        </optgroup>
+                        <optgroup label="Rolls">
+                            ${productData.rolls.map(r => `<option value="${r.name}">${r.name}</option>`).join('')}
+                        </optgroup>
+                    </select>
+                </td>
+                <td id="osf-cell-${rowId}">
+                    <select id="osf-${rowId}" onchange="onOsfChange(${rowId})" disabled>
+                        <option value="">-</option>
+                    </select>
+                </td>
+                <td id="size-cell-${rowId}">
+                    <select id="size-${rowId}" onchange="calculateTotal()" disabled>
+                        <option value="">-</option>
+                    </select>
+                </td>
+                <td>
+                    <div class="qty-cell">
+                        <input type="number" id="qty-${rowId}" placeholder="0" oninput="calculateTotal()">
+                        <span class="unit" id="unit-${rowId}">pcs</span>
+                    </div>
+                </td>
+                <td class="result-cell" id="result-${rowId}">0 kg</td>
+                <td class="action-cell">
+                    <button class="delete-btn" onclick="removeRow(${rowId})">×</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            updateItemCount();
+        }
+
+        function onProductChange(rowId) {
+            const productName = document.getElementById(`product-${rowId}`).value;
+            const osfSelect = document.getElementById(`osf-${rowId}`);
+            const sizeSelect = document.getElementById(`size-${rowId}`);
+            const unitSpan = document.getElementById(`unit-${rowId}`);
+
+            const pad = productData.pads.find(p => p.name === productName);
+            const roll = productData.rolls.find(r => r.name === productName);
+
+            if (pad) {
+                unitSpan.textContent = 'pcs';
+                if (pad.has_osf) {
+                    osfSelect.disabled = false;
+                    osfSelect.innerHTML = '<option value="">Select...</option>' +
+                        Object.keys(pad.osf_options).map(osf => `<option value="${osf}">${osf} OSF</option>`).join('');
+                    sizeSelect.disabled = true;
+                    sizeSelect.innerHTML = '<option value="">-</option>';
+                } else {
+                    osfSelect.disabled = true;
+                    osfSelect.innerHTML = '<option value="">N/A</option>';
+                    sizeSelect.disabled = false;
+                    sizeSelect.innerHTML = '<option value="">Select...</option>' +
+                        pad.sizes.map(s => `<option value="${s.emission_factor}">${s.size}</option>`).join('');
+                }
+            } else if (roll) {
+                unitSpan.textContent = 'linear yards';
+                osfSelect.disabled = true;
+                osfSelect.innerHTML = '<option value="">N/A</option>';
+                sizeSelect.disabled = true;
+                sizeSelect.innerHTML = `<option value="${roll.emission_factor}" selected>N/A</option>`;
+            } else {
+                osfSelect.disabled = true;
+                sizeSelect.disabled = true;
+            }
+            calculateTotal();
+        }
+
+        function onOsfChange(rowId) {
+            const productName = document.getElementById(`product-${rowId}`).value;
+            const osf = document.getElementById(`osf-${rowId}`).value;
+            const sizeSelect = document.getElementById(`size-${rowId}`);
+
+            const pad = productData.pads.find(p => p.name === productName);
+            if (pad && pad.has_osf && osf) {
+                sizeSelect.disabled = false;
+                const sizes = pad.osf_options[osf];
+                sizeSelect.innerHTML = '<option value="">Select...</option>' +
+                    sizes.map(s => `<option value="${s.emission_factor}">${s.size}</option>`).join('');
+            }
+            calculateTotal();
+        }
+
+        function removeRow(rowId) {
+            document.getElementById(`row-${rowId}`).remove();
+            if (!document.querySelector('.order-row')) {
+                document.getElementById('empty-state').style.display = '';
+            }
+            updateItemCount();
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            document.querySelectorAll('.order-row').forEach(row => {
+                const rowId = row.id.replace('row-', '');
+                const sizeSelect = document.getElementById(`size-${rowId}`);
+                const qtyInput = document.getElementById(`qty-${rowId}`);
+                const resultEl = document.getElementById(`result-${rowId}`);
+
+                const factor = parseFloat(sizeSelect?.value) || 0;
+                const qty = parseFloat(qtyInput?.value) || 0;
+                const emission = factor * qty;
+
+                resultEl.textContent = emission > 0 ? Math.round(emission).toLocaleString() + ' kg' : '0 kg';
+                row.classList.toggle('has-value', emission > 0);
+                total += emission;
+            });
+
+            document.getElementById('total-kg').textContent = Math.round(total).toLocaleString();
+            document.getElementById('total-tons').textContent = (total / 1000).toFixed(2);
+            document.getElementById('trees').textContent = Math.round(total / 21.77).toLocaleString();
+            document.getElementById('car-miles').textContent = Math.round(total / 0.4).toLocaleString();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProducts);
+    </script>
+</body>
+</html>
