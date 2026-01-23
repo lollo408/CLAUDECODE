@@ -12,7 +12,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import requests as http_requests  # Rename to avoid confusion with flask.request
 import secrets
-from pywebpush import webpush, WebPushException
+
+# Try to import pywebpush (may fail on some serverless environments)
+try:
+    from pywebpush import webpush, WebPushException
+    PYWEBPUSH_AVAILABLE = True
+except ImportError as e:
+    print(f"[Push] pywebpush not available: {e}")
+    PYWEBPUSH_AVAILABLE = False
+    webpush = None
+    WebPushException = Exception
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -79,10 +88,12 @@ else:
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
 VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@pianatechnology.com')
-PUSH_ENABLED = bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY)
+PUSH_ENABLED = bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY and PYWEBPUSH_AVAILABLE)
 
 if PUSH_ENABLED:
     print(f"[Push] Web Push notifications enabled")
+elif not PYWEBPUSH_AVAILABLE:
+    print(f"[Push] Web Push disabled (pywebpush library not available)")
 else:
     print(f"[Push] Web Push notifications disabled (missing VAPID keys)")
 
