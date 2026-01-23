@@ -236,13 +236,21 @@ def send_web_push(subscription_info, data, vapid_private_key, vapid_claims):
     parsed_url = endpoint.split('/')
     audience = '/'.join(parsed_url[:3])  # https://fcm.googleapis.com or similar
 
+    # Load the VAPID private key (raw 32-byte format) into an EC key object
+    vapid_private_bytes = urlsafe_b64decode(vapid_private_key)
+    vapid_private_key_obj = ec.derive_private_key(
+        int.from_bytes(vapid_private_bytes, 'big'),
+        ec.SECP256R1(),
+        default_backend()
+    )
+
     vapid_token = jwt.encode(
         {
             'aud': audience,
             'exp': int(time.time()) + 86400,
             'sub': vapid_claims.get('sub', VAPID_SUBJECT)
         },
-        urlsafe_b64decode(vapid_private_key),
+        vapid_private_key_obj,
         algorithm='ES256'
     )
 
