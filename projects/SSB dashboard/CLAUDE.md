@@ -116,6 +116,7 @@ SSB dashboard/
 - [ ] Deploy to Vercel
 - [ ] Share with SSB
 - [ ] **MISSING EMISSION FACTOR:** `KNIT APFR OWK W/FR` (51,712 units in 2025) - excluded from 2025 summary because no emission factor available. Need to get this from sustainability manager.
+- [ ] **DATA UPDATE PENDING:** Current 2025 order data is not the final version. Update `orders_2025.json` once we receive corrected/final data from Spencer.
 
 ---
 
