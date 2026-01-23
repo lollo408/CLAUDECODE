@@ -13,15 +13,21 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests as http_requests  # Rename to avoid confusion with flask.request
 import secrets
 
-# Try to import pywebpush (may fail on some serverless environments)
+# Web Push implementation using cryptography (no pywebpush dependency)
+import base64
+import struct
+import time
 try:
-    from pywebpush import webpush, WebPushException
-    PYWEBPUSH_AVAILABLE = True
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.backends import default_backend
+    import jwt
+    CRYPTO_AVAILABLE = True
 except ImportError as e:
-    print(f"[Push] pywebpush not available: {e}")
-    PYWEBPUSH_AVAILABLE = False
-    webpush = None
-    WebPushException = Exception
+    print(f"[Push] cryptography not available: {e}")
+    CRYPTO_AVAILABLE = False
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -88,14 +94,172 @@ else:
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
 VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@pianatechnology.com')
-PUSH_ENABLED = bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY and PYWEBPUSH_AVAILABLE)
+PUSH_ENABLED = bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY and CRYPTO_AVAILABLE)
 
 if PUSH_ENABLED:
     print(f"[Push] Web Push notifications enabled")
-elif not PYWEBPUSH_AVAILABLE:
-    print(f"[Push] Web Push disabled (pywebpush library not available)")
+elif not CRYPTO_AVAILABLE:
+    print(f"[Push] Web Push disabled (cryptography library not available)")
 else:
     print(f"[Push] Web Push notifications disabled (missing VAPID keys)")
+
+
+# --- WEB PUSH HELPER FUNCTIONS ---
+def urlsafe_b64decode(data):
+    """Decode URL-safe base64 with padding."""
+    padding = 4 - len(data) % 4
+    if padding != 4:
+        data += '=' * padding
+    return base64.urlsafe_b64decode(data)
+
+
+def urlsafe_b64encode(data):
+    """Encode to URL-safe base64 without padding."""
+    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('utf-8')
+
+
+def send_web_push(subscription_info, data, vapid_private_key, vapid_claims):
+    """
+    Send a Web Push notification using manual encryption.
+    This replaces pywebpush for Vercel compatibility.
+    """
+    if not CRYPTO_AVAILABLE:
+        raise Exception("Cryptography library not available")
+
+    endpoint = subscription_info['endpoint']
+    p256dh = subscription_info['keys']['p256dh']
+    auth = subscription_info['keys']['auth']
+
+    # Decode subscriber's public key and auth secret
+    user_public_key_bytes = urlsafe_b64decode(p256dh)
+    auth_secret = urlsafe_b64decode(auth)
+
+    # Generate ephemeral ECDH key pair
+    server_private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+    server_public_key = server_private_key.public_key()
+
+    # Get server public key bytes (uncompressed point format)
+    server_public_key_bytes = server_public_key.public_bytes(
+        serialization.Encoding.X962,
+        serialization.PublicFormat.UncompressedPoint
+    )
+
+    # Load user's public key
+    user_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
+        ec.SECP256R1(), user_public_key_bytes
+    )
+
+    # ECDH shared secret
+    shared_secret = server_private_key.exchange(ec.ECDH(), user_public_key)
+
+    # Derive encryption key using HKDF (RFC 8291)
+    # info for auth: "WebPush: info" || 0x00 || user_public_key || server_public_key
+    info_auth = b"WebPush: info\x00" + user_public_key_bytes + server_public_key_bytes
+
+    # PRK from auth secret
+    hkdf_auth = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=auth_secret,
+        info=info_auth,
+        backend=default_backend()
+    )
+    prk = hkdf_auth.derive(shared_secret)
+
+    # Derive content encryption key
+    hkdf_cek = HKDF(
+        algorithm=hashes.SHA256(),
+        length=16,
+        salt=b"",
+        info=b"Content-Encoding: aes128gcm\x00",
+        backend=default_backend()
+    )
+    cek = hkdf_cek.derive(prk)
+
+    # Derive nonce
+    hkdf_nonce = HKDF(
+        algorithm=hashes.SHA256(),
+        length=12,
+        salt=b"",
+        info=b"Content-Encoding: nonce\x00",
+        backend=default_backend()
+    )
+    nonce = hkdf_nonce.derive(prk)
+
+    # Encrypt payload with AES-GCM
+    # Add padding (RFC 8291): 0x00 padding delimiter + content
+    padded_data = b'\x02' + data.encode('utf-8')  # 0x02 = padding delimiter for aes128gcm
+
+    aesgcm = AESGCM(cek)
+    ciphertext = aesgcm.encrypt(nonce, padded_data, None)
+
+    # Build encrypted content (aes128gcm format)
+    # salt (16 bytes) || rs (4 bytes, record size) || idlen (1 byte) || keyid || ciphertext
+    salt = os.urandom(16)
+    rs = struct.pack('>I', 4096)  # record size
+    idlen = struct.pack('B', len(server_public_key_bytes))
+
+    # Re-derive keys with actual salt
+    hkdf_auth_real = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=auth_secret,
+        info=info_auth,
+        backend=default_backend()
+    )
+    prk_real = hkdf_auth_real.derive(shared_secret)
+
+    hkdf_cek_real = HKDF(
+        algorithm=hashes.SHA256(),
+        length=16,
+        salt=salt,
+        info=b"Content-Encoding: aes128gcm\x00",
+        backend=default_backend()
+    )
+    cek_real = hkdf_cek_real.derive(prk_real)
+
+    hkdf_nonce_real = HKDF(
+        algorithm=hashes.SHA256(),
+        length=12,
+        salt=salt,
+        info=b"Content-Encoding: nonce\x00",
+        backend=default_backend()
+    )
+    nonce_real = hkdf_nonce_real.derive(prk_real)
+
+    aesgcm_real = AESGCM(cek_real)
+    ciphertext_real = aesgcm_real.encrypt(nonce_real, padded_data, None)
+
+    body = salt + rs + idlen + server_public_key_bytes + ciphertext_real
+
+    # Create VAPID JWT token
+    parsed_url = endpoint.split('/')
+    audience = '/'.join(parsed_url[:3])  # https://fcm.googleapis.com or similar
+
+    vapid_token = jwt.encode(
+        {
+            'aud': audience,
+            'exp': int(time.time()) + 86400,
+            'sub': vapid_claims.get('sub', VAPID_SUBJECT)
+        },
+        urlsafe_b64decode(vapid_private_key),
+        algorithm='ES256'
+    )
+
+    # Send the request
+    headers = {
+        'Content-Type': 'application/octet-stream',
+        'Content-Encoding': 'aes128gcm',
+        'TTL': '86400',
+        'Authorization': f'vapid t={vapid_token}, k={VAPID_PUBLIC_KEY}'
+    }
+
+    response = http_requests.post(endpoint, data=body, headers=headers, timeout=30)
+
+    if response.status_code in [200, 201, 202]:
+        return True
+    else:
+        raise Exception(f"Push failed: {response.status_code} - {response.text}")
 
 
 def get_auth_url(redirect_uri, state=None):
@@ -1446,7 +1610,7 @@ def api_vapid_key():
         return jsonify({
             'error': 'Push notifications not configured',
             'debug': {
-                'pywebpush_available': PYWEBPUSH_AVAILABLE,
+                'crypto_available': CRYPTO_AVAILABLE,
                 'has_public_key': bool(VAPID_PUBLIC_KEY),
                 'has_private_key': bool(VAPID_PRIVATE_KEY)
             }
@@ -1601,7 +1765,7 @@ def api_send_notifications():
 
         for sub in subscriptions:
             try:
-                webpush(
+                send_web_push(
                     subscription_info={
                         'endpoint': sub['endpoint'],
                         'keys': {
@@ -1614,10 +1778,10 @@ def api_send_notifications():
                     vapid_claims={'sub': VAPID_SUBJECT}
                 )
                 success_count += 1
-            except WebPushException as e:
+            except Exception as e:
                 print(f"[Push] Failed to send to {sub['endpoint'][:50]}...: {e}")
-                # If subscription is expired/invalid, remove it
-                if e.response and e.response.status_code in [404, 410]:
+                # If subscription is expired/invalid (404/410), remove it
+                if '404' in str(e) or '410' in str(e):
                     try:
                         supabase.table('push_subscriptions') \
                             .delete() \
@@ -1626,9 +1790,6 @@ def api_send_notifications():
                         print(f"[Push] Removed expired subscription")
                     except:
                         pass
-                fail_count += 1
-            except Exception as e:
-                print(f"[Push] Unexpected error: {e}")
                 fail_count += 1
 
         return jsonify({
