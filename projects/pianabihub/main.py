@@ -1443,7 +1443,14 @@ def api_generate_summary():
 def api_vapid_key():
     """Returns the VAPID public key for browser subscription."""
     if not PUSH_ENABLED:
-        return jsonify({'error': 'Push notifications not configured'}), 503
+        return jsonify({
+            'error': 'Push notifications not configured',
+            'debug': {
+                'pywebpush_available': PYWEBPUSH_AVAILABLE,
+                'has_public_key': bool(VAPID_PUBLIC_KEY),
+                'has_private_key': bool(VAPID_PRIVATE_KEY)
+            }
+        }), 503
     return jsonify({'publicKey': VAPID_PUBLIC_KEY})
 
 
