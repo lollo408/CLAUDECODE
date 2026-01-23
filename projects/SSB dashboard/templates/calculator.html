@@ -4,261 +4,1012 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Piana Sustainability Calculator</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #10B981;
+            --green-dark: #059669;
+            --bg-dark: #0F172A;
+            --bg-card: #1E293B;
+            --bg-input: #334155;
+            --border: #475569;
+            --text: #F1F5F9;
+            --text-muted: #94A3B8;
+            --text-dim: #64748B;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 32px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .brand-text h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .brand-text span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Tabs */
+        .tab-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: var(--bg-input);
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: var(--green);
+            color: var(--bg-dark);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Add Button */
+        .add-btn {
+            background: var(--green);
+            color: var(--bg-dark);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .add-btn:hover {
+            background: var(--green-dark);
+            transform: scale(1.02);
+        }
+
+        @media (min-width: 801px) {
+            .add-btn {
+                width: auto;
+            }
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+        }
+
+        /* Order Section */
+        .order-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .item-count {
+            background: var(--bg-input);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .order-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 200px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        .empty-state .icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* Order Row */
+        .order-row {
+            background: var(--bg-input);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .order-row:hover {
+            border-color: var(--border);
+        }
+
+        .order-row.has-value {
+            border-color: var(--green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .row-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .row-result {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .row-fields {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .field {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .field-small {
+            flex: 0 0 90px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: border 0.2s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--green);
+        }
+
+        .remove-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .results-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .results-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--green);
+            line-height: 1;
+        }
+
+        .results-unit {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .results-tons {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: 8px;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 24px 0;
+        }
+
+        .equiv-section h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+        }
+
+        .equiv-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .equiv-item {
+            background: var(--bg-input);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .equiv-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .equiv-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .equiv-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* Summary Tab Styles */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+        }
+
+        .family-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .family-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border-left: 4px solid var(--green);
+            overflow: hidden;
+        }
+
+        .family-header {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .family-header:hover {
+            background: var(--bg-input);
+        }
+
+        .family-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .family-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .family-total {
+            text-align: right;
+        }
+
+        .family-total-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .family-total-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .family-toggle {
+            color: var(--text-dim);
+            transition: transform 0.2s;
+            margin-left: 12px;
+        }
+
+        .family-card.open .family-toggle {
+            transform: rotate(180deg);
+        }
+
+        .family-products {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .family-card.open .family-products {
+            max-height: 1000px;
+        }
+
+        .products-list {
+            padding: 0 24px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .product-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .product-row:last-child {
+            border-bottom: none;
+        }
+
+        .product-name {
+            color: var(--text-muted);
+        }
+
+        .product-stats {
+            display: flex;
+            gap: 24px;
+            text-align: right;
+        }
+
+        .product-qty {
+            color: var(--text-dim);
+            min-width: 80px;
+        }
+
+        .product-co2e {
+            color: var(--green);
+            font-weight: 600;
+            min-width: 100px;
+        }
+
+        .summary-year-badge {
+            display: inline-block;
+            background: var(--green);
+            color: var(--bg-dark);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .no-data-message {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .no-data-message .icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        /* Methodology Section */
+        .methodology {
+            max-width: 900px;
+            margin: 32px auto 0;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .methodology-header {
+            padding: 16px 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .methodology-header:hover {
+            background: var(--bg-input);
+        }
+
+        .methodology-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .methodology-toggle {
+            color: var(--text-dim);
+            transition: transform 0.2s;
+        }
+
+        .methodology.open .methodology-toggle {
+            transform: rotate(180deg);
+        }
+
+        .methodology-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .methodology.open .methodology-content {
+            max-height: 500px;
+        }
+
+        .methodology-inner {
+            padding: 0 24px 24px;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        .methodology-inner h4 {
+            color: var(--text);
+            font-size: 0.9rem;
+            margin: 16px 0 8px;
+        }
+
+        .methodology-inner h4:first-child {
+            margin-top: 0;
+        }
+
+        .methodology-inner ul {
+            margin-left: 20px;
+        }
+
+        .methodology-inner li {
+            margin: 4px 0;
+        }
+
+        /* Mobile */
+        @media (max-width: 800px) {
+            .main-grid, .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            .results-panel {
+                position: relative;
+            }
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            .tab-container {
+                flex-direction: column;
+            }
+            .tab-btn {
+                padding: 14px 20px;
+            }
+            .product-stats {
+                gap: 12px;
+            }
+            .product-qty, .product-co2e {
+                min-width: 60px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
-            <div class="logo-section">
-                <div class="logo-placeholder">PIANA</div>
-                <div class="header-text">
+            <div class="brand">
+                <img src="/static/images/piana-logo.png" alt="Piana" class="logo-icon">
+                <div class="brand-text">
                     <h1>Sustainability Calculator</h1>
-                    <p class="subtitle">CO2 Emissions Estimator for SSB Products</p>
+                    <span>Piana Technology × SSB</span>
                 </div>
             </div>
         </header>
 
-        <!-- Calculator Section -->
-        <main class="calculator">
-            <div class="instructions">
-                <p>Add products to calculate your carbon footprint.</p>
-            </div>
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('summary')">2025 Impact Summary</button>
+            <button class="tab-btn" onclick="switchTab('calculator')">Calculator</button>
+        </div>
 
-            <!-- Order List -->
-            <div class="order-section">
-                <div class="order-header">
-                    <h3>Your Products</h3>
-                    <button class="add-btn" onclick="addRow()">+ Add Product</button>
+        <!-- Tab 1: 2025 Impact Summary -->
+        <div id="tab-summary" class="tab-content active">
+            <div class="summary-grid">
+                <div class="family-cards" id="family-cards">
+                    <!-- Family cards will be rendered here -->
+                    <div class="no-data-message" id="loading-message">
+                        <div class="icon">Loading...</div>
+                    </div>
                 </div>
 
-                <div class="order-list" id="order-list">
-                    <!-- Empty state -->
-                    <div class="empty-state" id="empty-state">
-                        <p>No products added yet</p>
-                        <p class="hint">Click "Add Product" to get started</p>
+                <div class="results-panel" id="summary-results">
+                    <div class="summary-year-badge">2025 Full Year</div>
+                    <div class="results-header">
+                        <div class="results-label">Total Emissions</div>
+                        <div class="results-value" id="summary-total-kg">0</div>
+                        <span class="results-unit">kg CO2e</span>
+                        <div class="results-tons"><span id="summary-total-tons">0</span> metric tons</div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Results Panel -->
-            <div class="results-panel" id="results-panel">
-                <div class="results-header">
-                    <h2>Total Carbon Footprint</h2>
-                </div>
-                <div class="results-main">
-                    <div class="total-emissions">
-                        <span class="value" id="total-kg">0</span>
-                        <span class="unit">kg CO2e</span>
-                    </div>
-                    <div class="total-metric-tons">
-                        <span id="total-tons">0</span> metric tons
-                    </div>
-                </div>
-                <div class="equivalencies">
-                    <div class="equiv-item">
-                        <span class="equiv-icon">🌳</span>
-                        <div class="equiv-text">
-                            <span class="equiv-value" id="trees">0</span>
-                            <span class="equiv-label">trees absorbing CO2 for 1 year</span>
-                        </div>
-                    </div>
-                    <div class="equiv-item">
-                        <span class="equiv-icon">🚗</span>
-                        <div class="equiv-text">
-                            <span class="equiv-value" id="car-miles">0</span>
-                            <span class="equiv-label">miles driven</span>
+                    <div class="divider"></div>
+
+                    <div class="equiv-section">
+                        <h4>Equivalents</h4>
+                        <div class="equiv-grid">
+                            <div class="equiv-item">
+                                <div class="equiv-icon">🌳</div>
+                                <div class="equiv-value" id="summary-trees">0</div>
+                                <div class="equiv-label">trees/year</div>
+                            </div>
+                            <div class="equiv-item">
+                                <div class="equiv-icon">🚗</div>
+                                <div class="equiv-value" id="summary-car-miles">0</div>
+                                <div class="equiv-label">miles driven</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <p class="results-note">Based on EPA equivalency factors</p>
             </div>
-        </main>
+        </div>
 
-        <!-- Footer -->
+        <!-- Tab 2: Calculator -->
+        <div id="tab-calculator" class="tab-content">
+            <button class="add-btn" onclick="addRow()">+ Add Product</button>
+
+            <div class="main-grid">
+                <div class="order-section">
+                    <div class="section-header">
+                        <span class="section-title">Product List</span>
+                        <span class="item-count" id="item-count">0 items</span>
+                    </div>
+                    <div class="order-list" id="order-list">
+                        <div class="empty-state" id="empty-state">
+                            <div class="icon">📦</div>
+                            <div>No products added</div>
+                            <div style="font-size: 0.85rem; margin-top: 4px;">Click "+ Add Product" to start</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-panel">
+                    <div class="results-header">
+                        <div class="results-label">Total Emissions</div>
+                        <div class="results-value" id="total-kg">0</div>
+                        <span class="results-unit">kg CO2e</span>
+                        <div class="results-tons"><span id="total-tons">0</span> metric tons</div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="equiv-section">
+                        <h4>Equivalents</h4>
+                        <div class="equiv-grid">
+                            <div class="equiv-item">
+                                <div class="equiv-icon">🌳</div>
+                                <div class="equiv-value" id="trees">0</div>
+                                <div class="equiv-label">trees/year</div>
+                            </div>
+                            <div class="equiv-item">
+                                <div class="equiv-icon">🚗</div>
+                                <div class="equiv-value" id="car-miles">0</div>
+                                <div class="equiv-label">miles driven</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <footer class="footer">
-            <p>Data source: Piana Georgia Plant | Scope 1, 2, and 3 emissions</p>
-            <p class="copyright">&copy; 2026 Piana Nonwovens</p>
+            Data source: Piana Georgia Plant | Scope 1, 2 & 3 emissions
         </footer>
+    </div>
+
+    <div class="methodology" id="methodology">
+        <div class="methodology-header" onclick="toggleMethodology()">
+            <span class="methodology-title">Methodology & Data Sources</span>
+            <span class="methodology-toggle">▼</span>
+        </div>
+        <div class="methodology-content">
+            <div class="methodology-inner">
+                <h4>Data Source</h4>
+                <p>Emission factors are calculated from Piana's Georgia manufacturing facility using 2025 production data. All values represent cradle-to-gate emissions including Scope 1, 2, and upstream Scope 3.</p>
+
+                <h4>What's Included</h4>
+                <ul>
+                    <li><strong>Scope 1:</strong> Direct emissions from manufacturing</li>
+                    <li><strong>Scope 2:</strong> Purchased electricity and utilities</li>
+                    <li><strong>Scope 3 (upstream):</strong> Raw material extraction, processing, and transportation</li>
+                </ul>
+
+                <h4>Equivalency Calculations</h4>
+                <ul>
+                    <li><strong>Trees:</strong> 1 tree absorbs ~21.77 kg CO2 per year (EPA)</li>
+                    <li><strong>Car miles:</strong> Average passenger vehicle emits ~0.4 kg CO2 per mile (EPA)</li>
+                </ul>
+
+                <h4>Notes</h4>
+                <p>This calculator covers products manufactured at the Georgia plant only. Emission factors may vary ±15% based on production conditions and raw material sourcing.</p>
+            </div>
+        </div>
     </div>
 
     <script>
         let productData = null;
+        let ordersData = null;
         let rowCount = 0;
 
-        // Load product data
-        async function loadProducts() {
-            try {
-                const response = await fetch('/api/products');
-                productData = await response.json();
-            } catch (error) {
-                console.error('Error loading products:', error);
-            }
+        // Load both datasets on page load
+        async function loadData() {
+            const [productsResponse, ordersResponse] = await Promise.all([
+                fetch('/api/products'),
+                fetch('/api/orders-2025')
+            ]);
+            productData = await productsResponse.json();
+            ordersData = await ordersResponse.json();
+            renderSummary();
         }
 
-        // Add a new row
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // Render 2025 Summary
+        function renderSummary() {
+            const container = document.getElementById('family-cards');
+
+            // Check if there's any data
+            const hasData = ordersData.by_family.some(family =>
+                family.products.some(p => p.quantity > 0)
+            );
+
+            if (!hasData) {
+                container.innerHTML = `
+                    <div class="no-data-message">
+                        <div class="icon">📊</div>
+                        <div>2025 order data not yet available</div>
+                        <div style="font-size: 0.85rem; margin-top: 8px; color: var(--text-dim);">
+                            Use the Calculator tab to estimate emissions for custom quantities
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render family cards
+            let html = '';
+            ordersData.by_family.forEach((family, index) => {
+                // Skip families with no orders
+                if (family.subtotal_qty === 0) return;
+
+                const productsWithQty = family.products.filter(p => p.quantity > 0);
+
+                html += `
+                    <div class="family-card" id="family-${index}">
+                        <div class="family-header" onclick="toggleFamily(${index})">
+                            <div>
+                                <div class="family-name">${family.family}</div>
+                                <div class="family-meta">${family.subtotal_qty.toLocaleString()} ${family.unit}</div>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <div class="family-total">
+                                    <div class="family-total-value">${family.subtotal_co2e_kg.toLocaleString()} kg</div>
+                                    <div class="family-total-label">CO2e</div>
+                                </div>
+                                <span class="family-toggle">▼</span>
+                            </div>
+                        </div>
+                        <div class="family-products">
+                            <div class="products-list">
+                                ${productsWithQty.map(p => `
+                                    <div class="product-row">
+                                        <span class="product-name">${p.name}</span>
+                                        <div class="product-stats">
+                                            <span class="product-qty">${p.quantity.toLocaleString()}</span>
+                                            <span class="product-co2e">${p.co2e_kg.toLocaleString()} kg</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Update summary results panel
+            document.getElementById('summary-total-kg').textContent = ordersData.summary.total_co2e_kg.toLocaleString();
+            document.getElementById('summary-total-tons').textContent = ordersData.summary.total_co2e_tons.toFixed(2);
+            document.getElementById('summary-trees').textContent = ordersData.equivalencies.trees_per_year.toLocaleString();
+            document.getElementById('summary-car-miles').textContent = ordersData.equivalencies.car_miles.toLocaleString();
+        }
+
+        function toggleFamily(index) {
+            document.getElementById(`family-${index}`).classList.toggle('open');
+        }
+
+        function updateItemCount() {
+            const count = document.querySelectorAll('.order-row').length;
+            document.getElementById('item-count').textContent = count + ' item' + (count !== 1 ? 's' : '');
+        }
+
         function addRow() {
+            document.getElementById('empty-state').style.display = 'none';
             const list = document.getElementById('order-list');
-            const emptyState = document.getElementById('empty-state');
-
-            // Hide empty state
-            if (emptyState) emptyState.style.display = 'none';
-
             const rowId = rowCount++;
+
             const row = document.createElement('div');
             row.className = 'order-row';
             row.id = `row-${rowId}`;
             row.innerHTML = `
-                <div class="row-fields">
-                    <div class="field field-product">
-                        <label>Product</label>
-                        <select class="product-select" id="product-${rowId}" onchange="onProductChange(${rowId})">
-                            <option value="">Select product...</option>
-                            ${productData.families.map(f => `<option value="${f.name}">${f.name}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="field field-size" id="size-field-${rowId}" style="display: none;">
-                        <label>Size</label>
-                        <select class="size-select" id="size-${rowId}" onchange="calculateTotal()">
-                            <option value="">Select size...</option>
-                        </select>
-                    </div>
-                    <div class="field field-qty">
-                        <label>Qty</label>
-                        <div class="qty-wrapper">
-                            <input type="number" min="0" placeholder="0"
-                                class="qty-input" id="qty-${rowId}"
-                                oninput="calculateTotal()">
-                            <span class="unit" id="unit-${rowId}">pcs</span>
-                        </div>
-                    </div>
-                    <div class="field field-result">
-                        <label>CO2e</label>
-                        <div class="row-result" id="result-${rowId}">0 kg</div>
+                <div class="row-top">
+                    <span class="row-label">Product #${rowId + 1}</span>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="row-result" id="result-${rowId}">0 kg</span>
+                        <button class="remove-btn" onclick="removeRow(${rowId})">×</button>
                     </div>
                 </div>
-                <button class="remove-btn" onclick="removeRow(${rowId})" title="Remove">×</button>
+                <div class="row-fields">
+                    <div class="field">
+                        <label>Product</label>
+                        <select id="product-${rowId}" onchange="onProductChange(${rowId})">
+                            <option value="">Select product...</option>
+                            <optgroup label="Pads">
+                                ${productData.pads.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+                            </optgroup>
+                            <optgroup label="Rolls">
+                                ${productData.rolls.map(r => `<option value="${r.name}">${r.name}</option>`).join('')}
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="field field-small" id="osf-field-${rowId}" style="display:none;">
+                        <label>OSF</label>
+                        <select id="osf-${rowId}" onchange="onOsfChange(${rowId})">
+                            <option value="">-</option>
+                        </select>
+                    </div>
+                    <div class="field" id="size-field-${rowId}" style="display:none;">
+                        <label>Size</label>
+                        <select id="size-${rowId}" onchange="calculateTotal()">
+                            <option value="">-</option>
+                        </select>
+                    </div>
+                    <div class="field field-small">
+                        <label id="unit-label-${rowId}">Qty (pcs)</label>
+                        <input type="number" id="qty-${rowId}" placeholder="0" oninput="calculateTotal()">
+                    </div>
+                </div>
             `;
             list.appendChild(row);
+            updateItemCount();
         }
 
-        // Handle product selection change
         function onProductChange(rowId) {
-            const productSelect = document.getElementById(`product-${rowId}`);
+            const productName = document.getElementById(`product-${rowId}`).value;
+            const osfField = document.getElementById(`osf-field-${rowId}`);
+            const sizeField = document.getElementById(`size-field-${rowId}`);
+            const osfSelect = document.getElementById(`osf-${rowId}`);
+            const sizeSelect = document.getElementById(`size-${rowId}`);
+            const unitLabel = document.getElementById(`unit-label-${rowId}`);
+
+            const pad = productData.pads.find(p => p.name === productName);
+            const roll = productData.rolls.find(r => r.name === productName);
+
+            if (pad) {
+                unitLabel.textContent = 'Qty (pcs)';
+                if (pad.has_osf) {
+                    osfField.style.display = 'block';
+                    osfSelect.innerHTML = '<option value="">-</option>' +
+                        Object.keys(pad.osf_options).map(osf => `<option value="${osf}">${osf}</option>`).join('');
+                    sizeField.style.display = 'none';
+                } else {
+                    osfField.style.display = 'none';
+                    sizeField.style.display = 'block';
+                    sizeSelect.innerHTML = '<option value="">-</option>' +
+                        pad.sizes.map(s => `<option value="${s.emission_factor}">${s.size}</option>`).join('');
+                }
+            } else if (roll) {
+                unitLabel.textContent = 'Qty (linear yds)';
+                osfField.style.display = 'none';
+                sizeField.style.display = 'none';
+                sizeSelect.innerHTML = `<option value="${roll.emission_factor}" selected>-</option>`;
+            }
+            calculateTotal();
+        }
+
+        function onOsfChange(rowId) {
+            const productName = document.getElementById(`product-${rowId}`).value;
+            const osf = document.getElementById(`osf-${rowId}`).value;
             const sizeField = document.getElementById(`size-field-${rowId}`);
             const sizeSelect = document.getElementById(`size-${rowId}`);
-            const unitSpan = document.getElementById(`unit-${rowId}`);
 
-            const familyName = productSelect.value;
-            const family = productData.families.find(f => f.name === familyName);
-
-            if (!family) {
-                sizeField.style.display = 'none';
-                return;
-            }
-
-            // Update unit label
-            unitSpan.textContent = family.unit === 'pieces' ? 'pcs' : 'yds';
-
-            if (family.has_sizes) {
-                // Show size dropdown for pads
+            const pad = productData.pads.find(p => p.name === productName);
+            if (pad && pad.has_osf && osf) {
                 sizeField.style.display = 'block';
-                sizeSelect.innerHTML = `
-                    <option value="">Select size...</option>
-                    ${family.sizes.map(s => `<option value="${s.emission_factor}">${s.size}</option>`).join('')}
-                `;
-            } else {
-                // For rolls, hide size and use first product's factor
-                sizeField.style.display = 'none';
-                sizeSelect.innerHTML = `<option value="${family.products[0].emission_factor}" selected>-</option>`;
+                const sizes = pad.osf_options[osf];
+                sizeSelect.innerHTML = '<option value="">-</option>' +
+                    sizes.map(s => `<option value="${s.emission_factor}">${s.size}</option>`).join('');
             }
-
             calculateTotal();
         }
 
-        // Remove a row
         function removeRow(rowId) {
-            const row = document.getElementById(`row-${rowId}`);
-            if (row) row.remove();
-
-            // Show empty state if no rows left
-            const list = document.getElementById('order-list');
-            const rows = list.querySelectorAll('.order-row');
-            if (rows.length === 0) {
-                document.getElementById('empty-state').style.display = 'block';
+            document.getElementById(`row-${rowId}`).remove();
+            if (!document.querySelector('.order-row')) {
+                document.getElementById('empty-state').style.display = 'flex';
             }
-
+            updateItemCount();
             calculateTotal();
         }
 
-        // Calculate totals
         function calculateTotal() {
-            let grandTotal = 0;
-
-            const rows = document.querySelectorAll('.order-row');
-            rows.forEach(row => {
+            let total = 0;
+            document.querySelectorAll('.order-row').forEach(row => {
                 const rowId = row.id.replace('row-', '');
-                const productSelect = document.getElementById(`product-${rowId}`);
                 const sizeSelect = document.getElementById(`size-${rowId}`);
                 const qtyInput = document.getElementById(`qty-${rowId}`);
                 const resultEl = document.getElementById(`result-${rowId}`);
 
-                const familyName = productSelect.value;
-                const family = productData.families.find(f => f.name === familyName);
+                const factor = parseFloat(sizeSelect?.value) || 0;
+                const qty = parseFloat(qtyInput?.value) || 0;
+                const emission = factor * qty;
 
-                let factor = 0;
-                if (family) {
-                    if (family.has_sizes) {
-                        factor = parseFloat(sizeSelect.value) || 0;
-                    } else if (family.products && family.products.length > 0) {
-                        factor = family.products[0].emission_factor;
-                    }
-                }
-
-                const quantity = parseFloat(qtyInput.value) || 0;
-                const emission = factor * quantity;
-
-                resultEl.textContent = formatNumber(emission) + ' kg';
-
-                if (emission > 0) {
-                    row.classList.add('has-value');
-                } else {
-                    row.classList.remove('has-value');
-                }
-
-                grandTotal += emission;
+                resultEl.textContent = emission > 0 ? Math.round(emission).toLocaleString() + ' kg' : '0 kg';
+                row.classList.toggle('has-value', emission > 0);
+                total += emission;
             });
 
-            // Update totals
-            document.getElementById('total-kg').textContent = formatNumber(grandTotal);
-            document.getElementById('total-tons').textContent = (grandTotal / 1000).toFixed(2);
-
-            // EPA equivalencies
-            const trees = Math.round(grandTotal / 21.77);
-            const carMiles = Math.round(grandTotal / 0.4);
-
-            document.getElementById('trees').textContent = formatNumber(trees);
-            document.getElementById('car-miles').textContent = formatNumber(carMiles);
-
-            // Highlight results panel
-            const resultsPanel = document.getElementById('results-panel');
-            if (grandTotal > 0) {
-                resultsPanel.classList.add('has-results');
-            } else {
-                resultsPanel.classList.remove('has-results');
-            }
+            document.getElementById('total-kg').textContent = Math.round(total).toLocaleString();
+            document.getElementById('total-tons').textContent = (total / 1000).toFixed(2);
+            document.getElementById('trees').textContent = Math.round(total / 21.77).toLocaleString();
+            document.getElementById('car-miles').textContent = Math.round(total / 0.4).toLocaleString();
         }
 
-        // Format numbers with commas
-        function formatNumber(num) {
-            return Math.round(num).toLocaleString();
+        function toggleMethodology() {
+            document.getElementById('methodology').classList.toggle('open');
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', loadProducts);
+        document.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
 </html>

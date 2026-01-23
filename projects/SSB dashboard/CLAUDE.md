@@ -2,7 +2,7 @@
 
 **Customer:** SSB (Simmons Serta Bedding)
 **Purpose:** Customer-facing CO2 emissions calculator for Piana Nonwovens products
-**Status:** In Development (Design Phase)
+**Status:** In Development (Ready for Review)
 
 ---
 
@@ -96,14 +96,14 @@ SSB dashboard/
 ├── CLAUDE.md               # This file
 ├── notes                   # Meeting notes (TBD)
 ├── Dashboard SSB data.xlsx # Source data from sustainability manager
+├── SSB_2025_orders.xlsx    # 2025 order quantities
 ├── static/
 │   ├── css/styles.css      # Original styles
-│   └── data/products.json  # Product emission data
+│   └── data/
+│       ├── products.json   # Product emission factors
+│       └── orders_2025.json # 2025 SSB order data with CO2e
 └── templates/
-    ├── calculator.html     # Original (deprecated)
-    ├── option-a.html       # Minimal Clean design
-    ├── option-b.html       # Modern Dark design (CHOSEN)
-    └── option-c.html       # Corporate Table design
+    └── calculator.html     # Two-tab layout (2025 Summary + Calculator)
 ```
 
 ---
@@ -111,10 +111,11 @@ SSB dashboard/
 ## Open Items / Notes
 
 - [ ] Review data with sustainability manager (meeting notes pending)
-- [ ] Finalize Option B design
+- [x] Finalize Option B design
 - [ ] Add Piana Technology branding/logo
 - [ ] Deploy to Vercel
 - [ ] Share with SSB
+- [ ] **MISSING EMISSION FACTOR:** `KNIT APFR OWK W/FR` (51,712 units in 2025) - excluded from 2025 summary because no emission factor available. Need to get this from sustainability manager.
 
 ---
 
@@ -127,3 +128,14 @@ SSB dashboard/
 - Created 3 design alternatives (A, B, C)
 - Decision: Go with Option B (Modern Dark)
 - Committed to GitHub
+
+### Jan 23, 2026
+- Added two-tab layout: "2025 Impact Summary" + "Calculator"
+- Populated 2025 data from `SSB_2025_orders.xlsx`
+- Created `/api/orders-2025` endpoint
+- **2025 Totals:** 5,702,518 kg CO2e (5,702.52 metric tons)
+  - BSPV: 305,795 pcs → 1,001,882 kg
+  - SYFI: 379,400 pcs → 799,140 kg
+  - TRI-FIBER: 2,210 pcs → 5,820 kg
+  - Rolls: 2,568,340 linear yds → 4,697,628 kg
+- **Excluded:** KNIT APFR OWK W/FR (51,712 units) - no emission factor
