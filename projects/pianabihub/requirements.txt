@@ -2,3 +2,4 @@ flask>=3.1.0
 gunicorn>=23.0.0
 supabase>=2.24.0
 requests>=2.31.0
+pywebpush>=2.2.0

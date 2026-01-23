@@ -12,6 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import requests as http_requests  # Rename to avoid confusion with flask.request
 import secrets
+from pywebpush import webpush, WebPushException
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -72,6 +73,18 @@ if AZURE_AUTH_ENABLED:
     print(f"[Auth] Azure AD authentication enabled (manual OAuth2)")
 else:
     print(f"[Auth] Azure AD authentication disabled (Client: {bool(AZURE_CLIENT_ID)}, Tenant: {bool(AZURE_TENANT_ID)}, Secret: {bool(AZURE_CLIENT_SECRET)})")
+
+
+# --- VAPID CONFIGURATION (Web Push Notifications) ---
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
+VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@pianatechnology.com')
+PUSH_ENABLED = bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY)
+
+if PUSH_ENABLED:
+    print(f"[Push] Web Push notifications enabled")
+else:
+    print(f"[Push] Web Push notifications disabled (missing VAPID keys)")
 
 
 def get_auth_url(redirect_uri, state=None):
@@ -429,6 +442,8 @@ def check_auth_and_maintenance():
         '/static/',
         '/api/version',
         '/api/auth-status',
+        '/api/push/vapid-key',
+        '/api/send-notifications',
         '/manifest.json',
         '/service-worker.js',
         '/offline',
@@ -1409,6 +1424,205 @@ def api_generate_summary():
             pass
 
         return jsonify({'success': False, 'error': result['error']}), 500
+
+
+# --- PUSH NOTIFICATION API ENDPOINTS ---
+
+@app.route('/api/push/vapid-key')
+def api_vapid_key():
+    """Returns the VAPID public key for browser subscription."""
+    if not PUSH_ENABLED:
+        return jsonify({'error': 'Push notifications not configured'}), 503
+    return jsonify({'publicKey': VAPID_PUBLIC_KEY})
+
+
+@app.route('/api/push/subscribe', methods=['POST'])
+def api_push_subscribe():
+    """
+    Save a push subscription to the database.
+    Expected JSON payload:
+    {
+        "endpoint": "https://...",
+        "keys": {
+            "p256dh": "...",
+            "auth": "..."
+        }
+    }
+    """
+    if not PUSH_ENABLED:
+        return jsonify({'error': 'Push notifications not configured'}), 503
+
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json()
+    if not data or not data.get('endpoint') or not data.get('keys'):
+        return jsonify({'error': 'Invalid subscription data'}), 400
+
+    # Determine user identifier and type
+    if user.get('is_guest'):
+        user_id = f"guest_{session.sid if hasattr(session, 'sid') else 'anonymous'}"
+        user_type = 'guest'
+    elif user.get('user_type') == 'partner':
+        user_id = f"partner_{user.get('email', 'unknown')}"
+        user_type = 'partner'
+    else:
+        user_id = user.get('id', user.get('email', 'unknown'))
+        user_type = 'employee'
+
+    # Get user's preferred industry
+    prefs = get_user_preferences(user)
+    preferred_industry = prefs.get('preferred_industry')
+
+    try:
+        # Upsert subscription (update if endpoint already exists)
+        supabase.table('push_subscriptions').upsert({
+            'user_id': user_id,
+            'user_type': user_type,
+            'endpoint': data['endpoint'],
+            'p256dh': data['keys']['p256dh'],
+            'auth': data['keys']['auth'],
+            'preferred_industry': preferred_industry
+        }, on_conflict='endpoint').execute()
+
+        return jsonify({'success': True, 'message': 'Subscription saved'})
+    except Exception as e:
+        print(f"[Push] Error saving subscription: {e}")
+        return jsonify({'error': 'Failed to save subscription'}), 500
+
+
+@app.route('/api/push/unsubscribe', methods=['POST'])
+def api_push_unsubscribe():
+    """Remove a push subscription from the database."""
+    if not PUSH_ENABLED:
+        return jsonify({'error': 'Push notifications not configured'}), 503
+
+    data = request.get_json()
+    endpoint = data.get('endpoint') if data else None
+
+    if not endpoint:
+        return jsonify({'error': 'Endpoint required'}), 400
+
+    try:
+        supabase.table('push_subscriptions') \
+            .delete() \
+            .eq('endpoint', endpoint) \
+            .execute()
+        return jsonify({'success': True, 'message': 'Subscription removed'})
+    except Exception as e:
+        print(f"[Push] Error removing subscription: {e}")
+        return jsonify({'error': 'Failed to remove subscription'}), 500
+
+
+@app.route('/api/send-notifications', methods=['POST'])
+def api_send_notifications():
+    """
+    Webhook endpoint for Make.com to trigger push notifications.
+
+    Expected JSON payload:
+    {
+        "webhook_secret": "make-webhook-2026",
+        "type": "intelligence_report" | "event_summary",
+        "vertical": "Hospitality" | "Automotive" | "Bedding" | "Textiles",
+        "title": "New Hospitality Report",
+        "body": "5 top stories this week",
+        "url": "/dashboard"
+    }
+    """
+    webhook_secret = os.environ.get('WEBHOOK_SECRET', 'make-webhook-2026')
+
+    data = request.get_json()
+
+    # Validate webhook secret
+    if data.get('webhook_secret') != webhook_secret:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    if not PUSH_ENABLED:
+        return jsonify({'error': 'Push notifications not configured'}), 503
+
+    notification_type = data.get('type', 'intelligence_report')
+    vertical = data.get('vertical')
+    title = data.get('title', 'New Update')
+    body = data.get('body', 'Check out the latest content')
+    url = data.get('url', '/dashboard')
+
+    # Build the notification payload
+    notification_payload = json.dumps({
+        'title': title,
+        'body': body,
+        'url': url,
+        'icon': '/static/icons/icon-192.png',
+        'badge': '/static/icons/icon-192.png'
+    })
+
+    # Query subscriptions - filter by industry preference
+    try:
+        query = supabase.table('push_subscriptions').select('*')
+
+        # If vertical is specified, get subscriptions that:
+        # 1. Match the vertical preference, OR
+        # 2. Have no preference set (null)
+        if vertical:
+            # Get all subscriptions and filter in Python
+            # (Supabase doesn't have great OR null support)
+            response = query.execute()
+            subscriptions = [
+                sub for sub in response.data
+                if not sub.get('preferred_industry') or sub.get('preferred_industry') == vertical
+            ]
+        else:
+            # No vertical filter - send to everyone
+            response = query.execute()
+            subscriptions = response.data
+
+        print(f"[Push] Sending to {len(subscriptions)} subscriptions (vertical: {vertical})")
+
+        success_count = 0
+        fail_count = 0
+
+        for sub in subscriptions:
+            try:
+                webpush(
+                    subscription_info={
+                        'endpoint': sub['endpoint'],
+                        'keys': {
+                            'p256dh': sub['p256dh'],
+                            'auth': sub['auth']
+                        }
+                    },
+                    data=notification_payload,
+                    vapid_private_key=VAPID_PRIVATE_KEY,
+                    vapid_claims={'sub': VAPID_SUBJECT}
+                )
+                success_count += 1
+            except WebPushException as e:
+                print(f"[Push] Failed to send to {sub['endpoint'][:50]}...: {e}")
+                # If subscription is expired/invalid, remove it
+                if e.response and e.response.status_code in [404, 410]:
+                    try:
+                        supabase.table('push_subscriptions') \
+                            .delete() \
+                            .eq('endpoint', sub['endpoint']) \
+                            .execute()
+                        print(f"[Push] Removed expired subscription")
+                    except:
+                        pass
+                fail_count += 1
+            except Exception as e:
+                print(f"[Push] Unexpected error: {e}")
+                fail_count += 1
+
+        return jsonify({
+            'success': True,
+            'sent': success_count,
+            'failed': fail_count,
+            'total': len(subscriptions)
+        })
+
+    except Exception as e:
+        print(f"[Push] Error fetching subscriptions: {e}")
+        return jsonify({'error': f'Database error: {e}'}), 500
 
 
 if __name__ == '__main__':

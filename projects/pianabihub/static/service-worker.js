@@ -1,9 +1,9 @@
 /**
  * Service Worker for Piana BI Hub PWA
- * Handles caching strategies, offline functionality, and forced updates
+ * Handles caching strategies, offline functionality, forced updates, and push notifications
  */
 
-const CACHE_VERSION = 'piana-bi-v2';
+const CACHE_VERSION = 'piana-bi-v3';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install
@@ -196,3 +196,96 @@ function isHTMLPage(pathname) {
          pathname === '/maintenance' ||
          (!pathname.includes('.') && !pathname.startsWith('/api/'));
 }
+
+// --- PUSH NOTIFICATION HANDLERS ---
+
+/**
+ * Handle incoming push notifications
+ */
+self.addEventListener('push', (event) => {
+  console.log('[Service Worker] Push received');
+
+  let data = {
+    title: 'Piana BI Hub',
+    body: 'New content available',
+    url: '/dashboard',
+    icon: '/static/icons/icon-192.png',
+    badge: '/static/icons/icon-192.png'
+  };
+
+  // Parse push data if available
+  if (event.data) {
+    try {
+      data = { ...data, ...event.data.json() };
+    } catch (e) {
+      console.error('[Service Worker] Error parsing push data:', e);
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || '/static/icons/icon-192.png',
+    badge: data.badge || '/static/icons/icon-192.png',
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/dashboard',
+      dateOfArrival: Date.now()
+    },
+    actions: [
+      {
+        action: 'open',
+        title: 'View'
+      },
+      {
+        action: 'dismiss',
+        title: 'Dismiss'
+      }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+/**
+ * Handle notification click
+ */
+self.addEventListener('notificationclick', (event) => {
+  console.log('[Service Worker] Notification clicked');
+
+  event.notification.close();
+
+  // Handle action buttons
+  if (event.action === 'dismiss') {
+    return;
+  }
+
+  // Open or focus the app
+  const urlToOpen = event.notification.data?.url || '/dashboard';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Check if app is already open
+        for (const client of windowClients) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.navigate(urlToOpen);
+            return client.focus();
+          }
+        }
+
+        // Open new window if app not open
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+/**
+ * Handle notification close (for analytics if needed)
+ */
+self.addEventListener('notificationclose', (event) => {
+  console.log('[Service Worker] Notification closed without action');
+});
