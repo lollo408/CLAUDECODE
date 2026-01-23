@@ -1712,13 +1712,21 @@ def api_send_notifications():
         "url": "/dashboard"
     }
     """
-    webhook_secret = os.environ.get('WEBHOOK_SECRET', 'make-webhook-2026')
+    webhook_secret = os.environ.get('WEBHOOK_SECRET', 'make-webhook-2026').strip()
 
     data = request.get_json()
 
     # Validate webhook secret
-    if data.get('webhook_secret') != webhook_secret:
-        return jsonify({'error': 'Unauthorized'}), 401
+    received_secret = data.get('webhook_secret', '') if data else ''
+    if received_secret != webhook_secret:
+        return jsonify({
+            'error': 'Unauthorized',
+            'debug': {
+                'expected_len': len(webhook_secret),
+                'received_len': len(received_secret),
+                'match': received_secret == webhook_secret
+            }
+        }), 401
 
     if not PUSH_ENABLED:
         return jsonify({'error': 'Push notifications not configured'}), 503
