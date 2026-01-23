@@ -1771,6 +1771,7 @@ def api_send_notifications():
         success_count = 0
         fail_count = 0
 
+        errors = []
         for sub in subscriptions:
             try:
                 send_web_push(
@@ -1787,9 +1788,11 @@ def api_send_notifications():
                 )
                 success_count += 1
             except Exception as e:
+                error_msg = str(e)
+                errors.append(error_msg[:200])
                 print(f"[Push] Failed to send to {sub['endpoint'][:50]}...: {e}")
                 # If subscription is expired/invalid (404/410), remove it
-                if '404' in str(e) or '410' in str(e):
+                if '404' in error_msg or '410' in error_msg:
                     try:
                         supabase.table('push_subscriptions') \
                             .delete() \
@@ -1804,7 +1807,8 @@ def api_send_notifications():
             'success': True,
             'sent': success_count,
             'failed': fail_count,
-            'total': len(subscriptions)
+            'total': len(subscriptions),
+            'errors': errors if errors else None
         })
 
     except Exception as e:
