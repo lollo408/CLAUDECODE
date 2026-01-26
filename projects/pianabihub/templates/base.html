@@ -220,6 +220,14 @@
                         console.error('[PWA] Service Worker registration failed:', error);
                     });
             });
+
+            // Listen for navigation messages from service worker (notification clicks)
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'NAVIGATE') {
+                    console.log('[PWA] Navigating to:', event.data.url);
+                    window.location.href = event.data.url;
+                }
+            });
         }
     </script>
 
