@@ -33,6 +33,12 @@ except ImportError as e:
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
 
+# Session cookie configuration for service worker compatibility
+# SameSite=None allows cookies to be sent when service worker opens new windows
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Allow cross-context cookies
+app.config['SESSION_COOKIE_SECURE'] = True       # Required when SameSite=None
+app.config['SESSION_COOKIE_HTTPONLY'] = True     # Security best practice
+
 
 @app.context_processor
 def inject_user():
