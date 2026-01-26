@@ -1613,13 +1613,20 @@ def notification_redirect():
     if not target.startswith('/'):
         target = '/dashboard'
 
+    # DEBUG: Log what's happening
+    has_session_cookie = 'session' in request.cookies
+    user_in_session = 'user' in session
+    is_authed = is_user_authenticated()
+    print(f"[NotifRedirect] target={target}, has_cookie={has_session_cookie}, user_in_session={user_in_session}, is_authed={is_authed}")
+
     # Check if user is authenticated
-    if is_user_authenticated():
+    if is_authed:
+        print(f"[NotifRedirect] User authenticated, redirecting to {target}")
         return redirect(target)
     else:
-        # Redirect to login with next parameter
-        from urllib.parse import urlencode
-        return redirect(f'/login?next={target}')
+        redirect_url = f'/login?next={target}'
+        print(f"[NotifRedirect] User NOT authenticated, redirecting to {redirect_url}")
+        return redirect(redirect_url)
 
 
 # --- PUSH NOTIFICATION API ENDPOINTS ---
