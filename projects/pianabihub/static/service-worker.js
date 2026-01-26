@@ -261,17 +261,17 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  // Open or focus the app
-  const urlToOpen = event.notification.data?.url || '/dashboard';
+  // Build absolute URL
+  const path = event.notification.data?.url || '/dashboard';
+  const urlToOpen = new URL(path, self.location.origin).href;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((windowClients) => {
         // Check if app is already open
         for (const client of windowClients) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            client.navigate(urlToOpen);
-            return client.focus();
+          if (new URL(client.url).origin === self.location.origin && 'focus' in client) {
+            return client.focus().then(() => client.navigate(urlToOpen));
           }
         }
 
