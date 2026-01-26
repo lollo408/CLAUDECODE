@@ -667,6 +667,11 @@ def auth_microsoft():
     remember = request.args.get('remember', '1') == '1'
     session['remember_me'] = remember
 
+    # Store next URL for redirect after login
+    next_url = request.args.get('next')
+    if next_url and next_url.startswith('/'):
+        session['next_url'] = next_url
+
     # Build redirect URI - must use production URL to match Azure AD config
     redirect_uri = 'https://pianabihub.vercel.app' + AZURE_REDIRECT_PATH
 
@@ -691,9 +696,9 @@ def guest_login():
     }
     session.permanent = remember
 
-    # Get stored destination, default to home
-    next_url = session.pop('next_url', None)
-    if not next_url or next_url == '/login':
+    # Get destination: query param first, then session, then default
+    next_url = request.args.get('next') or session.pop('next_url', None)
+    if not next_url or next_url == '/login' or not next_url.startswith('/'):
         next_url = '/'
 
     return redirect(next_url)
@@ -1600,14 +1605,21 @@ def api_generate_summary():
 def notification_redirect():
     """
     Public redirect endpoint for push notification clicks.
-    Service worker opens this URL, then we redirect to the target.
-    This ensures session cookies are sent properly.
+    If user is logged in, redirect to target.
+    If not, redirect to login with target preserved in query string.
     """
     target = request.args.get('to', '/dashboard')
     # Validate target is a local path (security)
     if not target.startswith('/'):
         target = '/dashboard'
-    return redirect(target)
+
+    # Check if user is authenticated
+    if is_user_authenticated():
+        return redirect(target)
+    else:
+        # Redirect to login with next parameter
+        from urllib.parse import urlencode
+        return redirect(f'/login?next={target}')
 
 
 # --- PUSH NOTIFICATION API ENDPOINTS ---

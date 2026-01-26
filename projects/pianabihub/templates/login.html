@@ -251,14 +251,22 @@
     </div>
 
     <script>
+        // Get 'next' parameter from URL if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const nextUrl = urlParams.get('next') || '';
+
         function loginMicrosoft() {
             const remember = document.getElementById('remember-me').checked;
-            window.location.href = '/auth/microsoft?remember=' + (remember ? '1' : '0');
+            let url = '/auth/microsoft?remember=' + (remember ? '1' : '0');
+            if (nextUrl) url += '&next=' + encodeURIComponent(nextUrl);
+            window.location.href = url;
         }
 
         function loginGuest() {
             const remember = document.getElementById('remember-me').checked;
-            window.location.href = '/guest?remember=' + (remember ? '1' : '0');
+            let url = '/guest?remember=' + (remember ? '1' : '0');
+            if (nextUrl) url += '&next=' + encodeURIComponent(nextUrl);
+            window.location.href = url;
         }
     </script>
 </body>
