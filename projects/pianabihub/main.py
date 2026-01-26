@@ -1064,9 +1064,14 @@ def dashboard():
     textiles = get_latest_report('textiles')
 
     # Get user's preferred industry for default tab
+    # Query parameter ?industry=X overrides user preference (for notification deep links)
     user = get_current_user()
     prefs = get_user_preferences(user)
-    default_industry = prefs.get('preferred_industry') or 'Hospitality'
+    query_industry = request.args.get('industry')
+    if query_industry and query_industry in ['Hospitality', 'Automotive', 'Bedding', 'Textiles']:
+        default_industry = query_industry
+    else:
+        default_industry = prefs.get('preferred_industry') or 'Hospitality'
 
     # Render with all datasets
     return render_template('index.html',
