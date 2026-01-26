@@ -3,7 +3,7 @@
  * Handles caching strategies, offline functionality, forced updates, and push notifications
  */
 
-const CACHE_VERSION = 'piana-bi-v8';
+const CACHE_VERSION = 'piana-bi-v9';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install
@@ -264,32 +264,15 @@ self.addEventListener('notificationclick', (event) => {
   // For 'open' action or direct click, navigate to the URL
   const path = event.notification.data?.url || '/dashboard';
 
-  // Use redirect endpoint to ensure session cookies are sent properly
+  // Use redirect endpoint - handles auth check and preserves target URL through login
   const redirectUrl = new URL('/notification-redirect', self.location.origin);
   redirectUrl.searchParams.set('to', path);
 
+  // Simple approach: always open the redirect URL
+  // If logged in: goes straight to target
+  // If not logged in: goes to login, then target after login
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((windowClients) => {
-        // Try to find and focus an existing app window
-        for (const client of windowClients) {
-          const clientUrl = new URL(client.url);
-          if (clientUrl.origin === self.location.origin && !clientUrl.pathname.includes('/login')) {
-            // Found existing window - focus and navigate via postMessage
-            return client.focus().then((focusedClient) => {
-              if (focusedClient) {
-                focusedClient.postMessage({ type: 'NAVIGATE', url: path });
-              }
-            });
-          }
-        }
-        // No existing window - use redirect endpoint for proper cookie handling
-        return clients.openWindow(redirectUrl.href);
-      })
-      .catch((err) => {
-        console.error('[Service Worker] Notification click error:', err);
-        return clients.openWindow(redirectUrl.href);
-      })
+    clients.openWindow(redirectUrl.href)
   );
 });
 
