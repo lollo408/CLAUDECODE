@@ -3,7 +3,7 @@
  * Handles caching strategies, offline functionality, forced updates, and push notifications
  */
 
-const CACHE_VERSION = 'piana-bi-v5';
+const CACHE_VERSION = 'piana-bi-v6';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install
@@ -252,35 +252,40 @@ self.addEventListener('push', (event) => {
  * Handle notification click
  */
 self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Notification clicked');
+  console.log('[Service Worker] Notification clicked, action:', event.action);
 
   event.notification.close();
 
-  // Handle action buttons
+  // Handle dismiss action
   if (event.action === 'dismiss') {
     return;
   }
 
-  // Build absolute URL
+  // For 'open' action or direct click, navigate to the URL
   const path = event.notification.data?.url || '/dashboard';
   const urlToOpen = new URL(path, self.location.origin).href;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((windowClients) => {
-        // Find an existing window for our app
+        // Try to find and focus an existing app window
         for (const client of windowClients) {
-          if (new URL(client.url).origin === self.location.origin) {
-            // Found existing window - focus it and tell it to navigate
-            return client.focus().then(() => {
-              client.postMessage({
-                type: 'NAVIGATE',
-                url: path
-              });
+          const clientUrl = new URL(client.url);
+          if (clientUrl.origin === self.location.origin && !clientUrl.pathname.includes('/login')) {
+            // Found existing window - focus and navigate via postMessage
+            return client.focus().then((focusedClient) => {
+              if (focusedClient) {
+                focusedClient.postMessage({ type: 'NAVIGATE', url: path });
+              }
             });
           }
         }
-        // No existing window - open new one (user may need to log in)
+        // No existing window found - open new (user may need to log in)
+        return clients.openWindow(urlToOpen);
+      })
+      .catch((err) => {
+        console.error('[Service Worker] Notification click error:', err);
+        // Fallback to opening window
         return clients.openWindow(urlToOpen);
       })
   );
