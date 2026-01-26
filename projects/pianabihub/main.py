@@ -265,7 +265,7 @@ def send_web_push(subscription_info, data, vapid_private_key, vapid_claims):
     response = http_requests.post(endpoint, data=body, headers=headers, timeout=30)
 
     if response.status_code in [200, 201, 202]:
-        return True
+        return {'status': response.status_code, 'body': response.text[:100] if response.text else 'empty'}
     else:
         raise Exception(f"Push failed: {response.status_code} - {response.text}")
 
@@ -1780,9 +1780,10 @@ def api_send_notifications():
         fail_count = 0
 
         errors = []
+        responses = []
         for sub in subscriptions:
             try:
-                send_web_push(
+                result = send_web_push(
                     subscription_info={
                         'endpoint': sub['endpoint'],
                         'keys': {
@@ -1794,6 +1795,7 @@ def api_send_notifications():
                     vapid_private_key=VAPID_PRIVATE_KEY,
                     vapid_claims={'sub': VAPID_SUBJECT}
                 )
+                responses.append(result)
                 success_count += 1
             except Exception as e:
                 error_msg = str(e)
@@ -1816,7 +1818,8 @@ def api_send_notifications():
             'sent': success_count,
             'failed': fail_count,
             'total': len(subscriptions),
-            'errors': errors if errors else None
+            'errors': errors if errors else None,
+            'responses': responses if responses else None
         })
 
     except Exception as e:
