@@ -609,7 +609,8 @@ def check_auth_and_maintenance():
         '/manifest.json',
         '/service-worker.js',
         '/offline',
-        '/partner-login'
+        '/partner-login',
+        '/notification-redirect'
     ]
 
     # Check if current path is public
@@ -1591,6 +1592,22 @@ def api_generate_summary():
             pass
 
         return jsonify({'success': False, 'error': result['error']}), 500
+
+
+# --- NOTIFICATION REDIRECT (for service worker navigation) ---
+
+@app.route('/notification-redirect')
+def notification_redirect():
+    """
+    Public redirect endpoint for push notification clicks.
+    Service worker opens this URL, then we redirect to the target.
+    This ensures session cookies are sent properly.
+    """
+    target = request.args.get('to', '/dashboard')
+    # Validate target is a local path (security)
+    if not target.startswith('/'):
+        target = '/dashboard'
+    return redirect(target)
 
 
 # --- PUSH NOTIFICATION API ENDPOINTS ---

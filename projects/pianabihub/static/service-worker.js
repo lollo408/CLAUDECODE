@@ -3,7 +3,7 @@
  * Handles caching strategies, offline functionality, forced updates, and push notifications
  */
 
-const CACHE_VERSION = 'piana-bi-v6';
+const CACHE_VERSION = 'piana-bi-v7';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install
@@ -263,7 +263,10 @@ self.addEventListener('notificationclick', (event) => {
 
   // For 'open' action or direct click, navigate to the URL
   const path = event.notification.data?.url || '/dashboard';
-  const urlToOpen = new URL(path, self.location.origin).href;
+
+  // Use redirect endpoint to ensure session cookies are sent properly
+  const redirectUrl = new URL('/notification-redirect', self.location.origin);
+  redirectUrl.searchParams.set('to', path);
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
@@ -280,13 +283,12 @@ self.addEventListener('notificationclick', (event) => {
             });
           }
         }
-        // No existing window found - open new (user may need to log in)
-        return clients.openWindow(urlToOpen);
+        // No existing window - use redirect endpoint for proper cookie handling
+        return clients.openWindow(redirectUrl.href);
       })
       .catch((err) => {
         console.error('[Service Worker] Notification click error:', err);
-        // Fallback to opening window
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(redirectUrl.href);
       })
   );
 });
