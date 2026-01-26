@@ -3,7 +3,7 @@
  * Handles caching strategies, offline functionality, forced updates, and push notifications
  */
 
-const CACHE_VERSION = 'piana-bi-v9';
+const CACHE_VERSION = 'piana-bi-v10';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install
@@ -261,18 +261,31 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  // For 'open' action or direct click, navigate to the URL
-  const path = event.notification.data?.url || '/dashboard';
+  // Target URL from notification data
+  const targetPath = event.notification.data?.url || '/dashboard';
+  const targetUrl = new URL(targetPath, self.location.origin).href;
 
-  // Use redirect endpoint - handles auth check and preserves target URL through login
-  const redirectUrl = new URL('/notification-redirect', self.location.origin);
-  redirectUrl.searchParams.set('to', path);
-
-  // Simple approach: always open the redirect URL
-  // If logged in: goes straight to target
-  // If not logged in: goes to login, then target after login
   event.waitUntil(
-    clients.openWindow(redirectUrl.href)
+    // First, try to find an existing window/tab for our app
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Look for any existing window on our origin
+        for (const client of windowClients) {
+          if (client.url.startsWith(self.location.origin)) {
+            // Found an existing window - focus it and navigate
+            console.log('[Service Worker] Found existing window, navigating to:', targetPath);
+            return client.focus().then((focusedClient) => {
+              // Navigate the existing window to target
+              return focusedClient.navigate(targetUrl);
+            });
+          }
+        }
+
+        // No existing window found - open new one
+        // Use direct URL (session cookie should be sent for same-origin)
+        console.log('[Service Worker] No existing window, opening new:', targetUrl);
+        return clients.openWindow(targetUrl);
+      })
   );
 });
 
