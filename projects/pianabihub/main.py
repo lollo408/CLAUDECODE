@@ -13,16 +13,22 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests as http_requests  # Rename to avoid confusion with flask.request
 import secrets
 
-# Web Push implementation using pywebpush
+# Web Push implementation using cryptography (no http-ece dependency)
 import base64
 import time
+import struct
 try:
-    from pywebpush import webpush, WebPushException
-    PYWEBPUSH_AVAILABLE = True
-    print("[Push] pywebpush library loaded successfully")
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives import serialization, hashes
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.backends import default_backend
+    import jwt
+    CRYPTO_AVAILABLE = True
+    print("[Push] cryptography library loaded successfully")
 except ImportError as e:
-    print(f"[Push] pywebpush not available: {e}")
-    PYWEBPUSH_AVAILABLE = False
+    print(f"[Push] cryptography not available: {e}")
+    CRYPTO_AVAILABLE = False
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -89,34 +95,158 @@ else:
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
 VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@pianatechnology.com')
-PUSH_ENABLED = bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY and PYWEBPUSH_AVAILABLE)
+PUSH_ENABLED = bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY and CRYPTO_AVAILABLE)
 
 if PUSH_ENABLED:
     print(f"[Push] Web Push notifications enabled")
-elif not PYWEBPUSH_AVAILABLE:
-    print(f"[Push] Web Push disabled (pywebpush library not available)")
+elif not CRYPTO_AVAILABLE:
+    print(f"[Push] Web Push disabled (cryptography library not available)")
 else:
     print(f"[Push] Web Push notifications disabled (missing VAPID keys)")
 
 
 # --- WEB PUSH HELPER FUNCTIONS ---
+def urlsafe_b64decode(data):
+    """Decode URL-safe base64 with padding."""
+    padding = 4 - len(data) % 4
+    if padding != 4:
+        data += '=' * padding
+    return base64.urlsafe_b64decode(data)
+
+
+def urlsafe_b64encode(data):
+    """Encode to URL-safe base64 without padding."""
+    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('utf-8')
+
+
 def send_web_push(subscription_info, data, vapid_private_key, vapid_claims):
     """
-    Send a Web Push notification using pywebpush.
+    Send a Web Push notification using manual aes128gcm encryption.
+    Implements RFC 8291 without http-ece dependency.
     """
-    if not PYWEBPUSH_AVAILABLE:
-        raise Exception("pywebpush library not available")
+    if not CRYPTO_AVAILABLE:
+        raise Exception("cryptography library not available")
 
-    try:
-        response = webpush(
-            subscription_info=subscription_info,
-            data=data,
-            vapid_private_key=vapid_private_key,
-            vapid_claims=vapid_claims
-        )
+    endpoint = subscription_info['endpoint']
+    p256dh = subscription_info['keys']['p256dh']
+    auth = subscription_info['keys']['auth']
+
+    # Decode subscriber's public key and auth secret
+    user_public_key_bytes = urlsafe_b64decode(p256dh)
+    auth_secret = urlsafe_b64decode(auth)
+
+    # Generate ephemeral ECDH key pair for this message
+    server_private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+    server_public_key = server_private_key.public_key()
+    server_public_key_bytes = server_public_key.public_bytes(
+        serialization.Encoding.X962,
+        serialization.PublicFormat.UncompressedPoint
+    )
+
+    # Load user's public key
+    user_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
+        ec.SECP256R1(), user_public_key_bytes
+    )
+
+    # ECDH key exchange
+    shared_secret = server_private_key.exchange(ec.ECDH(), user_public_key)
+
+    # Generate salt
+    salt = os.urandom(16)
+
+    # Derive keys using HKDF (RFC 8291)
+    # auth_info for PRK derivation
+    auth_info = b"WebPush: info\x00" + user_public_key_bytes + server_public_key_bytes
+
+    # PRK = HKDF-Extract(auth_secret, ECDH_shared_secret)
+    # IKM = HKDF-Expand(PRK, auth_info, 32)
+    prk_hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=auth_secret,
+        info=auth_info,
+        backend=default_backend()
+    )
+    ikm = prk_hkdf.derive(shared_secret)
+
+    # Derive CEK (Content Encryption Key)
+    cek_info = b"Content-Encoding: aes128gcm\x00"
+    cek_hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=16,
+        salt=salt,
+        info=cek_info,
+        backend=default_backend()
+    )
+    cek = cek_hkdf.derive(ikm)
+
+    # Derive nonce
+    nonce_info = b"Content-Encoding: nonce\x00"
+    nonce_hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=12,
+        salt=salt,
+        info=nonce_info,
+        backend=default_backend()
+    )
+    nonce = nonce_hkdf.derive(ikm)
+
+    # Prepare plaintext with padding (RFC 8188)
+    plaintext = data.encode('utf-8')
+    # Add delimiter and padding
+    padded_plaintext = plaintext + b'\x02'  # Delimiter byte
+
+    # Encrypt using AES-GCM
+    aesgcm = AESGCM(cek)
+    ciphertext = aesgcm.encrypt(nonce, padded_plaintext, None)
+
+    # Build aes128gcm encrypted content (RFC 8188)
+    # Header: salt (16) + rs (4) + idlen (1) + keyid (65 for P-256)
+    rs = 4096  # Record size
+    encrypted_content = (
+        salt +  # 16 bytes
+        struct.pack('>I', rs) +  # 4 bytes, big-endian
+        struct.pack('B', len(server_public_key_bytes)) +  # 1 byte
+        server_public_key_bytes +  # 65 bytes
+        ciphertext
+    )
+
+    # Create VAPID JWT token
+    parsed_url = endpoint.split('/')
+    audience = '/'.join(parsed_url[:3])
+
+    # Load VAPID private key
+    vapid_private_bytes = urlsafe_b64decode(vapid_private_key)
+    vapid_private_key_obj = ec.derive_private_key(
+        int.from_bytes(vapid_private_bytes, 'big'),
+        ec.SECP256R1(),
+        default_backend()
+    )
+
+    vapid_token = jwt.encode(
+        {
+            'aud': audience,
+            'exp': int(time.time()) + 86400,
+            'sub': vapid_claims.get('sub', VAPID_SUBJECT)
+        },
+        vapid_private_key_obj,
+        algorithm='ES256'
+    )
+
+    # Send the request
+    headers = {
+        'Content-Type': 'application/octet-stream',
+        'Content-Encoding': 'aes128gcm',
+        'TTL': '86400',
+        'Authorization': f'vapid t={vapid_token}, k={VAPID_PUBLIC_KEY}'
+    }
+
+    response = http_requests.post(endpoint, data=encrypted_content, headers=headers, timeout=30)
+
+    if response.status_code in [200, 201, 202]:
         return {'status': response.status_code, 'body': response.text[:100] if response.text else 'empty'}
-    except WebPushException as e:
-        raise Exception(f"Push failed: {e}")
+    else:
+        raise Exception(f"Push failed: {response.status_code} - {response.text}")
 
 
 def get_auth_url(redirect_uri, state=None):
@@ -1467,7 +1597,7 @@ def api_vapid_key():
         return jsonify({
             'error': 'Push notifications not configured',
             'debug': {
-                'pywebpush_available': PYWEBPUSH_AVAILABLE,
+                'crypto_available': CRYPTO_AVAILABLE,
                 'has_public_key': bool(VAPID_PUBLIC_KEY),
                 'has_private_key': bool(VAPID_PRIVATE_KEY)
             }
