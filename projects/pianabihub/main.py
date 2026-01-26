@@ -13,20 +13,19 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests as http_requests  # Rename to avoid confusion with flask.request
 import secrets
 
-# Web Push implementation using cryptography (no pywebpush dependency)
+# Web Push implementation using http_ece for encryption
 import base64
-import struct
 import time
 try:
     from cryptography.hazmat.primitives.asymmetric import ec
-    from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.backends import default_backend
+    import http_ece
     import jwt
     CRYPTO_AVAILABLE = True
+    print("[Push] http_ece library loaded successfully")
 except ImportError as e:
-    print(f"[Push] cryptography not available: {e}")
+    print(f"[Push] Required libraries not available: {e}")
     CRYPTO_AVAILABLE = False
 
 app = Flask(__name__)
@@ -120,11 +119,10 @@ def urlsafe_b64encode(data):
 
 def send_web_push(subscription_info, data, vapid_private_key, vapid_claims):
     """
-    Send a Web Push notification using manual encryption.
-    This replaces pywebpush for Vercel compatibility.
+    Send a Web Push notification using http_ece for encryption.
     """
     if not CRYPTO_AVAILABLE:
-        raise Exception("Cryptography library not available")
+        raise Exception("Required libraries not available")
 
     endpoint = subscription_info['endpoint']
     p256dh = subscription_info['keys']['p256dh']
@@ -134,109 +132,36 @@ def send_web_push(subscription_info, data, vapid_private_key, vapid_claims):
     user_public_key_bytes = urlsafe_b64decode(p256dh)
     auth_secret = urlsafe_b64decode(auth)
 
-    # Generate ephemeral ECDH key pair
+    # Generate ephemeral ECDH key pair for encryption
     server_private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
     server_public_key = server_private_key.public_key()
-
-    # Get server public key bytes (uncompressed point format)
     server_public_key_bytes = server_public_key.public_bytes(
         serialization.Encoding.X962,
         serialization.PublicFormat.UncompressedPoint
     )
 
-    # Load user's public key
-    user_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
-        ec.SECP256R1(), user_public_key_bytes
-    )
+    # Get private key as raw bytes for http_ece
+    server_private_numbers = server_private_key.private_numbers()
+    server_private_bytes = server_private_numbers.private_value.to_bytes(32, 'big')
 
-    # ECDH shared secret
-    shared_secret = server_private_key.exchange(ec.ECDH(), user_public_key)
-
-    # Derive encryption key using HKDF (RFC 8291)
-    # info for auth: "WebPush: info" || 0x00 || user_public_key || server_public_key
-    info_auth = b"WebPush: info\x00" + user_public_key_bytes + server_public_key_bytes
-
-    # PRK from auth secret
-    hkdf_auth = HKDF(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=auth_secret,
-        info=info_auth,
-        backend=default_backend()
-    )
-    prk = hkdf_auth.derive(shared_secret)
-
-    # Derive content encryption key
-    hkdf_cek = HKDF(
-        algorithm=hashes.SHA256(),
-        length=16,
-        salt=b"",
-        info=b"Content-Encoding: aes128gcm\x00",
-        backend=default_backend()
-    )
-    cek = hkdf_cek.derive(prk)
-
-    # Derive nonce
-    hkdf_nonce = HKDF(
-        algorithm=hashes.SHA256(),
-        length=12,
-        salt=b"",
-        info=b"Content-Encoding: nonce\x00",
-        backend=default_backend()
-    )
-    nonce = hkdf_nonce.derive(prk)
-
-    # Encrypt payload with AES-GCM
-    # Add padding (RFC 8291): 0x00 padding delimiter + content
-    padded_data = b'\x02' + data.encode('utf-8')  # 0x02 = padding delimiter for aes128gcm
-
-    aesgcm = AESGCM(cek)
-    ciphertext = aesgcm.encrypt(nonce, padded_data, None)
-
-    # Build encrypted content (aes128gcm format)
-    # salt (16 bytes) || rs (4 bytes, record size) || idlen (1 byte) || keyid || ciphertext
+    # Generate salt
     salt = os.urandom(16)
-    rs = struct.pack('>I', 4096)  # record size
-    idlen = struct.pack('B', len(server_public_key_bytes))
 
-    # Re-derive keys with actual salt
-    hkdf_auth_real = HKDF(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=auth_secret,
-        info=info_auth,
-        backend=default_backend()
-    )
-    prk_real = hkdf_auth_real.derive(shared_secret)
-
-    hkdf_cek_real = HKDF(
-        algorithm=hashes.SHA256(),
-        length=16,
+    # Encrypt using http_ece
+    encrypted = http_ece.encrypt(
+        data.encode('utf-8'),
         salt=salt,
-        info=b"Content-Encoding: aes128gcm\x00",
-        backend=default_backend()
+        private_key=server_private_bytes,
+        dh=user_public_key_bytes,
+        auth_secret=auth_secret,
+        version='aes128gcm'
     )
-    cek_real = hkdf_cek_real.derive(prk_real)
-
-    hkdf_nonce_real = HKDF(
-        algorithm=hashes.SHA256(),
-        length=12,
-        salt=salt,
-        info=b"Content-Encoding: nonce\x00",
-        backend=default_backend()
-    )
-    nonce_real = hkdf_nonce_real.derive(prk_real)
-
-    aesgcm_real = AESGCM(cek_real)
-    ciphertext_real = aesgcm_real.encrypt(nonce_real, padded_data, None)
-
-    body = salt + rs + idlen + server_public_key_bytes + ciphertext_real
 
     # Create VAPID JWT token
     parsed_url = endpoint.split('/')
-    audience = '/'.join(parsed_url[:3])  # https://fcm.googleapis.com or similar
+    audience = '/'.join(parsed_url[:3])
 
-    # Load the VAPID private key (raw 32-byte format) into an EC key object
+    # Load the VAPID private key
     vapid_private_bytes = urlsafe_b64decode(vapid_private_key)
     vapid_private_key_obj = ec.derive_private_key(
         int.from_bytes(vapid_private_bytes, 'big'),
@@ -262,7 +187,7 @@ def send_web_push(subscription_info, data, vapid_private_key, vapid_claims):
         'Authorization': f'vapid t={vapid_token}, k={VAPID_PUBLIC_KEY}'
     }
 
-    response = http_requests.post(endpoint, data=body, headers=headers, timeout=30)
+    response = http_requests.post(endpoint, data=encrypted, headers=headers, timeout=30)
 
     if response.status_code in [200, 201, 202]:
         return {'status': response.status_code, 'body': response.text[:100] if response.text else 'empty'}
