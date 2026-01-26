@@ -1,0 +1,174 @@
+{
+  "pads": [
+    {
+      "name": "BSPV",
+      "type": "pad",
+      "unit": "pieces",
+      "has_osf": true,
+      "osf_options": {
+        "1.1": [
+          {
+            "size": "CAL KING",
+            "emission_factor": 3.485
+          },
+          {
+            "size": "FULL",
+            "emission_factor": 2.745
+          },
+          {
+            "size": "FULL XL",
+            "emission_factor": 2.841
+          },
+          {
+            "size": "HOT KING",
+            "emission_factor": 3.381
+          },
+          {
+            "size": "KING",
+            "emission_factor": 3.506
+          },
+          {
+            "size": "QUEEN",
+            "emission_factor": 3.038
+          },
+          {
+            "size": "TWIN",
+            "emission_factor": 2.335
+          },
+          {
+            "size": "TWIN XL",
+            "emission_factor": 2.404
+          }
+        ],
+        "2.2": [
+          {
+            "size": "CAL KING",
+            "emission_factor": 4.814
+          },
+          {
+            "size": "FULL",
+            "emission_factor": 3.621
+          },
+          {
+            "size": "FULL XL",
+            "emission_factor": 3.781
+          },
+          {
+            "size": "HOT KING",
+            "emission_factor": 4.652
+          },
+          {
+            "size": "KING",
+            "emission_factor": 4.853
+          },
+          {
+            "size": "QUEEN",
+            "emission_factor": 4.099
+          },
+          {
+            "size": "TWIN",
+            "emission_factor": 2.962
+          },
+          {
+            "size": "TWIN XL",
+            "emission_factor": 3.077
+          }
+        ]
+      }
+    },
+    {
+      "name": "SYFI",
+      "type": "pad",
+      "unit": "pieces",
+      "has_osf": false,
+      "sizes": [
+        {
+          "size": "CAL KG SPLIT",
+          "emission_factor": 3.014
+        },
+        {
+          "size": "FULL PAD",
+          "emission_factor": 2.147
+        },
+        {
+          "size": "HOT KG SPLIT",
+          "emission_factor": 2.912
+        },
+        {
+          "size": "FULL XL PAD",
+          "emission_factor": 2.187
+        },
+        {
+          "size": "QN PAD",
+          "emission_factor": 2.433
+        },
+        {
+          "size": "TWIN PAD",
+          "emission_factor": 1.741
+        },
+        {
+          "size": "TWIN XL PAD",
+          "emission_factor": 1.763
+        },
+        {
+          "size": "QN SPL PAD",
+          "emission_factor": 2.433
+        }
+      ]
+    },
+    {
+      "name": "TRI-FIBER",
+      "type": "pad",
+      "unit": "pieces",
+      "has_osf": false,
+      "sizes": [
+        {
+          "size": "CAL KNG",
+          "emission_factor": 2.835
+        },
+        {
+          "size": "FULL",
+          "emission_factor": 2.59
+        },
+        {
+          "size": "TWIN XL",
+          "emission_factor": 2.224
+        },
+        {
+          "size": "QUEEN",
+          "emission_factor": 2.611
+        },
+        {
+          "size": "KING",
+          "emission_factor": 2.768
+        }
+      ]
+    }
+  ],
+  "rolls": [
+    {
+      "name": "CRS800 0.9 OSF ROLL",
+      "emission_factor": 1.319
+    },
+    {
+      "name": "CRS800 1.1 OSF W/PCM ROLL",
+      "emission_factor": 3.008
+    },
+    {
+      "name": "EVF 0.75 OSF ELASTO VERT ROLL",
+      "emission_factor": 1.933
+    },
+    {
+      "name": "TB100 ECO 0.75 OSF ROLL",
+      "emission_factor": 2.556
+    },
+    {
+      "name": "VR700 0.9 OSF 88IN ROLL",
+      "emission_factor": 2.68
+    },
+    {
+      "name": "VRS350 VLAP SILKFR 0.9 OSF RL",
+      "emission_factor": 2.68
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "year": 2025,
+  "customer": "SSB",
+  "summary": {
+    "total_co2e_kg": 5702518,
+    "total_co2e_tons": 5702.52
+  },
+  "by_family": [
+    {
+      "family": "BSPV",
+      "unit": "pieces",
+      "subtotal_qty": 305795,
+      "subtotal_co2e_kg": 1001882,
+      "products": [
+        {"name": "BSPV 1.1 CAL KING", "quantity": 2010, "emission_factor": 3.485, "co2e_kg": 7005},
+        {"name": "BSPV 1.1 FULL", "quantity": 34095, "emission_factor": 2.745, "co2e_kg": 93591},
+        {"name": "BSPV 1.1 FULL XL", "quantity": 4140, "emission_factor": 2.841, "co2e_kg": 11762},
+        {"name": "BSPV 1.1 HOT KING", "quantity": 5145, "emission_factor": 3.381, "co2e_kg": 17395},
+        {"name": "BSPV 1.1 KING", "quantity": 55230, "emission_factor": 3.506, "co2e_kg": 193636},
+        {"name": "BSPV 1.1 QUEEN", "quantity": 105840, "emission_factor": 3.038, "co2e_kg": 321542},
+        {"name": "BSPV 1.1 TWIN", "quantity": 30045, "emission_factor": 2.335, "co2e_kg": 70155},
+        {"name": "BSPV 1.1 TWIN XL", "quantity": 6990, "emission_factor": 2.404, "co2e_kg": 16804},
+        {"name": "BSPV 2.2 CAL KING", "quantity": 580, "emission_factor": 4.814, "co2e_kg": 2792},
+        {"name": "BSPV 2.2 FULL", "quantity": 1290, "emission_factor": 3.621, "co2e_kg": 4671},
+        {"name": "BSPV 2.2 FULL XL", "quantity": 1380, "emission_factor": 3.781, "co2e_kg": 5218},
+        {"name": "BSPV 2.2 HOT KING", "quantity": 3520, "emission_factor": 4.652, "co2e_kg": 16375},
+        {"name": "BSPV 2.2 KING", "quantity": 21070, "emission_factor": 4.853, "co2e_kg": 102253},
+        {"name": "BSPV 2.2 QUEEN", "quantity": 32290, "emission_factor": 4.099, "co2e_kg": 132357},
+        {"name": "BSPV 2.2 TWIN", "quantity": 360, "emission_factor": 2.962, "co2e_kg": 1066},
+        {"name": "BSPV 2.2 TWIN XL", "quantity": 1710, "emission_factor": 3.077, "co2e_kg": 5262}
+      ]
+    },
+    {
+      "family": "SYFI",
+      "unit": "pieces",
+      "subtotal_qty": 379400,
+      "subtotal_co2e_kg": 799140,
+      "products": [
+        {"name": "SYFI CAL KG SPLIT", "quantity": 5000, "emission_factor": 3.014, "co2e_kg": 15070},
+        {"name": "SYFI FULL PAD", "quantity": 46300, "emission_factor": 2.147, "co2e_kg": 99406},
+        {"name": "SYFI HOT KG SPLIT", "quantity": 5600, "emission_factor": 2.912, "co2e_kg": 16307},
+        {"name": "SYFI FULL XL PAD", "quantity": 2800, "emission_factor": 2.187, "co2e_kg": 6124},
+        {"name": "SYFI QN PAD", "quantity": 144200, "emission_factor": 2.433, "co2e_kg": 350839},
+        {"name": "SYFI TWIN PAD", "quantity": 22300, "emission_factor": 1.741, "co2e_kg": 38824},
+        {"name": "SYFI TWIN XL PAD", "quantity": 149500, "emission_factor": 1.763, "co2e_kg": 263569},
+        {"name": "SYFI QN SPL PAD", "quantity": 3700, "emission_factor": 2.433, "co2e_kg": 9002}
+      ]
+    },
+    {
+      "family": "TRI-FIBER",
+      "unit": "pieces",
+      "subtotal_qty": 2210,
+      "subtotal_co2e_kg": 5820,
+      "products": [
+        {"name": "TRI-FIBER CAL KNG", "quantity": 40, "emission_factor": 2.835, "co2e_kg": 113},
+        {"name": "TRI-FIBER FULL", "quantity": 20, "emission_factor": 2.59, "co2e_kg": 52},
+        {"name": "TRI-FIBER TWIN XL", "quantity": 340, "emission_factor": 2.224, "co2e_kg": 756},
+        {"name": "TRI-FIBER QUEEN", "quantity": 710, "emission_factor": 2.611, "co2e_kg": 1854},
+        {"name": "TRI-FIBER KING", "quantity": 1100, "emission_factor": 2.768, "co2e_kg": 3045}
+      ]
+    },
+    {
+      "family": "Rolls",
+      "unit": "linear yards",
+      "subtotal_qty": 2568340,
+      "subtotal_co2e_kg": 4697628,
+      "products": [
+        {"name": "CRS800 0.9 OSF ROLL", "quantity": 1539550, "emission_factor": 1.319, "co2e_kg": 2030666},
+        {"name": "CRS800 1.1 OSF W/PCM ROLL", "quantity": 2400, "emission_factor": 3.008, "co2e_kg": 7219},
+        {"name": "EVF 0.75 OSF ELASTO VERT ROLL", "quantity": 20300, "emission_factor": 1.933, "co2e_kg": 39240},
+        {"name": "TB100 ECO 0.75 OSF ROLL", "quantity": 611440, "emission_factor": 2.556, "co2e_kg": 1562841},
+        {"name": "VR700 0.9 OSF 88IN ROLL", "quantity": 297650, "emission_factor": 2.68, "co2e_kg": 797702},
+        {"name": "VRS350 VLAP SILKFR 0.9 OSF RL", "quantity": 97000, "emission_factor": 2.68, "co2e_kg": 259960}
+      ]
+    }
+  ],
+  "equivalencies": {
+    "trees_per_year": 261991,
+    "car_miles": 14256295
+  }
+}

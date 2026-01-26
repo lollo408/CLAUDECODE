@@ -13,6 +13,23 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests as http_requests  # Rename to avoid confusion with flask.request
 import secrets
 
+# Web Push implementation using cryptography (no http-ece dependency)
+import base64
+import time
+import struct
+try:
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives import serialization, hashes
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.backends import default_backend
+    import jwt
+    CRYPTO_AVAILABLE = True
+    print("[Push] cryptography library loaded successfully")
+except ImportError as e:
+    print(f"[Push] cryptography not available: {e}")
+    CRYPTO_AVAILABLE = False
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
 
@@ -72,6 +89,164 @@ if AZURE_AUTH_ENABLED:
     print(f"[Auth] Azure AD authentication enabled (manual OAuth2)")
 else:
     print(f"[Auth] Azure AD authentication disabled (Client: {bool(AZURE_CLIENT_ID)}, Tenant: {bool(AZURE_TENANT_ID)}, Secret: {bool(AZURE_CLIENT_SECRET)})")
+
+
+# --- VAPID CONFIGURATION (Web Push Notifications) ---
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
+VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@pianatechnology.com')
+PUSH_ENABLED = bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY and CRYPTO_AVAILABLE)
+
+if PUSH_ENABLED:
+    print(f"[Push] Web Push notifications enabled")
+elif not CRYPTO_AVAILABLE:
+    print(f"[Push] Web Push disabled (cryptography library not available)")
+else:
+    print(f"[Push] Web Push notifications disabled (missing VAPID keys)")
+
+
+# --- WEB PUSH HELPER FUNCTIONS ---
+def urlsafe_b64decode(data):
+    """Decode URL-safe base64 with padding."""
+    padding = 4 - len(data) % 4
+    if padding != 4:
+        data += '=' * padding
+    return base64.urlsafe_b64decode(data)
+
+
+def urlsafe_b64encode(data):
+    """Encode to URL-safe base64 without padding."""
+    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('utf-8')
+
+
+def send_web_push(subscription_info, data, vapid_private_key, vapid_claims):
+    """
+    Send a Web Push notification using manual aes128gcm encryption.
+    Implements RFC 8291 without http-ece dependency.
+    """
+    if not CRYPTO_AVAILABLE:
+        raise Exception("cryptography library not available")
+
+    endpoint = subscription_info['endpoint']
+    p256dh = subscription_info['keys']['p256dh']
+    auth = subscription_info['keys']['auth']
+
+    # Decode subscriber's public key and auth secret
+    user_public_key_bytes = urlsafe_b64decode(p256dh)
+    auth_secret = urlsafe_b64decode(auth)
+
+    # Generate ephemeral ECDH key pair for this message
+    server_private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+    server_public_key = server_private_key.public_key()
+    server_public_key_bytes = server_public_key.public_bytes(
+        serialization.Encoding.X962,
+        serialization.PublicFormat.UncompressedPoint
+    )
+
+    # Load user's public key
+    user_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
+        ec.SECP256R1(), user_public_key_bytes
+    )
+
+    # ECDH key exchange
+    shared_secret = server_private_key.exchange(ec.ECDH(), user_public_key)
+
+    # Generate salt
+    salt = os.urandom(16)
+
+    # Derive keys using HKDF (RFC 8291)
+    # auth_info for PRK derivation
+    auth_info = b"WebPush: info\x00" + user_public_key_bytes + server_public_key_bytes
+
+    # PRK = HKDF-Extract(auth_secret, ECDH_shared_secret)
+    # IKM = HKDF-Expand(PRK, auth_info, 32)
+    prk_hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=auth_secret,
+        info=auth_info,
+        backend=default_backend()
+    )
+    ikm = prk_hkdf.derive(shared_secret)
+
+    # Derive CEK (Content Encryption Key)
+    cek_info = b"Content-Encoding: aes128gcm\x00"
+    cek_hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=16,
+        salt=salt,
+        info=cek_info,
+        backend=default_backend()
+    )
+    cek = cek_hkdf.derive(ikm)
+
+    # Derive nonce
+    nonce_info = b"Content-Encoding: nonce\x00"
+    nonce_hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=12,
+        salt=salt,
+        info=nonce_info,
+        backend=default_backend()
+    )
+    nonce = nonce_hkdf.derive(ikm)
+
+    # Prepare plaintext with padding (RFC 8188)
+    plaintext = data.encode('utf-8')
+    # Add delimiter and padding
+    padded_plaintext = plaintext + b'\x02'  # Delimiter byte
+
+    # Encrypt using AES-GCM
+    aesgcm = AESGCM(cek)
+    ciphertext = aesgcm.encrypt(nonce, padded_plaintext, None)
+
+    # Build aes128gcm encrypted content (RFC 8188)
+    # Header: salt (16) + rs (4) + idlen (1) + keyid (65 for P-256)
+    rs = 4096  # Record size
+    encrypted_content = (
+        salt +  # 16 bytes
+        struct.pack('>I', rs) +  # 4 bytes, big-endian
+        struct.pack('B', len(server_public_key_bytes)) +  # 1 byte
+        server_public_key_bytes +  # 65 bytes
+        ciphertext
+    )
+
+    # Create VAPID JWT token
+    parsed_url = endpoint.split('/')
+    audience = '/'.join(parsed_url[:3])
+
+    # Load VAPID private key
+    vapid_private_bytes = urlsafe_b64decode(vapid_private_key)
+    vapid_private_key_obj = ec.derive_private_key(
+        int.from_bytes(vapid_private_bytes, 'big'),
+        ec.SECP256R1(),
+        default_backend()
+    )
+
+    vapid_token = jwt.encode(
+        {
+            'aud': audience,
+            'exp': int(time.time()) + 86400,
+            'sub': vapid_claims.get('sub', VAPID_SUBJECT)
+        },
+        vapid_private_key_obj,
+        algorithm='ES256'
+    )
+
+    # Send the request
+    headers = {
+        'Content-Type': 'application/octet-stream',
+        'Content-Encoding': 'aes128gcm',
+        'TTL': '86400',
+        'Authorization': f'vapid t={vapid_token}, k={VAPID_PUBLIC_KEY}'
+    }
+
+    response = http_requests.post(endpoint, data=encrypted_content, headers=headers, timeout=30)
+
+    if response.status_code in [200, 201, 202]:
+        return {'status': response.status_code, 'body': response.text[:100] if response.text else 'empty'}
+    else:
+        raise Exception(f"Push failed: {response.status_code} - {response.text}")
 
 
 def get_auth_url(redirect_uri, state=None):
@@ -429,6 +604,8 @@ def check_auth_and_maintenance():
         '/static/',
         '/api/version',
         '/api/auth-status',
+        '/api/push/vapid-key',
+        '/api/send-notifications',
         '/manifest.json',
         '/service-worker.js',
         '/offline',
@@ -887,9 +1064,14 @@ def dashboard():
     textiles = get_latest_report('textiles')
 
     # Get user's preferred industry for default tab
+    # Query parameter ?industry=X overrides user preference (for notification deep links)
     user = get_current_user()
     prefs = get_user_preferences(user)
-    default_industry = prefs.get('preferred_industry') or 'Hospitality'
+    query_industry = request.args.get('industry')
+    if query_industry and query_industry in ['Hospitality', 'Automotive', 'Bedding', 'Textiles']:
+        default_industry = query_industry
+    else:
+        default_industry = prefs.get('preferred_industry') or 'Hospitality'
 
     # Render with all datasets
     return render_template('index.html',
@@ -1409,6 +1591,224 @@ def api_generate_summary():
             pass
 
         return jsonify({'success': False, 'error': result['error']}), 500
+
+
+# --- PUSH NOTIFICATION API ENDPOINTS ---
+
+@app.route('/api/push/vapid-key')
+def api_vapid_key():
+    """Returns the VAPID public key for browser subscription."""
+    if not PUSH_ENABLED:
+        return jsonify({
+            'error': 'Push notifications not configured',
+            'debug': {
+                'crypto_available': CRYPTO_AVAILABLE,
+                'has_public_key': bool(VAPID_PUBLIC_KEY),
+                'has_private_key': bool(VAPID_PRIVATE_KEY)
+            }
+        }), 503
+    return jsonify({'publicKey': VAPID_PUBLIC_KEY})
+
+
+@app.route('/api/push/subscribe', methods=['POST'])
+def api_push_subscribe():
+    """
+    Save a push subscription to the database.
+    Expected JSON payload:
+    {
+        "endpoint": "https://...",
+        "keys": {
+            "p256dh": "...",
+            "auth": "..."
+        }
+    }
+    """
+    if not PUSH_ENABLED:
+        return jsonify({'error': 'Push notifications not configured'}), 503
+
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json()
+    if not data or not data.get('endpoint') or not data.get('keys'):
+        return jsonify({'error': 'Invalid subscription data'}), 400
+
+    # Determine user identifier and type
+    if user.get('is_guest'):
+        user_id = f"guest_{session.sid if hasattr(session, 'sid') else 'anonymous'}"
+        user_type = 'guest'
+    elif user.get('user_type') == 'partner':
+        user_id = f"partner_{user.get('email', 'unknown')}"
+        user_type = 'partner'
+    else:
+        user_id = user.get('id', user.get('email', 'unknown'))
+        user_type = 'employee'
+
+    # Get user's preferred industry
+    prefs = get_user_preferences(user)
+    preferred_industry = prefs.get('preferred_industry')
+
+    try:
+        # Upsert subscription (update if endpoint already exists)
+        supabase.table('push_subscriptions').upsert({
+            'user_id': user_id,
+            'user_type': user_type,
+            'endpoint': data['endpoint'],
+            'p256dh': data['keys']['p256dh'],
+            'auth': data['keys']['auth'],
+            'preferred_industry': preferred_industry
+        }, on_conflict='endpoint').execute()
+
+        return jsonify({'success': True, 'message': 'Subscription saved'})
+    except Exception as e:
+        print(f"[Push] Error saving subscription: {e}")
+        return jsonify({'error': 'Failed to save subscription'}), 500
+
+
+@app.route('/api/push/unsubscribe', methods=['POST'])
+def api_push_unsubscribe():
+    """Remove a push subscription from the database."""
+    if not PUSH_ENABLED:
+        return jsonify({'error': 'Push notifications not configured'}), 503
+
+    data = request.get_json()
+    endpoint = data.get('endpoint') if data else None
+
+    if not endpoint:
+        return jsonify({'error': 'Endpoint required'}), 400
+
+    try:
+        supabase.table('push_subscriptions') \
+            .delete() \
+            .eq('endpoint', endpoint) \
+            .execute()
+        return jsonify({'success': True, 'message': 'Subscription removed'})
+    except Exception as e:
+        print(f"[Push] Error removing subscription: {e}")
+        return jsonify({'error': 'Failed to remove subscription'}), 500
+
+
+@app.route('/api/send-notifications', methods=['POST'])
+def api_send_notifications():
+    """
+    Webhook endpoint for Make.com to trigger push notifications.
+
+    Expected JSON payload:
+    {
+        "webhook_secret": "make-webhook-2026",
+        "type": "intelligence_report" | "event_summary",
+        "vertical": "Hospitality" | "Automotive" | "Bedding" | "Textiles",
+        "title": "New Hospitality Report",
+        "body": "5 top stories this week",
+        "url": "/dashboard"
+    }
+    """
+    webhook_secret = os.environ.get('WEBHOOK_SECRET', 'make-webhook-2026').strip()
+
+    data = request.get_json()
+
+    # Validate webhook secret
+    received_secret = data.get('webhook_secret', '') if data else ''
+    if received_secret != webhook_secret:
+        return jsonify({
+            'error': 'Unauthorized',
+            'debug': {
+                'expected_len': len(webhook_secret),
+                'received_len': len(received_secret),
+                'match': received_secret == webhook_secret
+            }
+        }), 401
+
+    if not PUSH_ENABLED:
+        return jsonify({'error': 'Push notifications not configured'}), 503
+
+    notification_type = data.get('type', 'intelligence_report')
+    vertical = data.get('vertical')
+    title = data.get('title', 'New Update')
+    body = data.get('body', 'Check out the latest content')
+    url = data.get('url', '/dashboard')
+
+    # Build the notification payload
+    notification_payload = json.dumps({
+        'title': title,
+        'body': body,
+        'url': url,
+        'icon': '/static/icons/icon-192.png',
+        'badge': '/static/icons/icon-192.png'
+    })
+
+    # Query subscriptions - filter by industry preference
+    try:
+        query = supabase.table('push_subscriptions').select('*')
+
+        # If vertical is specified, get subscriptions that:
+        # 1. Match the vertical preference, OR
+        # 2. Have no preference set (null)
+        if vertical:
+            # Get all subscriptions and filter in Python
+            # (Supabase doesn't have great OR null support)
+            response = query.execute()
+            subscriptions = [
+                sub for sub in response.data
+                if not sub.get('preferred_industry') or sub.get('preferred_industry') == vertical
+            ]
+        else:
+            # No vertical filter - send to everyone
+            response = query.execute()
+            subscriptions = response.data
+
+        print(f"[Push] Sending to {len(subscriptions)} subscriptions (vertical: {vertical})")
+
+        success_count = 0
+        fail_count = 0
+
+        errors = []
+        responses = []
+        for sub in subscriptions:
+            try:
+                result = send_web_push(
+                    subscription_info={
+                        'endpoint': sub['endpoint'],
+                        'keys': {
+                            'p256dh': sub['p256dh'],
+                            'auth': sub['auth']
+                        }
+                    },
+                    data=notification_payload,
+                    vapid_private_key=VAPID_PRIVATE_KEY,
+                    vapid_claims={'sub': VAPID_SUBJECT}
+                )
+                responses.append(result)
+                success_count += 1
+            except Exception as e:
+                error_msg = str(e)
+                errors.append(error_msg[:200])
+                print(f"[Push] Failed to send to {sub['endpoint'][:50]}...: {e}")
+                # If subscription is expired/invalid (404/410), remove it
+                if '404' in error_msg or '410' in error_msg:
+                    try:
+                        supabase.table('push_subscriptions') \
+                            .delete() \
+                            .eq('endpoint', sub['endpoint']) \
+                            .execute()
+                        print(f"[Push] Removed expired subscription")
+                    except:
+                        pass
+                fail_count += 1
+
+        return jsonify({
+            'success': True,
+            'sent': success_count,
+            'failed': fail_count,
+            'total': len(subscriptions),
+            'errors': errors if errors else None,
+            'responses': responses if responses else None
+        })
+
+    except Exception as e:
+        print(f"[Push] Error fetching subscriptions: {e}")
+        return jsonify({'error': f'Database error: {e}'}), 500
 
 
 if __name__ == '__main__':
