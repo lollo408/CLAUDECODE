@@ -3,7 +3,7 @@
  * Handles caching strategies, offline functionality, forced updates, and push notifications
  */
 
-const CACHE_VERSION = 'piana-bi-v7';
+const CACHE_VERSION = 'piana-bi-v8';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install
