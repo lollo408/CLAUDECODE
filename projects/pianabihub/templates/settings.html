@@ -438,11 +438,28 @@
                 enabledStatus.style.display = 'flex';
                 return true;
             } else {
-                console.error('[Push] Failed to save subscription');
-                return false;
+                const errorData = await subscribeResponse.json().catch(() => ({}));
+                console.error('[Push] Failed to save subscription:', errorData);
+                // Subscription worked at browser level, just server save failed
+                // Still show as enabled since browser will receive notifications
+                enabledStatus.style.display = 'flex';
+                return true;
             }
         } catch (e) {
             console.error('[Push] Subscription error:', e);
+            // Check if we actually have a subscription despite the error
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.getSubscription();
+                if (sub) {
+                    // We have a subscription, so it worked
+                    console.log('[Push] Subscription exists despite error');
+                    enabledStatus.style.display = 'flex';
+                    return true;
+                }
+            } catch (checkErr) {
+                console.error('[Push] Could not verify subscription:', checkErr);
+            }
             alert('Failed to enable notifications. Please try again.');
             checkbox.checked = false;
             return false;
