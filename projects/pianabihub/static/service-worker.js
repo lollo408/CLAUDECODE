@@ -3,7 +3,7 @@
  * Handles caching strategies, offline functionality, forced updates, and push notifications
  */
 
-const CACHE_VERSION = 'piana-bi-v3';
+const CACHE_VERSION = 'piana-bi-v4';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install
@@ -265,21 +265,9 @@ self.addEventListener('notificationclick', (event) => {
   const path = event.notification.data?.url || '/dashboard';
   const urlToOpen = new URL(path, self.location.origin).href;
 
+  // Simply open the URL - let the browser handle focus/navigation
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((windowClients) => {
-        // Check if app is already open
-        for (const client of windowClients) {
-          if (new URL(client.url).origin === self.location.origin && 'focus' in client) {
-            return client.focus().then(() => client.navigate(urlToOpen));
-          }
-        }
-
-        // Open new window if app not open
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
+    clients.openWindow(urlToOpen)
   );
 });
 
