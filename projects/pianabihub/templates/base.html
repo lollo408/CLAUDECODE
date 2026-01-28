@@ -570,11 +570,11 @@
                         await new Promise(resolve => setTimeout(resolve, 500));
                     }
 
-                    // Clear local version so it gets re-set on reload
-                    localStorage.removeItem(VERSION_KEY);
+                    // Store new version
+                    localStorage.setItem(VERSION_KEY, newVersion);
 
-                    // Redirect to login page (clears session so users see new login experience)
-                    window.location.href = '/logout';
+                    // Silent reload - keeps user signed in
+                    window.location.reload();
                 } catch (error) {
                     console.error('[Version] Silent update failed:', error);
                     sessionStorage.removeItem(UPDATE_IN_PROGRESS_KEY);
