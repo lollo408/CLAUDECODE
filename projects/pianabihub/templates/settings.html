@@ -283,32 +283,17 @@
             </div>
         </div>
 
-        <div class="settings-card" id="notifications-card">
+        <div class="settings-card coming-soon" id="notifications-card">
             <div class="settings-section-title">
                 Notifications
+                <span class="coming-soon-badge">Coming Soon</span>
             </div>
             <div class="settings-section-desc">Get notified about new reports and upcoming events.</div>
 
             <hr class="divider">
 
-            <div id="push-status" style="display: none;"></div>
-
-            <div class="checkbox-group" id="push-toggle-container">
-                <input type="checkbox" id="notifications_enabled" name="notifications_enabled"
-                       {{ 'checked' if preferences.notifications_enabled else '' }}>
-                <span>Enable push notifications</span>
-            </div>
-
-            <div id="push-unsupported" style="display: none;" class="push-notice push-notice-warning">
-                <span>Your browser doesn't support push notifications.</span>
-            </div>
-
-            <div id="push-denied" style="display: none;" class="push-notice push-notice-error">
-                <span>Notifications are blocked. Please enable them in your browser settings.</span>
-            </div>
-
-            <div id="push-enabled-status" style="display: none;" class="push-notice push-notice-success">
-                <span>Push notifications are enabled! You'll receive alerts for new reports.</span>
+            <div class="push-notice push-notice-info">
+                <span>Push notifications are coming soon. We're polishing this feature for you.</span>
             </div>
         </div>
 
