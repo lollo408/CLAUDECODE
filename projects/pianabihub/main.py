@@ -987,7 +987,9 @@ def get_all_events(filter_type='3months', industry=None):
             query = query.lt('start_date', today.isoformat())
         # 'all' = no date filter
 
-        response = query.order('start_date', desc=False).execute()
+        # Past events: newest first. Upcoming events: soonest first.
+        order_desc = (filter_type == 'past')
+        response = query.order('start_date', desc=order_desc).execute()
         return response.data
     except Exception as e:
         print(f"Error fetching events: {e}")
