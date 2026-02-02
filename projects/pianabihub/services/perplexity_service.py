@@ -166,12 +166,12 @@ RESEARCH DATA:
 
 FORMAT YOUR RESPONSE AS HTML WITH THIS EXACT STRUCTURE:
 
-<!-- SCORECARD - Quick orientation as bullet points -->
+<!-- SCORECARD - Quick orientation as bullet points with emojis -->
 <h3>Quick Assessment</h3>
 <ul>
-<li><strong>Opportunity Score:</strong> [HIGH / MEDIUM / LOW] — <em>[One line explaining why]</em></li>
-<li><strong>Piana Relevance:</strong> [HIGH / MEDIUM / LOW] — <em>[One line explaining why]</em></li>
-<li><strong>Urgency:</strong> [IMMEDIATE / NEAR-TERM / MONITOR] — <em>[One line explaining why]</em></li>
+<li><strong>🎯 Opportunity Score:</strong> [HIGH / MEDIUM / LOW] — <em>[One line explaining why]</em></li>
+<li><strong>🏢 Piana Relevance:</strong> [HIGH / MEDIUM / LOW] — <em>[One line explaining why]</em></li>
+<li><strong>⏰ Urgency:</strong> [IMMEDIATE / NEAR-TERM / MONITOR] — <em>[One line explaining why]</em></li>
 </ul>
 
 <!-- BUSINESS INTELLIGENCE -->
