@@ -593,7 +593,6 @@ vercel --prod
 - [ ] Upload 2026 Q2 events (April-June) when dates available
 - [x] Fix login page and user dropdown visual styling (alignment, mobile optimization)
 - [x] Monitor Make.com automation for Q1 2026 event summaries
-- [ ] Push notifications (future enhancement) - click redirect bug needs fixing
 - [ ] Real-time updates via Supabase subscriptions (future enhancement)
 - [ ] **External Control Panel** - Need solution to operate admin controls outside the app platform (Supabase dashboard, separate admin app, or similar)
 
@@ -626,10 +625,12 @@ vercel --prod
 - [x] Silent reload on updates (users stay signed in)
 
 **Version 1.5.0** (Planned)
-- [ ] Push notifications (fix click redirect bug first)
 - [ ] User-generated ranking/voting (authenticated users only)
 - [ ] Saved articles/bookmarks feature
 - [ ] External control panel solution
+
+**Deprioritized / Notes:**
+- Push notifications - Decided not to implement. PWA web push has poor iOS support, and native app (App Store) is overkill for internal tool. Alternatives if needed: email digest via Make.com or Teams/Slack integration.
 
 ### Session Notes (Jan 20, 2026)
 **v1.2.0 Deployment:**
