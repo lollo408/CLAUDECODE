@@ -1293,10 +1293,9 @@ def event_detail(event_id):
 @app.route('/upload-events', methods=['GET', 'POST'])
 def upload_events():
     """CSV upload for events - Admin only."""
-    # Admin protection: require ?key=<admin_secret>
-    admin_secret = os.environ.get('ADMIN_SECRET', 'piana2026')
-    if request.args.get('key') != admin_secret:
-        return "<h3>Unauthorized - Admin access required</h3>", 403
+    # Admin protection: require session-based auth (URL key removed for security)
+    if not session.get('admin_authenticated'):
+        return redirect(url_for('admin'))
 
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -1371,23 +1370,60 @@ def admin():
     """Admin control panel for app management."""
     admin_secret = os.environ.get('ADMIN_SECRET', 'piana2026')
 
-    # Check if already authenticated via session or URL key (for backwards compatibility)
-    is_authenticated = session.get('admin_authenticated') or request.args.get('key') == admin_secret
+    # Check if authenticated via session only (URL key auth removed for security)
+    is_authenticated = session.get('admin_authenticated')
 
     message = None
     error = None
+
+    # Rate limiting for admin login (5 attempts → 15 min cooldown)
+    MAX_ATTEMPTS = 5
+    LOCKOUT_MINUTES = 15
+    failed_attempts = session.get('admin_failed_attempts', 0)
+    lockout_until = session.get('admin_lockout_until')
+
+    # Check if currently locked out
+    if lockout_until:
+        lockout_time = datetime.fromisoformat(lockout_until)
+        if datetime.now() < lockout_time:
+            remaining = int((lockout_time - datetime.now()).total_seconds() / 60) + 1
+            return render_template('admin.html',
+                                   authenticated=False,
+                                   login_error=f"Too many failed attempts. Try again in {remaining} minutes.")
+        else:
+            # Lockout expired, reset counters
+            session.pop('admin_lockout_until', None)
+            session.pop('admin_failed_attempts', None)
+            failed_attempts = 0
 
     # Handle login attempt
     if request.method == 'POST' and request.form.get('action') == 'login':
         password = request.form.get('password', '')
         if password == admin_secret:
+            # Success - clear failed attempts and authenticate
+            session.pop('admin_failed_attempts', None)
+            session.pop('admin_lockout_until', None)
             session['admin_authenticated'] = True
             session.permanent = True  # Keep session for 31 days
             return redirect(url_for('admin'))
         else:
+            # Failed attempt - increment counter
+            failed_attempts += 1
+            session['admin_failed_attempts'] = failed_attempts
+
+            if failed_attempts >= MAX_ATTEMPTS:
+                # Lock out for 15 minutes
+                from datetime import timedelta
+                lockout_time = datetime.now() + timedelta(minutes=LOCKOUT_MINUTES)
+                session['admin_lockout_until'] = lockout_time.isoformat()
+                return render_template('admin.html',
+                                       authenticated=False,
+                                       login_error=f"Too many failed attempts. Try again in {LOCKOUT_MINUTES} minutes.")
+
+            remaining_attempts = MAX_ATTEMPTS - failed_attempts
             return render_template('admin.html',
                                    authenticated=False,
-                                   login_error="Invalid password")
+                                   login_error=f"Invalid password. {remaining_attempts} attempts remaining.")
 
     # If not authenticated, show login form
     if not is_authenticated:
