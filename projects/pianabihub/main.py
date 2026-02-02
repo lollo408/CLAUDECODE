@@ -12,6 +12,26 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import requests as http_requests  # Rename to avoid confusion with flask.request
 import secrets
+from urllib.parse import urlparse
+
+
+def is_safe_redirect_url(url):
+    """
+    Validate that a redirect URL is safe (internal path only).
+    Prevents open redirect attacks like //evil.com or https://evil.com
+    """
+    if not url:
+        return False
+
+    parsed = urlparse(url)
+    # Must be a relative path with no scheme or netloc
+    # Safe: /dashboard, /events/123
+    # Unsafe: //evil.com, https://evil.com, javascript:alert(1)
+    return (
+        not parsed.scheme and
+        not parsed.netloc and
+        url.startswith('/')
+    )
 
 # Web Push implementation using cryptography (no http-ece dependency)
 import base64
@@ -31,7 +51,18 @@ except ImportError as e:
     CRYPTO_AVAILABLE = False
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# Secret key for session encryption - MUST be set in production
+_secret_key = os.environ.get('FLASK_SECRET_KEY')
+if not _secret_key:
+    if os.environ.get('VERCEL'):
+        # In production (Vercel), fail if secret key not set
+        raise RuntimeError("FLASK_SECRET_KEY environment variable must be set in production!")
+    else:
+        # Local development only - use a random key (sessions won't persist across restarts)
+        _secret_key = secrets.token_hex(32)
+        print("[WARNING] FLASK_SECRET_KEY not set - using random key for local development")
+app.secret_key = _secret_key
 
 # Session cookie configuration for service worker compatibility
 # SameSite=None allows cookies to be sent when service worker opens new windows
@@ -675,7 +706,7 @@ def auth_microsoft():
 
     # Store next URL for redirect after login
     next_url = request.args.get('next')
-    if next_url and next_url.startswith('/'):
+    if next_url and is_safe_redirect_url(next_url):
         session['next_url'] = next_url
 
     # Build redirect URI - must use production URL to match Azure AD config
@@ -704,7 +735,7 @@ def guest_login():
 
     # Get destination: query param first, then session, then default
     next_url = request.args.get('next') or session.pop('next_url', None)
-    if not next_url or next_url == '/login' or not next_url.startswith('/'):
+    if not next_url or next_url == '/login' or not is_safe_redirect_url(next_url):
         next_url = '/'
 
     return redirect(next_url)
@@ -720,6 +751,12 @@ def callback():
     if 'error' in request.args:
         error_desc = request.args.get('error_description', 'Unknown error')
         return redirect(url_for('login', error=error_desc))
+
+    # Validate OAuth state (CSRF protection)
+    received_state = request.args.get('state')
+    stored_state = session.get('oauth_state')
+    if not received_state or not stored_state or received_state != stored_state:
+        return redirect(url_for('login', error='Invalid authentication state. Please try again.'))
 
     # Get the authorization code
     code = request.args.get('code')
@@ -755,8 +792,10 @@ def callback():
     # Clear OAuth state
     session.pop('oauth_state', None)
 
-    # Redirect to original destination or home
-    next_url = session.pop('next_url', '/')
+    # Redirect to original destination or home (with validation)
+    next_url = session.pop('next_url', None)
+    if not next_url or not is_safe_redirect_url(next_url):
+        next_url = '/'
     return redirect(next_url)
 
 
@@ -892,24 +931,36 @@ def partner_login():
                                 }) \
                                 .execute()
 
-                    # Set session with individual's info
-                    session['user'] = {
-                        'name': name,
-                        'email': email,
-                        'company': access_code['partner_name'],
-                        'user_type': 'partner'
-                    }
-                    session.permanent = remember
-
-                    # Update access code last_used_at
-                    supabase.table('access_codes') \
-                        .update({'last_used_at': datetime.now().isoformat()}) \
+                    # Re-validate code is still active (prevent race condition)
+                    recheck = supabase.table('access_codes') \
+                        .select('is_active') \
                         .eq('id', access_code['id']) \
+                        .limit(1) \
                         .execute()
 
-                    # Redirect to original destination or home
-                    next_url = session.pop('next_url', '/')
-                    return redirect(next_url)
+                    if not recheck.data or not recheck.data[0].get('is_active'):
+                        error = "Access code is no longer active"
+                    else:
+                        # Set session with individual's info
+                        session['user'] = {
+                            'name': name,
+                            'email': email,
+                            'company': access_code['partner_name'],
+                            'user_type': 'partner'
+                        }
+                        session.permanent = remember
+
+                        # Update access code last_used_at
+                        supabase.table('access_codes') \
+                            .update({'last_used_at': datetime.now().isoformat()}) \
+                            .eq('id', access_code['id']) \
+                            .execute()
+
+                        # Redirect to original destination or home (with validation)
+                        next_url = session.pop('next_url', None)
+                        if not next_url or not is_safe_redirect_url(next_url):
+                            next_url = '/'
+                        return redirect(next_url)
                 else:
                     error = "Invalid Code"
             except Exception as e:
