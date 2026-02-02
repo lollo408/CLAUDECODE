@@ -625,12 +625,12 @@ vercel --prod
 - [x] Silent reload on updates (users stay signed in)
 
 **Version 1.5.0** (Planned)
-- [ ] User-generated ranking/voting (authenticated users only)
-- [ ] Saved articles/bookmarks feature
 - [ ] External control panel solution
 
 **Deprioritized / Notes:**
-- Push notifications - Decided not to implement. PWA web push has poor iOS support, and native app (App Store) is overkill for internal tool. Alternatives if needed: email digest via Make.com or Teams/Slack integration.
+- Push notifications - PWA web push has poor iOS support, native app is overkill for internal tool. Alternative: email digest via Make.com.
+- User-generated ranking/voting - Nice to have, not essential for current use case.
+- Saved articles/bookmarks - Nice to have, not essential for current use case.
 
 ### Session Notes (Jan 20, 2026)
 **v1.2.0 Deployment:**
