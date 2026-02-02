@@ -6,9 +6,27 @@ Two-pass approach:
 """
 
 import os
+import re
 import requests
 
 PERPLEXITY_API_KEY = os.environ.get('PERPLEXITY_API_KEY', '').strip()
+
+
+def _clean_html_response(content: str) -> str:
+    """
+    Clean up AI-generated HTML response.
+    - Strips markdown code blocks (```html ... ```)
+    - Removes any leading/trailing whitespace
+    """
+    if not content:
+        return content
+
+    # Remove markdown code blocks (```html, ```HTML, ``` etc.)
+    # Pattern matches opening ```html or ``` and closing ```
+    content = re.sub(r'^```(?:html|HTML)?\s*\n?', '', content.strip())
+    content = re.sub(r'\n?```\s*$', '', content.strip())
+
+    return content.strip()
 PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
 
 # Piana context used in Pass 2
@@ -268,8 +286,11 @@ def generate_event_summary(event_name: str, event_date: str,
             'error': f"Pass 2 (Analysis) failed: {analysis_result['error']}"
         }
 
+    # Clean up HTML (remove markdown code blocks if present)
+    cleaned_summary = _clean_html_response(analysis_result['content'])
+
     return {
         'success': True,
-        'summary': analysis_result['content'],
+        'summary': cleaned_summary,
         'error': None
     }
