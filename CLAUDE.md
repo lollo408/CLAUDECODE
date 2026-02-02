@@ -155,7 +155,8 @@ If you can't select "main" as production branch or auto-deploy stops working:
 - `templates/events.html` - Events list with dropdown filters
 - `templates/event_detail.html` - Single event view with AI summaries
 - `templates/upload_events.html` - CSV upload form (admin-only)
-- `services/perplexity_service.py` - Perplexity API wrapper
+- `services/perplexity_service.py` - Two-pass Perplexity API (research + analysis)
+- `scripts/regenerate_automotive_summaries.py` - Batch regeneration script
 - `vercel.json` - Vercel deployment config
 - `requirements.txt` - Python dependencies
 - `static/` - CSS and images
@@ -172,7 +173,7 @@ If you can't select "main" as production branch or auto-deploy stops working:
 - CSV Upload: `/upload-events?key=piana2026`
 
 **Make.com Webhook Endpoint:**
-- URL: `https://pianabihub192026.vercel.app/api/generate-summary`
+- URL: `https://pianabihub.vercel.app/api/generate-summary`
 - Method: POST
 - Auth: `webhook_secret` in JSON body
 
@@ -188,6 +189,86 @@ name, industry, start_date, end_date, location, country, website, description
 **Upcoming Tasks:**
 - [ ] Upload 2026 Q2 events (April-June) when dates available
 - [x] Monitor Make.com automation for Q1 2026 event summaries
+
+---
+
+### Enhanced Event Summary System (Subproject)
+**Status:** ✅ COMPLETE & DEPLOYED (Feb 2, 2026)
+**Goal:** Higher quality, business-focused event summaries with actionable intelligence
+
+**Two-Pass Research Architecture:**
+```
+Pass 1 (sonar-pro): Web Research
+├── Gather raw facts about the event
+├── Find announcements, speakers, attendees
+├── Collect source URLs
+└── Output: Factual report
+
+Pass 2 (sonar-reasoning-pro): Business Analysis
+├── Analyze through Piana business lens
+├── Score opportunities and relevance
+├── Identify actionable leads
+└── Output: Executive briefing HTML
+```
+
+**Summary Output Format:**
+```
+┌─────────────────────────────────────────────┐
+│ QUICK ASSESSMENT (with emojis)              │
+│ • 🎯 Opportunity Score: HIGH/MEDIUM/LOW     │
+│ • 🏢 Piana Relevance: HIGH/MEDIUM/LOW       │
+│ • ⏰ Urgency: IMMEDIATE/NEAR-TERM/MONITOR   │
+├─────────────────────────────────────────────┤
+│ BUSINESS INTELLIGENCE                       │
+│ • Immediate Actions                         │
+│ • Opportunities Identified (by urgency)     │
+│ • Market Intelligence                       │
+│ • Key Contacts                              │
+│ • Why This Matters to Piana (if genuine)    │
+│ • Sources (clickable links)                 │
+├─────────────────────────────────────────────┤
+│ EVENT RECAP                                 │
+│ 2-3 paragraphs for passive reading          │
+│ No business lens - just what happened       │
+└─────────────────────────────────────────────┘
+```
+
+**Piana Context in Prompts:**
+- Piana Technology: 440+ year heritage, sustainable fiber materials, automotive interiors
+- Piana Sleep: Luxury hospitality mattresses, V/Smart™ technology, zero-waste
+- Opportunity indicators: Renovations, ESG commitments, luxury brands, decision-makers
+
+**Regeneration Script:**
+```bash
+cd "C:\Users\LLeprotti\OneDrive - Tintoria-Piana US Inc\Claude Code\projects\pianabihub"
+
+# Test with 3 events
+python scripts/regenerate_automotive_summaries.py --limit 3
+
+# Run all events for one industry
+python scripts/regenerate_automotive_summaries.py --industry Hospitality
+
+# Run ALL past events (all industries)
+python scripts/regenerate_automotive_summaries.py --industry all
+
+# Available industries: Automotive, Hospitality, Bedding, Textiles, or "all"
+```
+
+**Files Modified:**
+- `services/perplexity_service.py` - Two-pass system, Piana context, HTML cleanup
+- `templates/event_detail.html` - CSS for section styling (purple headers, spacing)
+- `scripts/regenerate_automotive_summaries.py` - Batch regeneration script
+
+**Visual Styling:**
+- Purple underline accent on section headings
+- Emojis in Quick Assessment for quick scanning
+- 32px spacing between sections
+- Purple links with hover effect
+- HR separator before Event Recap
+
+**Cost Estimate:**
+- ~$0.04-0.05 per event (two API calls)
+- 53 past events = ~$2-3 total
 
 ---
 
@@ -512,8 +593,9 @@ vercel --prod
 - [ ] Upload 2026 Q2 events (April-June) when dates available
 - [x] Fix login page and user dropdown visual styling (alignment, mobile optimization)
 - [x] Monitor Make.com automation for Q1 2026 event summaries
-- [ ] Push notifications (future enhancement)
+- [ ] Push notifications (future enhancement) - click redirect bug needs fixing
 - [ ] Real-time updates via Supabase subscriptions (future enhancement)
+- [ ] **External Control Panel** - Need solution to operate admin controls outside the app platform (Supabase dashboard, separate admin app, or similar)
 
 ---
 
@@ -538,10 +620,16 @@ vercel --prod
 - [x] "Remember me" checkbox for partner login
 - [x] Admin panel: Access Codes management section
 
-**Version 1.4.0** (Planned)
+**Version 1.4.2** ✅ DEPLOYED (Jan 30, 2026)
+- [x] Push notifications temporarily disabled ("Coming Soon" badge)
+- [x] Fixed PWA install button visibility (purple gradient on Android + iOS)
+- [x] Silent reload on updates (users stay signed in)
+
+**Version 1.5.0** (Planned)
+- [ ] Push notifications (fix click redirect bug first)
 - [ ] User-generated ranking/voting (authenticated users only)
 - [ ] Saved articles/bookmarks feature
-- [ ] Additional TBD features
+- [ ] External control panel solution
 
 ### Session Notes (Jan 20, 2026)
 **v1.2.0 Deployment:**
@@ -577,3 +665,34 @@ vercel --prod
 2. Code validates company access
 3. Profile stored if "Remember me" checked
 4. Session shows individual's name in nav
+
+### Session Notes (Feb 2, 2026)
+**Enhanced Event Summary System:**
+- [x] Fixed Make.com webhook URL (was using old preview URL, now uses production)
+- [x] Fixed past events ordering (newest first instead of oldest first)
+- [x] Implemented two-pass research system (sonar-pro → sonar-reasoning-pro)
+- [x] Added Piana Technology + Piana Sleep business context to prompts
+- [x] Designed summary format collaboratively (scorecard, BI sections, event recap)
+- [x] Added emojis to Quick Assessment (🎯🏢⏰)
+- [x] Fixed HTML cleanup (strip markdown code blocks from AI response)
+- [x] Fixed source links requirement (must be clickable hyperlinks)
+- [x] Added CSS styling for sections (purple headers, spacing, link colors)
+- [x] Created regeneration script with --industry and --limit flags
+- [x] Regenerated all 13 Automotive events with new format
+- [x] SQL fix for 19 existing summaries (removed ```html blocks)
+- [x] Running full regeneration for all 53 past events
+
+**Technical Decisions:**
+- Perplexity API only offers Sonar models (not Gemini/GPT/Claude) through API
+- Two-pass approach chosen over single pass for better quality
+- sonar-reasoning-pro used for analysis (better reasoning than sonar-pro)
+- Script writes directly to Supabase - no deployment needed for data updates
+
+**Event Counts:**
+| Industry | Past Events |
+|----------|-------------|
+| Textiles | 18 |
+| Automotive | 13 |
+| Hospitality | 12 |
+| Bedding | 10 |
+| **Total** | **53** |
