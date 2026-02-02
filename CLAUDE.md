@@ -594,7 +594,12 @@ vercel --prod
 - [x] Fix login page and user dropdown visual styling (alignment, mobile optimization)
 - [x] Monitor Make.com automation for Q1 2026 event summaries
 - [ ] Real-time updates via Supabase subscriptions (future enhancement)
-- [ ] **External Control Panel** - Need solution to operate admin controls outside the app platform (Supabase dashboard, separate admin app, or similar)
+- [ ] **External Control Panel** - Separate admin interface outside the app platform
+  - Audit logging (admin actions, login attempts, version updates)
+  - Maintenance mode toggle
+  - Version deployment controls
+  - User/partner session management
+  - Options: Supabase dashboard, separate Streamlit app, or Retool
 
 ---
 
@@ -713,8 +718,19 @@ vercel --prod
 | Issue | Severity | Status |
 |-------|----------|--------|
 | URL param admin auth | Critical | ✅ Fixed |
-| No rate limiting | Major | ✅ Fixed |
+| No rate limiting (admin) | Major | ✅ Fixed |
 | CSRF on OAuth | Critical | Already protected |
 | Open redirect | Critical | Already protected |
 | Session fixation | Major | Already protected |
 | Hardcoded secret key | Major | Already fails if not set |
+
+**Auth Configuration (Documented Decisions):**
+These are intentional design choices for an internal business tool, not issues:
+| Setting | Current State | Rationale |
+|---------|---------------|-----------|
+| Admin password | Plaintext comparison | Single admin password, env var protected |
+| Partner login rate limiting | None | Low risk, access codes are invite-only |
+| Session timeout | 31 days | Convenience for internal users |
+| Admin MFA | None (Microsoft has org MFA) | Microsoft login enforces org policies |
+| Lockout notifications | None | Low volume, manual monitoring sufficient |
+| Audit logging | None | Planned for External Control Panel |
