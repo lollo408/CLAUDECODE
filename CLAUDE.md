@@ -624,8 +624,10 @@ vercel --prod
 - [x] Fixed PWA install button visibility (purple gradient on Android + iOS)
 - [x] Silent reload on updates (users stay signed in)
 
-**Version 1.5.0** (Planned)
-- [ ] External control panel solution
+**Version 1.5.0** (In Progress)
+- [x] #1: Auth diagnostic & security fixes (URL param auth removed, rate limiting added)
+- [ ] #2: External control panel solution
+- [ ] Navigation flow improvements (if needed)
 
 **Deprioritized / Notes:**
 - Push notifications - PWA web push has poor iOS support, native app is overkill for internal tool. Alternative: email digest via Make.com.
@@ -697,3 +699,22 @@ vercel --prod
 | Hospitality | 12 |
 | Bedding | 10 |
 | **Total** | **53** |
+
+**Auth Security Audit & Fixes:**
+- [x] Performed comprehensive auth flow review (22 issues found, 4 critical)
+- [x] Fixed: Removed URL param auth from `/admin` route (security risk)
+- [x] Fixed: Removed URL param auth from `/upload-events` route
+- [x] Fixed: Added rate limiting to admin login (5 attempts → 15 min lockout)
+- [x] Already OK: CSRF protection via OAuth state tokens
+- [x] Already OK: Open redirect prevention with `is_safe_redirect_url()`
+- [x] Already OK: Remember Me defaults to TRUE across all login methods
+
+**Auth Security Improvements (Feb 2, 2026):**
+| Issue | Severity | Status |
+|-------|----------|--------|
+| URL param admin auth | Critical | ✅ Fixed |
+| No rate limiting | Major | ✅ Fixed |
+| CSRF on OAuth | Critical | Already protected |
+| Open redirect | Critical | Already protected |
+| Session fixation | Major | Already protected |
+| Hardcoded secret key | Major | Already fails if not set |
