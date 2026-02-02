@@ -34,47 +34,78 @@ def generate_event_summary(event_name: str, event_date: str,
             'error': 'PERPLEXITY_API_KEY not configured'
         }
 
-    prompt = f"""Research the industry event below and provide a structured summary in HTML format.
+    # System context for Piana business intelligence
+    system_message = """You are a business intelligence analyst for Piana, a 440+ year heritage company (est. 1582, Biella, Italy).
 
-Event: {event_name}
-Date: {event_date}
-Industry: {industry}
-Location: {location}
-{f'Website: {website}' if website else ''}
+PIANA TECHNOLOGY (Parent Company):
+- Develops sustainable fiber-based materials replacing wasteful single-use products
+- Clean technologies: water-based dyeing, non-toxic flame retardants, steam-molded fibers
+- Industries: Textiles, Automotive interiors, Bedding/Sleep
+- Circular economy focus: 100% recyclable and reusable materials
 
-FORMAT YOUR RESPONSE AS HTML EXACTLY LIKE THIS:
+PIANA SLEEP (Hospitality Division):
+- Luxury American-made mattresses (manufactured in Cartersville, Georgia)
+- V/Smart™ fiber technology - molecular printing for performance enhancement
+- Flagship: Rinnovo mattress - breathable, hypoallergenic, low-VOC
+- Zero waste to landfill + end-of-life take-back program
+- Target customers: Luxury hotels, resorts, cruise lines, premium hospitality
 
-<h3>Overview</h3>
-<p>One paragraph summarizing what the event was about and its significance.</p>
+WHAT MATTERS TO PIANA:
+1. HOSPITALITY LEADS: Hotel renovations, new property openings, bedding RFPs, FF&E projects
+2. AUTOMOTIVE OPPORTUNITIES: OEM interior programs, EV manufacturers, sustainable material mandates
+3. SUSTAINABILITY SIGNALS: ESG commitments, circular economy pledges, plastic/foam reduction initiatives
+4. DECISION MAKERS: Procurement directors, sustainability officers, FF&E designers, C-suite executives
+5. COMPETITIVE INTEL: Bedding innovations, textile technologies, material science advances
+6. REGULATORY TRENDS: Mattress recycling laws, VOC regulations, sustainability standards"""
 
-<h3>Key Highlights</h3>
+    prompt = f"""Research this industry event and provide actionable business intelligence.
+
+EVENT:
+- Name: {event_name}
+- Date: {event_date}
+- Industry: {industry}
+- Location: {location}
+{f'- Website: {website}' if website else ''}
+
+FORMAT YOUR RESPONSE AS HTML:
+
+<h3>Event Overview</h3>
+<p>2-3 sentences: What happened and why it matters to the {industry} industry.</p>
+
+<h3>Business Opportunities</h3>
 <ul>
-<li><strong>Highlight 1:</strong> Key announcement or product launch</li>
-<li><strong>Highlight 2:</strong> Important trend discussed</li>
-<li><strong>Highlight 3:</strong> Notable speaker or presentation</li>
-<li><strong>Highlight 4:</strong> Industry impact or takeaway</li>
+<li><strong>[Company Name]:</strong> Specific announcement (renovation, new property, sustainability initiative) that could be a sales lead. Include details on scope and timing if available.</li>
+<li><strong>[Company Name]:</strong> Another actionable opportunity with specifics.</li>
+</ul>
+<p><em>If no clear opportunities, state "No direct opportunities identified at this event" and briefly explain.</em></p>
+
+<h3>Sustainability & Innovation</h3>
+<ul>
+<li><strong>ESG:</strong> Circular economy commitments, waste reduction pledges, or sustainability certifications announced</li>
+<li><strong>Technology:</strong> New materials, manufacturing processes, or product innovations relevant to textiles/bedding/automotive</li>
 </ul>
 
-<h3>Notable Attendees</h3>
+<h3>Key Contacts</h3>
 <ul>
-<li>Company/Person 1</li>
-<li>Company/Person 2</li>
+<li><strong>Name, Title @ Company</strong> - Their relevance (decision-maker, announced project, sustainability leader)</li>
 </ul>
+<p><em>Focus on people with purchasing authority or sustainability responsibility.</em></p>
+
+<h3>Market Trends</h3>
+<p>1-2 sentences on industry direction, regulatory changes, or competitive shifts observed.</p>
 
 <h3>Sources</h3>
 <ul>
-<li><a href="URL">Source 1 title</a></li>
-<li><a href="URL">Source 2 title</a></li>
+<li><a href="URL">Source title</a></li>
 </ul>
 
-IMPORTANT RULES:
-- Output ONLY valid HTML, no markdown
-- Do NOT include inline citations like [1] or [2] in the text
-- Use <ul> and <li> for bullet points
-- Put all sources at the bottom with clickable links
-- Write in a professional business intelligence tone
-- Focus on actionable insights
-- Do NOT wrap the response in code blocks"""
+RULES:
+- Output ONLY valid HTML, no markdown or code blocks
+- No inline citations like [1] or [2]
+- All source URLs must be real (not example.com or placeholder)
+- Be specific: name companies, people, dollar amounts, timelines
+- If information is limited, acknowledge it honestly
+- Professional, actionable tone"""
 
     headers = {
         'Authorization': f'Bearer {PERPLEXITY_API_KEY}',
@@ -84,6 +115,7 @@ IMPORTANT RULES:
     payload = {
         'model': 'sonar-pro',
         'messages': [
+            {'role': 'system', 'content': system_message},
             {'role': 'user', 'content': prompt}
         ]
     }
