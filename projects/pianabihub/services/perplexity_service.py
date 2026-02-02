@@ -166,15 +166,13 @@ RESEARCH DATA:
 
 FORMAT YOUR RESPONSE AS HTML WITH THIS EXACT STRUCTURE:
 
-<!-- SCORECARD - Quick orientation -->
-<div class="scorecard">
+<!-- SCORECARD - Quick orientation as bullet points -->
 <h3>Quick Assessment</h3>
-<table>
-<tr><td><strong>Opportunity Score</strong></td><td>[HIGH / MEDIUM / LOW]</td><td><em>[One line explaining why]</em></td></tr>
-<tr><td><strong>Piana Relevance</strong></td><td>[HIGH / MEDIUM / LOW]</td><td><em>[One line explaining why]</em></td></tr>
-<tr><td><strong>Urgency</strong></td><td>[IMMEDIATE / NEAR-TERM / MONITOR]</td><td><em>[One line explaining why]</em></td></tr>
-</table>
-</div>
+<ul>
+<li><strong>Opportunity Score:</strong> [HIGH / MEDIUM / LOW] — <em>[One line explaining why]</em></li>
+<li><strong>Piana Relevance:</strong> [HIGH / MEDIUM / LOW] — <em>[One line explaining why]</em></li>
+<li><strong>Urgency:</strong> [IMMEDIATE / NEAR-TERM / MONITOR] — <em>[One line explaining why]</em></li>
+</ul>
 
 <!-- BUSINESS INTELLIGENCE -->
 <h3>Immediate Actions</h3>
@@ -205,8 +203,10 @@ FORMAT YOUR RESPONSE AS HTML WITH THIS EXACT STRUCTURE:
 
 <h3>Sources</h3>
 <ul>
-<li><a href="URL">Source title</a></li>
+<li><a href="https://actual-url.com/path">Source title</a></li>
+<li><a href="https://another-real-url.com">Another source</a></li>
 </ul>
+<p><em>CRITICAL: Every source MUST be a clickable hyperlink with a real URL. Format: &lt;a href="https://..."&gt;Title&lt;/a&gt;</em></p>
 
 <!-- EVENT RECAP - For passive reading -->
 <hr>
@@ -225,9 +225,11 @@ SCORING GUIDANCE:
 - MONITOR Urgency: Long-term trend or no specific timeline
 
 RULES:
-- Output ONLY valid HTML, no markdown or code blocks
+- Output ONLY valid HTML, no markdown or code blocks (no ``` anywhere)
 - No inline citations like [1] or [2]
-- All source URLs must be real (not example.com)
+- SOURCES MUST BE CLICKABLE LINKS: Use <a href="https://real-url.com">Title</a> format
+- Every source needs a real, working URL - no placeholder text like "event materials" without a link
+- If you cannot find a URL for a source, include only sources you have URLs for
 - Be specific: names, companies, dollar amounts, timelines
 - Be honest about limitations - if data is thin, say so
 - The Event Recap should be enjoyable to read, not dry"""
