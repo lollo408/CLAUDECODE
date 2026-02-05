@@ -965,7 +965,7 @@ def get_latest_report(vertical_name):
 
 
 # --- EVENTS HELPER FUNCTIONS ---
-def get_all_events(filter_type='3months', industry=None):
+def get_all_events(filter_type='upcoming', industry=None):
     """Fetches events with optional filtering."""
     try:
         from datetime import timedelta
@@ -1137,7 +1137,7 @@ def archive():
 @app.route('/events')
 def events():
     """Events listing page with filters, upcoming notifications, and pagination."""
-    filter_type = request.args.get('filter', '3months')
+    filter_type = request.args.get('filter', 'upcoming')
 
     # Use user's preferred industry as default if no industry param in URL
     industry = request.args.get('industry')
